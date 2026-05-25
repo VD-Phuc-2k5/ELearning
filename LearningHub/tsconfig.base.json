@@ -16,7 +16,6 @@
     "skipLibCheck": true,
     "strict": true,
     "target": "es2022",
-    "customConditions": ["@learning-hub/source"],
     "paths": {
       "@learning-hub/core": ["./packages/core/src/index.ts"],
       "@learning-hub/core/server": ["./packages/core/src/server.ts"],
