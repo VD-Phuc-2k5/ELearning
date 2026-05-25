@@ -16,8 +16,8 @@ Please report suspected vulnerabilities privately using GitHub Security
 Advisories for this repository:
 [/security/advisories/new](/security/advisories/new)
 
-If private reporting through GitHub is unavailable, email the maintainers at
-security@example.com. Please do not open public GitHub issues for security
+We accept private vulnerability reports through GitHub Security Advisories
+for this repository. Please do not open public GitHub issues for security
 reports.
 
 To help us triage the issue quickly, include:
