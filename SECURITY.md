@@ -32,4 +32,4 @@ We will acknowledge receipt within 3 business days and aim to provide an
 initial triage update within 7 business days. After validation, we will keep
 you informed of remediation progress and coordinated disclosure timing. If the
 report is out of scope, not reproducible, or otherwise not accepted, we will
-let you know with the reason when possible.
+let you know the reason when possible.
