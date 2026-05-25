@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compileOnSave": false,
+  "files": [],
+  "references": [
+    {
+      "path": "./apps/LearningHub-e2e"
+    },
+    {
+      "path": "./apps/LearningHub"
+    },
+    {
+      "path": "./libs/my-lib"
+    }
+  ]
+}
