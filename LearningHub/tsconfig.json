@@ -10,7 +10,19 @@
       "path": "./apps/LearningHub"
     },
     {
-      "path": "./libs/my-lib"
+      "path": "./packages/domain"
+    },
+    {
+      "path": "./packages/core"
+    },
+    {
+      "path": "./packages/data"
+    },
+    {
+      "path": "./apps/api-e2e"
+    },
+    {
+      "path": "./apps/api"
     }
   ]
 }
