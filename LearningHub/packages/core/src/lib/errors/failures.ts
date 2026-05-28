@@ -25,7 +25,7 @@ class PermissionFailure extends Failure {
 
 class NotFoundFailure extends Failure {
   constructor() {
-    super('The data requested not found');
+    super('The requested data was not found.');
   }
 }
 

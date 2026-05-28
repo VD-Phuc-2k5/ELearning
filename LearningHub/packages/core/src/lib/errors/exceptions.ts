@@ -1,7 +1,7 @@
 class AppException extends Error {
   constructor(message: string) {
     super(message);
-    this.name = 'AppException';
+    this.name = new.target.name;
     Object.setPrototypeOf(this, new.target.prototype);
   }
 }
