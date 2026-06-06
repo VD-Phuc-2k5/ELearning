@@ -38,6 +38,7 @@ Never run a command silently. The explanation must come immediately before the c
 **Examples:**
 
 Before inspecting the repo:
+
 ```
 Current request:
 - Check the current state of the Git repository.
@@ -49,6 +50,7 @@ Command purpose:
 ```
 
 Before reading a diff:
+
 ```
 Current request:
 - Understand what changed in src/auth/token.ts to decide its commit type.
@@ -58,6 +60,7 @@ Command purpose:
 ```
 
 Before executing a commit:
+
 ```
 Current request:
 - Stage and commit the auth-related files as one logical unit.
@@ -90,6 +93,7 @@ git diff --cached --stat
 ```
 
 If nothing is staged, check for unstaged changes:
+
 ```bash
 git diff --name-only
 git ls-files --others --exclude-standard  # untracked files
@@ -101,7 +105,7 @@ If the working tree is completely clean, inform the user and stop.
 
 ## Step 2 — Analyze Changes
 
-Read the actual diff for each changed file to understand *what* changed, not just *that* it changed:
+Read the actual diff for each changed file to understand _what_ changed, not just _that_ it changed:
 
 ```bash
 # Unstaged changes
@@ -115,6 +119,7 @@ cat <file>
 ```
 
 For each file, note:
+
 - **What kind of file** it is (source code, test, config, docs, style, CI, build script)
 - **What changed** (new function, bug fix, refactor, dependency update, etc.)
 - **Which feature/module** it belongs to (infer from path and content)
@@ -127,19 +132,20 @@ Group files that belong together into a single commit. A good commit is **atomic
 
 ### Grouping heuristics
 
-| Signal | Suggested grouping |
-|---|---|
-| Same feature or module | One commit |
-| Independent bug fixes | Separate commits |
-| Test file + source file it tests | Same commit |
-| Config/env changes | Separate `chore` commit |
+| Signal                                  | Suggested grouping        |
+| --------------------------------------- | ------------------------- |
+| Same feature or module                  | One commit                |
+| Independent bug fixes                   | Separate commits          |
+| Test file + source file it tests        | Same commit               |
+| Config/env changes                      | Separate `chore` commit   |
 | Dependency lock file + package manifest | Same `chore(deps)` commit |
-| Documentation update | Separate `docs` commit |
-| Style/formatting only | Separate `style` commit |
-| CI pipeline files | Separate `ci` commit |
-| Multiple unrelated features | Separate `feat` commits |
+| Documentation update                    | Separate `docs` commit    |
+| Style/formatting only                   | Separate `style` commit   |
+| CI pipeline files                       | Separate `ci` commit      |
+| Multiple unrelated features             | Separate `feat` commits   |
 
 **Avoid:**
+
 - Grouping unrelated files just because they're both modified
 - Splitting a single feature across multiple commits
 - Mixing `feat` and `fix` in the same commit
@@ -160,23 +166,24 @@ Each commit message follows the [Conventional Commits v1.0.0](https://www.conven
 
 ### Types
 
-| Type | When to use |
-|---|---|
-| `feat` | A new feature or capability |
-| `fix` | A bug fix |
-| `refactor` | Code restructured without behavior change |
-| `perf` | Performance improvement |
-| `test` | Adding or updating tests |
-| `docs` | Documentation only |
-| `style` | Formatting, whitespace, missing semicolons — no logic change |
-| `chore` | Maintenance tasks: dependencies, tooling, config |
-| `build` | Changes to build system or scripts |
-| `ci` | CI/CD pipeline changes |
-| `revert` | Reverting a previous commit |
+| Type       | When to use                                                  |
+| ---------- | ------------------------------------------------------------ |
+| `feat`     | A new feature or capability                                  |
+| `fix`      | A bug fix                                                    |
+| `refactor` | Code restructured without behavior change                    |
+| `perf`     | Performance improvement                                      |
+| `test`     | Adding or updating tests                                     |
+| `docs`     | Documentation only                                           |
+| `style`    | Formatting, whitespace, missing semicolons — no logic change |
+| `chore`    | Maintenance tasks: dependencies, tooling, config             |
+| `build`    | Changes to build system or scripts                           |
+| `ci`       | CI/CD pipeline changes                                       |
+| `revert`   | Reverting a previous commit                                  |
 
 ### Scope
 
 The scope is optional but recommended. Use the affected module, package, or feature area:
+
 - `feat(auth):`, `fix(api):`, `chore(deps):`, `refactor(db):`
 - Omit scope if change is truly global or spans many areas
 
@@ -189,7 +196,8 @@ The scope is optional but recommended. Use the affected module, package, or feat
 
 ### Body (optional)
 
-Add a body when the *why* is not obvious from the subject:
+Add a body when the _why_ is not obvious from the subject:
+
 ```
 refactor(cache): replace in-memory map with Redis
 
@@ -201,6 +209,7 @@ supports horizontal scaling.
 ### Breaking changes
 
 Append `!` after the type/scope, and add `BREAKING CHANGE:` footer:
+
 ```
 feat(api)!: remove v1 endpoints
 
@@ -232,6 +241,7 @@ Proceed? (yes / edit / cancel)
 **Skip confirmation** if the user explicitly said "just commit" or "auto commit everything".
 
 **Always confirm** if:
+
 - There are more than 5 commits in the plan
 - Any commit would be marked breaking (`!`)
 - The grouping is ambiguous and you're not confident
@@ -251,6 +261,7 @@ git commit -m "feat(auth): add JWT refresh token support"
 ```
 
 For multiline messages:
+
 ```bash
 git commit -m "refactor(cache): replace in-memory map with Redis
 
