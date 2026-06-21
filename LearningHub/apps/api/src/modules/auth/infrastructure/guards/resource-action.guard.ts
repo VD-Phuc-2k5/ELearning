@@ -59,9 +59,8 @@ export class ResourceActionGuard implements CanActivate {
   }
 
   private extractResource(path: string): string | null {
+    const SKIP = new Set(['api', 'admin']);
     const segments = path.split('/').filter(Boolean);
-    if (segments.length === 0) return null;
-    // skip 'admin' prefix segment
-    return segments[0] === 'admin' ? (segments[1] ?? null) : segments[0];
+    return segments.find((s) => !SKIP.has(s)) ?? null;
   }
 }

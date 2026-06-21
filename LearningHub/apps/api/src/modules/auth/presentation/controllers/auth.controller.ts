@@ -6,7 +6,6 @@ import {
   ConflictException,
   ForbiddenException,
   UnauthorizedException,
-  UseGuards,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Public } from '../../infrastructure/decorators/public.decorator';
@@ -20,9 +19,6 @@ import { LoginDto } from '../../application/dto/login.dto';
 import { RefreshTokenDto } from '../../application/dto/refresh-token.dto';
 import { LogoutDto } from '../../application/dto/logout.dto';
 import { AuthFailures } from '../../domain/errors/auth.failures';
-import { JwtAuthGuard } from '../../infrastructure/guards/jwt-auth.guard';
-import { PermissionGuard } from '../../infrastructure/guards/permission.guard';
-import { RequirePermissions } from '../../infrastructure/decorators/require-permissions.decorator';
 import { CurrentUser } from '../../infrastructure/decorators/current-user.decorator';
 import { User } from '../../domain/entities/user.entity';
 
@@ -95,8 +91,6 @@ export class AuthController {
   }
 
   @Post('admin/register')
-  @UseGuards(JwtAuthGuard, PermissionGuard)
-  @RequirePermissions('admin:write')
   async adminRegister(
     @Body() dto: RegisterDto,
     @CurrentUser() currentUser: User,

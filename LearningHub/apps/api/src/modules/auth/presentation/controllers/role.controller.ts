@@ -7,16 +7,12 @@ import {
   Param,
   Body,
   ParseIntPipe,
-  UseGuards,
   Inject,
   NotFoundException,
   ConflictException,
   BadRequestException,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../../infrastructure/guards/jwt-auth.guard';
-import { PermissionGuard } from '../../infrastructure/guards/permission.guard';
-import { RequirePermissions } from '../../infrastructure/decorators/require-permissions.decorator';
 import { IRoleRepository } from '../../domain/repositories/i-role.repository';
 import { IRolePermissionRepository } from '../../domain/repositories/i-role-permission.repository';
 import { CreateRoleUseCase } from '../../application/use-cases/create-role.use-case';
@@ -45,7 +41,6 @@ function mapFailure(failure: AuthFailures): never {
 
 @ApiTags('admin/roles')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard, PermissionGuard)
 @Controller('admin/roles')
 export class RoleController {
   constructor(
@@ -62,14 +57,12 @@ export class RoleController {
 
   @Get()
   @ApiOperation({ summary: 'List all roles' })
-  @RequirePermissions('admin:read')
   findAll() {
     return this.roleRepo.findAll();
   }
 
   @Post()
   @ApiOperation({ summary: 'Create a role' })
-  @RequirePermissions('admin:write')
   async create(@Body() dto: CreateRoleDto) {
     const result = await this.createRole.execute(dto);
     if (result.type === 'left') mapFailure(result.value as AuthFailures);
@@ -78,7 +71,6 @@ export class RoleController {
 
   @Patch(':id')
   @ApiOperation({ summary: 'Update a role' })
-  @RequirePermissions('admin:write')
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateRoleDto,
@@ -90,7 +82,6 @@ export class RoleController {
 
   @Delete(':id')
   @ApiOperation({ summary: 'Delete a role' })
-  @RequirePermissions('admin:write')
   async remove(@Param('id', ParseIntPipe) id: number) {
     const result = await this.deleteRole.execute({ id });
     if (result.type === 'left') mapFailure(result.value as AuthFailures);
@@ -99,14 +90,12 @@ export class RoleController {
 
   @Get(':roleId/permissions')
   @ApiOperation({ summary: 'List permissions of a role' })
-  @RequirePermissions('admin:read')
   getPermissions(@Param('roleId', ParseIntPipe) roleId: number) {
     return this.rolePermissionRepo.findPermissionsByRoleId(roleId);
   }
 
   @Post(':roleId/permissions')
   @ApiOperation({ summary: 'Assign permission to role' })
-  @RequirePermissions('admin:write')
   async assignPerm(
     @Param('roleId', ParseIntPipe) roleId: number,
     @Body() dto: AssignPermissionDto,
@@ -121,7 +110,6 @@ export class RoleController {
 
   @Delete(':roleId/permissions/:permissionId')
   @ApiOperation({ summary: 'Remove permission from role' })
-  @RequirePermissions('admin:write')
   async removePerm(
     @Param('roleId', ParseIntPipe) roleId: number,
     @Param('permissionId', ParseIntPipe) permissionId: number,
