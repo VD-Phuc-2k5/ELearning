@@ -55,6 +55,7 @@ import { GrantUserPermissionUseCase } from './application/use-cases/grant-user-p
 
 // Controllers
 import { AuthController } from './presentation/controllers/auth.controller';
+import { AdminUserController } from './presentation/controllers/admin-user.controller';
 import { RoleController } from './presentation/controllers/role.controller';
 import { PermissionController } from './presentation/controllers/permission.controller';
 import { UserRoleController } from './presentation/controllers/user-role.controller';
@@ -83,6 +84,7 @@ import { UserPermissionController } from './presentation/controllers/user-permis
   ],
   controllers: [
     AuthController,
+    AdminUserController,
     RoleController,
     PermissionController,
     UserRoleController,
@@ -117,6 +119,7 @@ import { UserPermissionController } from './presentation/controllers/user-permis
     JwtAuthGuard,
     PermissionGuard,
     ResourceActionGuard,
+    { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: ResourceActionGuard },
     // Use Cases — Auth
     RegisterUseCase,
