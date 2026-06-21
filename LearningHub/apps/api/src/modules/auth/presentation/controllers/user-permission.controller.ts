@@ -19,6 +19,10 @@ import { User } from '../../domain/entities/user.entity';
 import { GrantUserPermissionUseCase } from '../../application/use-cases/grant-user-permission.use-case';
 import { GrantUserPermissionDto } from '../../application/dto/user-permission.dto';
 import { AuthFailures } from '../../domain/errors/auth.failures';
+import {
+  toUserPermissionsResponse,
+  toUserPermissionResponse,
+} from '../dto/response.dto';
 
 function mapFailure(failure: AuthFailures): never {
   switch (failure.code) {
@@ -47,8 +51,9 @@ export class UserPermissionController {
 
   @Get()
   @ApiOperation({ summary: 'List direct permissions of a user' })
-  findAll(@Param('userId') userId: string) {
-    return this.userPermissionRepo.findByUserId(userId);
+  async findAll(@Param('userId') userId: string) {
+    const userPermissions = await this.userPermissionRepo.findByUserId(userId);
+    return toUserPermissionsResponse(userPermissions);
   }
 
   @Post()
@@ -65,7 +70,7 @@ export class UserPermissionController {
       grantedBy: currentUser.id,
     });
     if (result.type === 'left') mapFailure(result.value as AuthFailures);
-    return result.value;
+    return toUserPermissionResponse(result.value!.userPermission);
   }
 
   @Delete(':permissionId')

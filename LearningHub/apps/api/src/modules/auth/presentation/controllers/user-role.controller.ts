@@ -20,6 +20,7 @@ import { AssignRoleToUserUseCase } from '../../application/use-cases/assign-role
 import { RemoveRoleFromUserUseCase } from '../../application/use-cases/remove-role-from-user.use-case';
 import { AssignRoleDto } from '../../application/dto/user-role.dto';
 import { AuthFailures } from '../../domain/errors/auth.failures';
+import { toUserRolesResponse, toUserRoleResponse } from '../dto/response.dto';
 
 function mapFailure(failure: AuthFailures): never {
   switch (failure.code) {
@@ -49,8 +50,9 @@ export class UserRoleController {
 
   @Get()
   @ApiOperation({ summary: 'List roles of a user' })
-  findAll(@Param('userId') userId: string) {
-    return this.userRoleRepo.findByUserId(userId);
+  async findAll(@Param('userId') userId: string) {
+    const userRoles = await this.userRoleRepo.findByUserId(userId);
+    return toUserRolesResponse(userRoles);
   }
 
   @Post()
@@ -66,7 +68,7 @@ export class UserRoleController {
       assignedBy: currentUser.id,
     });
     if (result.type === 'left') mapFailure(result.value as AuthFailures);
-    return result.value;
+    return toUserRoleResponse(result.value!.userRole);
   }
 
   @Delete(':roleId')

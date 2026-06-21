@@ -21,6 +21,7 @@ import { LogoutDto } from '../../application/dto/logout.dto';
 import { AuthFailures } from '../../domain/errors/auth.failures';
 import { CurrentUser } from '../../infrastructure/decorators/current-user.decorator';
 import { User } from '../../domain/entities/user.entity';
+import { toUserResponse } from '../dto/response.dto';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -46,7 +47,7 @@ export class AuthController {
       }
       throw new BadRequestException(result.value.message);
     }
-    return result.value;
+    return { user: toUserResponse(result.value.user) };
   }
 
   @Public()
@@ -108,7 +109,7 @@ export class AuthController {
       }
       throw new BadRequestException(result.value.message);
     }
-    return result.value;
+    return { user: toUserResponse(result.value.user) };
   }
 
   @Public()

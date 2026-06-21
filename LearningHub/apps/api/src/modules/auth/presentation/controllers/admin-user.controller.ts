@@ -14,6 +14,7 @@ import {
 import { CurrentUser } from '../../infrastructure/decorators/current-user.decorator';
 import { IUserRepository } from '../../domain/repositories/i-user.repository';
 import { User } from '../../domain/entities/user.entity';
+import { toUserResponse } from '../dto/response.dto';
 
 @ApiTags('admin/users')
 @ApiBearerAuth()
@@ -33,8 +34,9 @@ export class AdminUserController {
     required: true,
     description: 'Role code to filter by (e.g. ADMIN)',
   })
-  findAll(@Query('role') role: string, @CurrentUser() currentUser: User) {
+  async findAll(@Query('role') role: string, @CurrentUser() currentUser: User) {
     if (!role) throw new BadRequestException('Query param "role" is required');
-    return this.userRepo.findUsersByRole(role, currentUser.id);
+    const users = await this.userRepo.findUsersByRole(role, currentUser.id);
+    return users.map(toUserResponse);
   }
 }
