@@ -55,6 +55,20 @@ export class AuthFailures extends Failure {
     return new AuthFailures('User does not have admin role', 'NOT_ADMIN');
   }
 
+  static selfPermissionGrant(): AuthFailures {
+    return new AuthFailures(
+      'Cannot grant permission to yourself',
+      'SELF_PERMISSION_GRANT',
+    );
+  }
+
+  static cannotModifyOwner(): AuthFailures {
+    return new AuthFailures(
+      'Admin cannot modify permissions of an owner',
+      'CANNOT_MODIFY_OWNER',
+    );
+  }
+
   static resourceNotFound(): AuthFailures {
     return new AuthFailures(
       'Resource not found in registry',

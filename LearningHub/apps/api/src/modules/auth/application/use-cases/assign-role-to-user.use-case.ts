@@ -3,6 +3,7 @@ import { Either, Failure, Usecase, left, right } from '@learning-hub/core';
 import { IUserRepository } from '../../domain/repositories/i-user.repository';
 import { IRoleRepository } from '../../domain/repositories/i-role.repository';
 import { IUserRoleRepository } from '../../domain/repositories/i-user-role.repository';
+import { IPermissionResolverService } from '../interfaces/i-permission-resolver.service';
 import { UserRole } from '../../domain/entities/user-role.entity';
 import { AuthFailures } from '../../domain/errors/auth.failures';
 
@@ -12,10 +13,14 @@ export interface AssignRoleToUserParams {
   assignedBy: string;
 }
 
-export interface AssignRoleToUserResult { userRole: UserRole; }
+export interface AssignRoleToUserResult {
+  userRole: UserRole;
+}
 
 @Injectable()
-export class AssignRoleToUserUseCase implements Usecase<AssignRoleToUserResult, AssignRoleToUserParams> {
+export class AssignRoleToUserUseCase
+  implements Usecase<AssignRoleToUserResult, AssignRoleToUserParams>
+{
   constructor(
     @Inject('IUserRepository')
     private readonly userRepo: IUserRepository,
@@ -23,11 +28,19 @@ export class AssignRoleToUserUseCase implements Usecase<AssignRoleToUserResult, 
     private readonly roleRepo: IRoleRepository,
     @Inject('IUserRoleRepository')
     private readonly userRoleRepo: IUserRoleRepository,
+    @Inject('IPermissionResolverService')
+    private readonly permissionResolver: IPermissionResolverService,
   ) {}
 
   async execute(
     params: AssignRoleToUserParams,
   ): Promise<Either<Failure, AssignRoleToUserResult>> {
+    const [targetPerms, actorPerms] = await Promise.all([
+      this.permissionResolver.getEffectivePermissions(params.userId),
+      this.permissionResolver.getEffectivePermissions(params.assignedBy),
+    ]);
+    if (targetPerms.has('*') && !actorPerms.has('*'))
+      return left(AuthFailures.cannotModifyOwner());
     const user = await this.userRepo.findById(params.userId);
     if (!user) return left(AuthFailures.userNotFound());
     if (!user.isActive) return left(AuthFailures.userInactive());
@@ -40,6 +53,7 @@ export class AssignRoleToUserUseCase implements Usecase<AssignRoleToUserResult, 
       params.roleId,
       params.assignedBy,
     );
+    this.permissionResolver.invalidate(params.userId);
     return right({ userRole });
   }
 }

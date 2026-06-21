@@ -6,7 +6,6 @@ import {
   Param,
   Body,
   ParseIntPipe,
-  UseGuards,
   Inject,
   NotFoundException,
   ConflictException,
@@ -14,9 +13,6 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../../infrastructure/guards/jwt-auth.guard';
-import { PermissionGuard } from '../../infrastructure/guards/permission.guard';
-import { RequirePermissions } from '../../infrastructure/decorators/require-permissions.decorator';
 import { CurrentUser } from '../../infrastructure/decorators/current-user.decorator';
 import { IUserRoleRepository } from '../../domain/repositories/i-user-role.repository';
 import { User } from '../../domain/entities/user.entity';
@@ -33,6 +29,7 @@ function mapFailure(failure: AuthFailures): never {
     case 'ALREADY_ASSIGNED':
       throw new ConflictException(failure.message);
     case 'USER_INACTIVE':
+    case 'CANNOT_MODIFY_OWNER':
       throw new ForbiddenException(failure.message);
     default:
       throw new BadRequestException(failure.message);
@@ -41,7 +38,6 @@ function mapFailure(failure: AuthFailures): never {
 
 @ApiTags('admin/users')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard, PermissionGuard)
 @Controller('admin/users/:userId/roles')
 export class UserRoleController {
   constructor(
@@ -53,14 +49,12 @@ export class UserRoleController {
 
   @Get()
   @ApiOperation({ summary: 'List roles of a user' })
-  @RequirePermissions('admin:read')
   findAll(@Param('userId') userId: string) {
     return this.userRoleRepo.findByUserId(userId);
   }
 
   @Post()
   @ApiOperation({ summary: 'Assign role to user' })
-  @RequirePermissions('admin:write')
   async assign(
     @Param('userId') userId: string,
     @Body() dto: AssignRoleDto,
@@ -77,12 +71,16 @@ export class UserRoleController {
 
   @Delete(':roleId')
   @ApiOperation({ summary: 'Remove role from user' })
-  @RequirePermissions('admin:write')
   async remove(
     @Param('userId') userId: string,
     @Param('roleId', ParseIntPipe) roleId: number,
+    @CurrentUser() currentUser: User,
   ) {
-    const result = await this.removeRoleFromUser.execute({ userId, roleId });
+    const result = await this.removeRoleFromUser.execute({
+      userId,
+      roleId,
+      actorId: currentUser.id,
+    });
     if (result.type === 'left') mapFailure(result.value as AuthFailures);
     return result.value;
   }

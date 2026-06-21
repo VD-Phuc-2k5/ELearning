@@ -6,17 +6,15 @@ import {
   Param,
   Body,
   ParseIntPipe,
-  UseGuards,
   Inject,
   NotFoundException,
+  ForbiddenException,
   BadRequestException,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../../infrastructure/guards/jwt-auth.guard';
-import { PermissionGuard } from '../../infrastructure/guards/permission.guard';
-import { RequirePermissions } from '../../infrastructure/decorators/require-permissions.decorator';
 import { CurrentUser } from '../../infrastructure/decorators/current-user.decorator';
 import { IUserPermissionRepository } from '../../domain/repositories/i-user-permission.repository';
+import { IPermissionResolverService } from '../../application/interfaces/i-permission-resolver.service';
 import { User } from '../../domain/entities/user.entity';
 import { GrantUserPermissionUseCase } from '../../application/use-cases/grant-user-permission.use-case';
 import { GrantUserPermissionDto } from '../../application/dto/user-permission.dto';
@@ -27,6 +25,9 @@ function mapFailure(failure: AuthFailures): never {
     case 'USER_NOT_FOUND':
     case 'PERMISSION_NOT_FOUND':
       throw new NotFoundException(failure.message);
+    case 'SELF_PERMISSION_GRANT':
+    case 'CANNOT_MODIFY_OWNER':
+      throw new ForbiddenException(failure.message);
     default:
       throw new BadRequestException(failure.message);
   }
@@ -34,25 +35,24 @@ function mapFailure(failure: AuthFailures): never {
 
 @ApiTags('admin/users')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard, PermissionGuard)
 @Controller('admin/users/:userId/permissions')
 export class UserPermissionController {
   constructor(
     @Inject('IUserPermissionRepository')
     private readonly userPermissionRepo: IUserPermissionRepository,
+    @Inject('IPermissionResolverService')
+    private readonly permissionResolver: IPermissionResolverService,
     private readonly grantUserPermission: GrantUserPermissionUseCase,
   ) {}
 
   @Get()
   @ApiOperation({ summary: 'List direct permissions of a user' })
-  @RequirePermissions('admin:read')
   findAll(@Param('userId') userId: string) {
     return this.userPermissionRepo.findByUserId(userId);
   }
 
   @Post()
   @ApiOperation({ summary: 'Grant or deny a permission for a user' })
-  @RequirePermissions('admin:write')
   async grant(
     @Param('userId') userId: string,
     @Body() dto: GrantUserPermissionDto,
@@ -70,12 +70,21 @@ export class UserPermissionController {
 
   @Delete(':permissionId')
   @ApiOperation({ summary: 'Remove direct permission override for a user' })
-  @RequirePermissions('admin:write')
   async remove(
     @Param('userId') userId: string,
     @Param('permissionId', ParseIntPipe) permissionId: number,
+    @CurrentUser() currentUser: User,
   ) {
+    const [targetPerms, actorPerms] = await Promise.all([
+      this.permissionResolver.getEffectivePermissions(userId),
+      this.permissionResolver.getEffectivePermissions(currentUser.id),
+    ]);
+    if (targetPerms.has('*') && !actorPerms.has('*'))
+      throw new ForbiddenException(
+        'Admin cannot modify permissions of an owner',
+      );
     await this.userPermissionRepo.remove(userId, permissionId);
+    this.permissionResolver.invalidate(userId);
     return { success: true };
   }
 }
