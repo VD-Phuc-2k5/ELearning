@@ -1,7 +1,9 @@
 allowBuilds:
   '@nestjs/core': true
   '@parcel/watcher': true
+  '@scarf/scarf': true
   '@swc/core': true
+  bcrypt: true
   less: true
   nx: true
   sharp: true
@@ -14,11 +16,31 @@ minimumReleaseAgeExclude:
   - ws@8.21.0
   - uuid@11.1.1
   - tmp@0.2.6
+  - tmp@0.2.7
+  - form-data@4.0.6
+  - vite@8.0.16
+  - launch-editor@2.14.1
+  - js-yaml@4.1.2
+  - '@babel/core@7.29.1'
+  - webpack-dev-server@5.2.5
+  - multer@2.2.0
+  - http-proxy-middleware@3.0.7
+  - http-proxy-middleware@3.0.6
+  - piscina@4.9.3
+  - undici@7.28.0
 overrides:
   brace-expansion@>=5.0.0 <5.0.6: ^5.0.6
+  form-data@>=4.0.0 <4.0.6: ^4.0.6
+  http-proxy-middleware@>=0.16.0 <3.0.6: ^3.0.6
+  js-yaml@<=4.1.1: ^4.1.2
+  multer@>=1.0.0 <2.2.0: ^2.2.0
+  multer@>=2.0.0-alpha.1 <2.2.0: ^2.2.0
   next@<16.2.6: ^16.2.6
   postcss@<8.5.10: ^8.5.10
   tmp@<0.2.6: ^0.2.6
+  undici@>=7.0.0 <7.28.0: ^7.28.0
+  undici@>=7.23.0 <7.28.0: ^7.28.0
   uuid@<11.1.1: ^11.1.1
+  vite@>=8.0.0 <=8.0.15: ^8.0.16
   ws@>=8.0.0 <8.20.1: ^8.20.1
   yaml@>=2.0.0 <2.8.3: ^2.8.3

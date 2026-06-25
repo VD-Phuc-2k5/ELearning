@@ -1,0 +1,13 @@
+{
+    "$schema": "../../node_modules/nx/schemas/project-schema.json",
+    "sourceRoot": "apps/LearningHub",
+    "projectType": "application",
+    "tags": [],
+    "targets": {
+        "dev": {
+            "options": {
+                "port": 3002
+            }
+        }
+    }
+}

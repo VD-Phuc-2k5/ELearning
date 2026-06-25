@@ -1,7 +1,31 @@
 const { NxAppWebpackPlugin } = require('@nx/webpack/app-plugin');
 const { join } = require('path');
 
+const workspaceRoot = join(__dirname, '../..');
+
 module.exports = {
+  resolve: {
+    alias: {
+      '@learning-hub/core': join(workspaceRoot, 'packages/core/src/index.ts'),
+      '@learning-hub/core/server': join(
+        workspaceRoot,
+        'packages/core/src/server.ts',
+      ),
+      '@learning-hub/domain': join(
+        workspaceRoot,
+        'packages/domain/src/index.ts',
+      ),
+      '@learning-hub/domain/server': join(
+        workspaceRoot,
+        'packages/domain/src/server.ts',
+      ),
+      '@learning-hub/data': join(workspaceRoot, 'packages/data/src/index.ts'),
+      '@learning-hub/data/server': join(
+        workspaceRoot,
+        'packages/data/src/server.ts',
+      ),
+    },
+  },
   output: {
     path: join(__dirname, '../../dist/apps/api'),
     clean: true,
