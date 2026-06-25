@@ -6,7 +6,7 @@ import {
   PrimaryGeneratedColumn,
   Column,
 } from 'typeorm';
-import { UserEntity } from '../../../auth/infrastructure/persistence/entities/user.entity';
+import { UserEntity } from '../../../../auth/infrastructure/persistence/entities/user.entity';
 import { QuestionBankEntity } from './question-bank.entity';
 
 @Entity('question_bank_uploads')

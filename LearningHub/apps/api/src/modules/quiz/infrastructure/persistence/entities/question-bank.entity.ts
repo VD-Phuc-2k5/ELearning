@@ -10,7 +10,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { UserEntity } from '../../../auth/infrastructure/persistence/entities/user.entity';
+import { UserEntity } from '../../../../auth/infrastructure/persistence/entities/user.entity';
 import { BankTagEntity } from './bank-tag.entity';
 import { QuestionBankStatusEntity } from './question-bank-status.entity';
 import { QuestionBankUploadEntity } from './question-bank-upload.entity';

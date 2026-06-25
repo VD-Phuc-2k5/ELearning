@@ -73,7 +73,7 @@ export class QuestionBankRepository implements IQuestionBankRepository {
   async findById(id: string): Promise<QuestionBankDomain | null> {
     const entity = await this.repo.findOne({
       where: { id },
-      relations: ['tags', 'status'],
+      relations: { tags: true, status: true },
     });
     if (!entity) return null;
     return this.toDomain(entity);

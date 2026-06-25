@@ -79,7 +79,7 @@ export class QuestionRepository implements IQuestionRepository {
   async findByBankId(bankId: string, hideAnswers: boolean): Promise<QuestionDomain[]> {
     const entities = await this.repo.find({
       where: { questionBankId: bankId },
-      relations: ['answerOptions', 'correctAnswers'],
+      relations: { answerOptions: true, correctAnswers: true },
     });
     return entities.map((e) => this.toDomain(e, hideAnswers));
   }
@@ -87,7 +87,7 @@ export class QuestionRepository implements IQuestionRepository {
   async findById(id: string): Promise<QuestionDomain | null> {
     const entity = await this.repo.findOne({
       where: { id },
-      relations: ['answerOptions', 'correctAnswers'],
+      relations: { answerOptions: true, correctAnswers: true },
     });
     if (!entity) return null;
     return this.toDomain(entity, false);
