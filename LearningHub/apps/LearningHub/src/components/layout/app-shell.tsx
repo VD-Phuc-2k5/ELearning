@@ -19,9 +19,14 @@ type AppShellProps = {
 export function AppShell({ children }: AppShellProps) {
   const pathname = usePathname();
 
+  if (pathname?.startsWith('/auth')) {
+    return <>{children}</>;
+  }
+
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-950">
-      <aside className="fixed inset-y-0 left-0 z-20 hidden w-64 border-r border-slate-200 bg-white px-4 py-5 lg:block">
+      <aside className="fixed inset-y-0 left-0 z-20 hidden w-64 px-4 py-5 bg-white border-r border-slate-200 lg:block">
         <Brand />
         <nav className="mt-8 space-y-1" aria-label="Main navigation">
           {navigation.map((item) => (
@@ -36,9 +41,9 @@ export function AppShell({ children }: AppShellProps) {
         </nav>
       </aside>
 
-      <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 px-4 backdrop-blur lg:ml-64 lg:px-8">
-        <div className="flex h-16 items-center justify-between gap-3">
-          <div className="flex min-w-0 items-center gap-3">
+      <header className="sticky top-0 z-30 px-4 border-b border-slate-200 bg-white/95 backdrop-blur lg:ml-64 lg:px-8">
+        <div className="flex items-center justify-between h-16 gap-3">
+          <div className="flex items-center min-w-0 gap-3">
             <div className="lg:hidden">
               <Brand compact />
             </div>
@@ -46,7 +51,7 @@ export function AppShell({ children }: AppShellProps) {
               <p className="text-xs font-semibold uppercase text-slate-500">
                 LearningHub
               </p>
-              <h1 className="truncate text-lg font-semibold text-slate-950">
+              <h1 className="text-lg font-semibold truncate text-slate-950">
                 Training workspace
               </h1>
             </div>
@@ -60,7 +65,7 @@ export function AppShell({ children }: AppShellProps) {
         </div>
         <nav
           aria-label="Mobile navigation"
-          className="flex gap-2 overflow-x-auto border-t border-slate-100 py-2 lg:hidden"
+          className="flex gap-2 py-2 overflow-x-auto border-t border-slate-100 lg:hidden"
         >
           {navigation.map((item) => (
             <Link
@@ -80,7 +85,7 @@ export function AppShell({ children }: AppShellProps) {
       </header>
 
       <main className="lg:ml-64">
-        <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        <div className="w-full px-4 py-6 mx-auto max-w-7xl sm:px-6 lg:px-8">
           {children}
         </div>
       </main>
@@ -90,16 +95,16 @@ export function AppShell({ children }: AppShellProps) {
 
 function Brand({ compact = false }: { compact?: boolean }) {
   return (
-    <Link className="flex min-w-0 items-center gap-3" href="/">
-      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-indigo-600 text-sm font-bold text-white">
+    <Link className="flex items-center min-w-0 gap-3" href="/">
+      <span className="grid w-10 h-10 text-sm font-bold text-white bg-indigo-600 rounded-md shrink-0 place-items-center">
         LH
       </span>
       {!compact ? (
         <span className="min-w-0">
-          <span className="block truncate text-base font-semibold text-slate-950">
+          <span className="block text-base font-semibold truncate text-slate-950">
             LearningHub
           </span>
-          <span className="block truncate text-xs font-medium text-slate-500">
+          <span className="block text-xs font-medium truncate text-slate-500">
             E-learning admin
           </span>
         </span>

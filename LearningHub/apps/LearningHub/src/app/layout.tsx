@@ -1,5 +1,4 @@
 import './global.css';
-import { AppShell } from '../components/layout/app-shell';
 
 export const metadata = {
   title: 'LearningHub',
@@ -13,9 +12,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="vi">
-      <body>
-        <AppShell>{children}</AppShell>
-      </body>
+      <body>{children}</body>
     </html>
   );
 }

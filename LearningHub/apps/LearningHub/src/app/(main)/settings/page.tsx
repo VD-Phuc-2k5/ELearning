@@ -1,4 +1,4 @@
-import { Input } from '../../components/ui';
+import { Input } from '../../../components/ui';
 
 export default function SettingsPage() {
   return (

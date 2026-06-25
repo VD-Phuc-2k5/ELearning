@@ -1,4 +1,4 @@
-import { Button, Input, Loading } from '../components/ui';
+import { Button, Input, Loading } from '../../components/ui';
 
 const stats = [
   { label: 'Active learners', value: '1,284', delta: '+12%' },
