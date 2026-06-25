@@ -15,11 +15,20 @@ export interface GetQuestionBankListInput {
   statusId?: string;
 }
 
+export interface UpdateQuestionBankInput {
+  title?: string;
+  description?: string;
+  statusId?: string;
+  tagIds?: number[];
+}
+
 export interface IQuestionBankRepository {
   create(input: CreateQuestionBankInput): Promise<QuestionBankDomain>;
   findAll(input: GetQuestionBankListInput): Promise<{ data: QuestionBankDomain[]; total: number }>;
   findById(id: string): Promise<QuestionBankDomain | null>;
   updateTotalQuestions(id: string, total: number): Promise<void>;
+  update(id: string, input: UpdateQuestionBankInput): Promise<QuestionBankDomain>;
+  delete(id: string): Promise<void>;
 }
 
 export const QUESTION_BANK_REPOSITORY = Symbol('IQuestionBankRepository');

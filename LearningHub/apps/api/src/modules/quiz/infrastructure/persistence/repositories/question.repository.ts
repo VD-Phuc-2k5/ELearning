@@ -7,6 +7,7 @@ import { CorrectAnswerEntity } from '../entities/correct-answer.entity';
 import {
   IQuestionRepository,
   CreateQuestionInput,
+  UpdateQuestionInput,
 } from '../../../domain/repositories/question.repository.interface';
 import {
   QuestionDomain,
@@ -91,5 +92,72 @@ export class QuestionRepository implements IQuestionRepository {
     });
     if (!entity) return null;
     return this.toDomain(entity, false);
+  }
+
+  async update(id: string, input: UpdateQuestionInput): Promise<QuestionDomain> {
+    await this.dataSource.transaction(async (manager) => {
+      const question = await manager.findOne(QuestionEntity, {
+        where: { id },
+        relations: { answerOptions: true, correctAnswers: true },
+      });
+      if (!question) {
+        throw new Error(`Không tìm thấy câu hỏi với ID: ${id}`);
+      }
+
+      if (input.content !== undefined) question.content = input.content;
+      if (input.explanation !== undefined) question.explanation = input.explanation;
+      await manager.save(question);
+
+      let currentOptions = question.answerOptions;
+      if (input.answerOptions !== undefined) {
+        // Delete correct answers first since they reference the options
+        await manager.delete(CorrectAnswerEntity, { questionId: id });
+        await manager.delete(AnswerOptionEntity, { questionId: id });
+
+        const optionEntities = input.answerOptions.map((opt) =>
+          manager.create(AnswerOptionEntity, {
+            questionId: id,
+            optionLabel: opt.optionLabel,
+            content: opt.content,
+          }),
+        );
+        currentOptions = await manager.save(optionEntities);
+      }
+
+      let targetCorrectLabels = input.correctOptionLabels;
+      if (targetCorrectLabels === undefined && input.answerOptions !== undefined) {
+        const oldCorrectOptionIds = question.correctAnswers?.map((ca) => ca.optionId) ?? [];
+        targetCorrectLabels = question.answerOptions
+          ?.filter((opt) => oldCorrectOptionIds.includes(opt.id))
+          .map((opt) => opt.optionLabel) ?? [];
+      }
+
+      if (targetCorrectLabels !== undefined) {
+        if (input.answerOptions === undefined) {
+          await manager.delete(CorrectAnswerEntity, { questionId: id });
+        }
+
+        const correctOptions = currentOptions.filter((opt) =>
+          targetCorrectLabels.includes(opt.optionLabel),
+        );
+        const correctAnswerEntities = correctOptions.map((opt) =>
+          manager.create(CorrectAnswerEntity, {
+            questionId: id,
+            optionId: opt.id,
+          }),
+        );
+        await manager.save(correctAnswerEntities);
+      }
+    });
+
+    const updated = await this.findById(id);
+    if (!updated) {
+      throw new Error(`Không thể tải lại câu hỏi vừa cập nhật với ID: ${id}`);
+    }
+    return updated;
+  }
+
+  async delete(id: string): Promise<void> {
+    await this.repo.delete(id);
   }
 }

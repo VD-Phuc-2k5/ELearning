@@ -30,4 +30,10 @@ export class QuestionBankUploadEntity {
 
   @CreateDateColumn({ name: 'uploaded_at' })
   uploadedAt!: Date;
+
+  @Column({ name: 'file_name', type: 'varchar', length: 255, nullable: true })
+  fileName!: string | null;
+
+  @Column({ name: 'total_questions_imported', type: 'integer', default: 0 })
+  totalQuestionsImported!: number;
 }

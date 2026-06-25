@@ -6,6 +6,7 @@ import {
   IQuestionBankRepository,
   CreateQuestionBankInput,
   GetQuestionBankListInput,
+  UpdateQuestionBankInput,
 } from '../../../domain/repositories/question-bank.repository.interface';
 import { QuestionBankDomain } from '../../../domain/entities/question-bank.domain';
 
@@ -81,5 +82,29 @@ export class QuestionBankRepository implements IQuestionBankRepository {
 
   async updateTotalQuestions(id: string, total: number): Promise<void> {
     await this.repo.update(id, { totalQuestions: total });
+  }
+
+  async update(id: string, input: UpdateQuestionBankInput): Promise<QuestionBankDomain> {
+    const entity = await this.repo.findOne({
+      where: { id },
+      relations: { tags: true },
+    });
+    if (!entity) {
+      throw new Error(`Không tìm thấy ngân hàng câu hỏi với ID: ${id}`);
+    }
+
+    if (input.title !== undefined) entity.title = input.title;
+    if (input.description !== undefined) entity.description = input.description;
+    if (input.statusId !== undefined) entity.statusId = input.statusId;
+    if (input.tagIds !== undefined) {
+      entity.tags = input.tagIds.map((tagId) => ({ id: tagId })) as any;
+    }
+
+    const saved = await this.repo.save(entity);
+    return this.toDomain(saved);
+  }
+
+  async delete(id: string): Promise<void> {
+    await this.repo.delete(id);
   }
 }

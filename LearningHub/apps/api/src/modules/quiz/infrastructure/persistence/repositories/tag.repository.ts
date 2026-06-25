@@ -24,4 +24,15 @@ export class TagRepository implements ITagRepository {
     const entity = this.repo.create({ name, description });
     return this.repo.save(entity);
   }
+
+  async update(id: number, name?: string, description?: string): Promise<BankTagEntity> {
+    const entity = await this.repo.findOneOrFail({ where: { id } });
+    if (name !== undefined) entity.name = name;
+    if (description !== undefined) entity.description = description;
+    return this.repo.save(entity);
+  }
+
+  async delete(id: number): Promise<void> {
+    await this.repo.delete(id);
+  }
 }
