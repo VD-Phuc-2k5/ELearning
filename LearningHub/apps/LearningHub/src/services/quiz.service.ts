@@ -30,6 +30,7 @@ export interface Question {
     content: string;
     explanation?: string;
     answerOptions: AnswerOption[];
+    correctAnswerOptionIds?: string[];
 }
 
 export interface UploadHistory {
@@ -38,7 +39,7 @@ export interface UploadHistory {
     uploadedBy: string;
     fileName?: string;
     totalQuestionsImported: number;
-    createdAt: string;
+    uploadedAt: string;
 }
 
 export interface QuizResult {
@@ -86,14 +87,14 @@ const QuizService = {
         return response.data.data;
     },
 
-    getQuestionsForQuiz: async (bankId: string): Promise<Question[]> => {
-        const response = await internalApi.get(`quiz/banks/${bankId}/questions`);
+    getQuestionsForQuiz: async (bankId: string, showAnswers = false): Promise<Question[]> => {
+        const response = await internalApi.get(`quiz/banks/${bankId}/questions`, { params: showAnswers ? { showAnswers: 'true' } : undefined });
         return response.data.data;
     },
 
     verifyAnswer: async (questionId: string, selectedOptionId: string): Promise<{ isCorrect: boolean; correctOptionId?: string }> => {
         const response = await internalApi.post(`quiz/questions/${questionId}/verify`, { selectedOptionId });
-        return response.data;
+        return { isCorrect: response.data.isCorrect, correctOptionId: response.data.correctOptionIds?.[0] };
     },
 
     submitQuiz: async (bankId: string, answers: { questionId: string; selectedOptionId: string }[]): Promise<QuizResult> => {
@@ -113,6 +114,15 @@ const QuizService = {
     getTags: async (): Promise<Tag[]> => {
         const response = await internalApi.get('quiz/tags');
         return response.data.data;
+    },
+
+    createTag: async (name: string): Promise<Tag> => {
+        const response = await internalApi.post('quiz/tags', { name });
+        return response.data.data;
+    },
+
+    deleteTag: async (id: number): Promise<void> => {
+        await internalApi.delete(`quiz/tags/${id}`);
     },
 
     parseExcel: async (bankId: string, file: File): Promise<{ questions: any[] }> => {

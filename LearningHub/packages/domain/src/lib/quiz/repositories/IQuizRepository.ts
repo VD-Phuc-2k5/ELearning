@@ -61,7 +61,10 @@ export interface IQuizRepository {
     fileName: string,
   ): Promise<Either<Failure, { questions: unknown[] }>>;
   getUploadHistory(bankId: string): Promise<Either<Failure, UploadHistory[]>>;
-  getQuestionsForQuiz(bankId: string): Promise<Either<Failure, Question[]>>;
+  getQuestionsForQuiz(
+    bankId: string,
+    showAnswers?: boolean,
+  ): Promise<Either<Failure, Question[]>>;
   verifyAnswer(
     questionId: string,
     selectedOptionId: string,
@@ -76,6 +79,8 @@ export interface IQuizRepository {
   ): Promise<Either<Failure, Question>>;
   deleteQuestion(id: string): Promise<Either<Failure, void>>;
   getTags(): Promise<Either<Failure, Tag[]>>;
+  createTag(name: string): Promise<Either<Failure, Tag>>;
+  deleteTag(id: number): Promise<Either<Failure, void>>;
   checkBankHash(
     hash: string,
   ): Promise<Either<Failure, { exists: boolean; bank?: QuestionBank }>>;
