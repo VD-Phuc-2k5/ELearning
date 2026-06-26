@@ -17,20 +17,19 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@learning-hub/core": ["packages/core/src/index.ts"],
+      "@learning-hub/core/server": ["packages/core/src/server.ts"],
+      "@learning-hub/domain": ["packages/domain/src/index.ts"],
+      "@learning-hub/domain/server": ["packages/domain/src/server.ts"],
+      "@learning-hub/data": ["packages/data/src/index.ts"],
+      "@learning-hub/data/server": ["packages/data/src/server.ts"]
     },
-    "types": ["jest", "node"],
-    "outDir": "dist",
-    "rootDir": "src",
-    "tsBuildInfoFile": "dist/tsconfig.tsbuildinfo"
+    "types": ["jest", "node"]
   },
   "include": [
     "src/**/*.ts",
     "src/**/*.tsx",
-    "src/**/*.js",
-    "src/**/*.jsx",
-    "../../apps/LearningHub/.next/types/**/*.ts",
-    "../../dist/apps/LearningHub/.next/types/**/*.ts",
     "next-env.d.ts"
   ],
   "exclude": [
