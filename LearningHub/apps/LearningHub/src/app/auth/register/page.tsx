@@ -10,6 +10,7 @@ import AuthService from '../../../services/auth.service';
 import { Button, Input } from '../../../components/ui';
 import { useState } from 'react';
 import { AlertCircle } from 'lucide-react';
+import type { AxiosError } from 'axios';
 
 export default function RegisterPage() {
     const router = useRouter();
@@ -28,7 +29,7 @@ export default function RegisterPage() {
         onSuccess: () => {
             router.push('/auth?registered=true');
         },
-        onError: (err: any) => {
+        onError: (err: AxiosError<{ message?: string }>) => {
             setError(err.response?.data?.message || 'Registration failed. Please try again.');
         },
     });

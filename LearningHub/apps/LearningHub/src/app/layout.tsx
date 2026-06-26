@@ -1,19 +1,18 @@
+import type { Metadata } from 'next';
+import type { ReactNode } from 'react';
+import QueryProvider from '../components/providers/query-provider';
 import './global.css';
 
-export const metadata = {
+export const metadata: Metadata = {
   title: 'LearningHub',
   description: 'E-learning management workspace',
 };
 
-import QueryProvider from '../components/providers/query-provider';
+interface RootLayoutProps { children: ReactNode; }
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: RootLayoutProps) {
   return (
-    <html lang="vi" suppressHydrationWarning>
+    <html lang="vi" suppressHydrationWarning data-scroll-behavior="smooth">
       <body>
         <QueryProvider>{children}</QueryProvider>
       </body>

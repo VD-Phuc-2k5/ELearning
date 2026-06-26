@@ -1,15 +1,14 @@
-import api, { setAccessToken } from '../lib/api';
+import { AuthTokens, User } from '@learning-hub/domain';
 import { jwtDecode } from 'jwt-decode';
+import api, { setAccessToken } from '../lib/api';
 import { LoginInput, RegisterInput } from '../lib/schemas';
 
-export interface User {
-    id: string;
-    email: string;
-    username: string;
-}
+export type { AuthTokens, User };
+
+export interface RegisterResponse { user: User; }
 
 const AuthService = {
-    login: async (data: LoginInput): Promise<{ accessToken: string; refreshToken: string }> => {
+    login: async (data: LoginInput): Promise<AuthTokens> => {
         const response = await api.post('/auth/login', data);
         const { accessToken, refreshToken } = response.data;
         setAccessToken(accessToken);
@@ -21,7 +20,7 @@ const AuthService = {
         return response.data;
     },
 
-    register: async (data: RegisterInput): Promise<{ user: User }> => {
+    register: async (data: RegisterInput): Promise<RegisterResponse> => {
         const response = await api.post('/auth/register', data);
         return response.data;
     },

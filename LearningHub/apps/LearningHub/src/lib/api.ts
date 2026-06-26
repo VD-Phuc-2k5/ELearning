@@ -1,4 +1,9 @@
-import axios from 'axios';
+import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
+
+interface RetryConfig extends InternalAxiosRequestConfig {
+  _retry?: boolean;
+}
+type ApiError = AxiosError<{ error?: string }>;
 
 const api = axios.create({
     baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080',
@@ -47,10 +52,10 @@ const doRefresh = (): Promise<string> => {
 };
 
 const makeErrorHandler = (instance: typeof api | typeof internalApi) =>
-    async (error: any) => {
-        const originalRequest = error.config;
+    async (error: ApiError) => {
+        const originalRequest = error.config as RetryConfig | undefined;
         const is401 = error.response?.status === 401 || error.response?.data?.error === 'Unauthorized';
-        if (is401 && !originalRequest._retry) {
+        if (is401 && originalRequest && !originalRequest._retry) {
             originalRequest._retry = true;
             try {
                 const newToken = await doRefresh();

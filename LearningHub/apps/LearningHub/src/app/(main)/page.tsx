@@ -1,7 +1,8 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import QuizService from '../../services/quiz.service';
+import QuizService, { type QuestionBank } from '../../services/quiz.service';
+import { StatCard } from './_components/stat-card';
 import { BookOpen, Users, Star, TrendingUp, ArrowUpRight } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '../../components/ui';
@@ -62,7 +63,7 @@ export default function DashboardPage() {
             </Link>
           </div>
           <div className="space-y-3">
-            {myBanks?.data?.length ? myBanks.data.map((bank: any) => (
+            {myBanks?.data?.length ? myBanks.data.map((bank: QuestionBank) => (
               <div key={bank.id} className="flex items-center gap-4 p-4 rounded-2xl border border-slate-100 bg-white shadow-sm hover:shadow-md transition group">
                 <div className="h-11 w-11 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 group-hover:bg-indigo-600 group-hover:text-white transition">
                   <BookOpen className="h-5 w-5" />
@@ -114,16 +115,4 @@ export default function DashboardPage() {
   );
 }
 
-function StatCard({ title, value, icon, color }: { title: string; value: string | number; icon: React.ReactNode; color: string }) {
-  return (
-    <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
-      <div className={`h-12 w-12 rounded-xl ${color} text-white flex items-center justify-center shadow-md shrink-0`}>
-        {icon}
-      </div>
-      <div>
-        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{title}</p>
-        <p className="text-2xl font-extrabold text-slate-900 mt-0.5">{value}</p>
-      </div>
-    </div>
-  );
-}
+

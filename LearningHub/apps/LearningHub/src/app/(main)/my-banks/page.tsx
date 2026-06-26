@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import QuizService from '../../../services/quiz.service';
+import QuizService, { type QuestionBank } from '../../../services/quiz.service';
 import { Button } from '../../../components/ui';
 import { Plus, BookOpen, Share2, Upload, FileQuestion } from 'lucide-react';
 import Link from 'next/link';
@@ -32,7 +32,7 @@ export default function MyBanksPage() {
                 </div>
             ) : data?.data?.length > 0 ? (
                 <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                    {data.data.map((bank: any) => (
+                    {data.data.map((bank: QuestionBank) => (
                         <div key={bank.id} className="group relative flex flex-col rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md hover:-translate-y-0.5">
                             <div className="flex items-center gap-3">
                                 <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 transition group-hover:bg-indigo-600 group-hover:text-white shrink-0">

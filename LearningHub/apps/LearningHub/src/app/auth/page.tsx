@@ -10,6 +10,7 @@ import AuthService from '../../services/auth.service';
 import { Button, Input } from '../../components/ui';
 import { useState } from 'react';
 import { AlertCircle } from 'lucide-react';
+import type { AxiosError } from 'axios';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -28,7 +29,7 @@ export default function LoginPage() {
     onSuccess: () => {
       router.push('/');
     },
-    onError: (err: any) => {
+    onError: (err: AxiosError<{ message?: string }>) => {
       setError(err.response?.data?.message || 'Sign in failed. Please try again.');
     },
   });

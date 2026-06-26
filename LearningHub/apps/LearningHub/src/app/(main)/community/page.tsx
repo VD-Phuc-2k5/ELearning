@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import QuizService from '../../../services/quiz.service';
+import QuizService, { type QuestionBank } from '../../../services/quiz.service';
 import { Button } from '../../../components/ui';
 import { Search, BookOpen, Filter, Star, Clock } from 'lucide-react';
 
@@ -57,7 +57,7 @@ export default function CommunityPage() {
                 </div>
             ) : (
                 <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                    {banks?.data?.map((bank: any) => (
+                    {banks?.data?.map((bank: QuestionBank) => (
                         <div key={bank.id} className="group flex flex-col rounded-3xl border border-slate-100 bg-white p-2 shadow-sm transition hover:shadow-xl hover:-translate-y-1 overflow-hidden">
                             <div className="aspect-[16/10] bg-gradient-to-br from-slate-50 to-indigo-50 rounded-2xl flex items-center justify-center relative">
                                 <BookOpen className="h-10 w-10 text-indigo-200" />

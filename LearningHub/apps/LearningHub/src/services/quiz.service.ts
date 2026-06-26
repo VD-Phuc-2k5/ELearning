@@ -1,56 +1,49 @@
+import {
+  AnswerOptionInput,
+  BankHashResult,
+  CreateBankQuizParams,
+  DerivedBank,
+  GetBanksQuizParams,
+  Question,
+  QuestionBank,
+  QuizAnswer,
+  QuizResult,
+  Tag,
+  UpdateBankQuizParams,
+  UpdateQuestionQuizParams,
+  UploadHistory,
+  VerifyAnswerResult,
+} from '@learning-hub/domain';
 import { internalApi } from '../lib/api';
 
-export interface Tag {
-    id: number;
-    name: string;
-    description?: string;
-}
+export type {
+  AnswerOptionInput,
+  BankHashResult,
+  CreateBankQuizParams,
+  DerivedBank,
+  GetBanksQuizParams,
+  Question,
+  QuestionBank,
+  QuizAnswer,
+  QuizResult,
+  Tag,
+  UpdateBankQuizParams,
+  UpdateQuestionQuizParams,
+  UploadHistory,
+  VerifyAnswerResult,
+};
 
-export interface QuestionBank {
-    id: string;
-    title: string;
-    description: string;
-    uploaderId: string;
-    fileHash?: string;
-    totalQuestions: number;
-    statusId: string;
-    tags?: Tag[];
-    createdAt: string;
-    updatedAt: string;
+interface UploadMessageResult { message: string; }
+export interface ParsedQuestion {
+  content: string;
+  explanation?: string;
+  answerOptions: AnswerOptionInput[];
+  correctOptionLabels: string[];
 }
-
-export interface AnswerOption {
-    id: string;
-    optionLabel: string;
-    content: string;
-}
-
-export interface Question {
-    id: string;
-    content: string;
-    explanation?: string;
-    answerOptions: AnswerOption[];
-    correctAnswerOptionIds?: string[];
-}
-
-export interface UploadHistory {
-    id: string;
-    questionBankId: string;
-    uploadedBy: string;
-    fileName?: string;
-    totalQuestionsImported: number;
-    uploadedAt: string;
-}
-
-export interface QuizResult {
-    totalQuestions: number;
-    correctCount: number;
-    score: number;
-    answers: { questionId: string; isCorrect: boolean; correctOptionId: string }[];
-}
+export interface ParseExcelResponse { questions: ParsedQuestion[]; }
 
 const QuizService = {
-    getBanks: async (params?: { page?: number; limit?: number; search?: string; tagId?: number; statusId?: string }) => {
+    getBanks: async (params?: GetBanksQuizParams) => {
         const response = await internalApi.get('quiz/banks', { params });
         return response.data;
     },
@@ -60,12 +53,12 @@ const QuizService = {
         return response.data.data;
     },
 
-    createBank: async (data: { title: string; description?: string; tagIds?: number[] }): Promise<QuestionBank> => {
+    createBank: async (data: CreateBankQuizParams): Promise<QuestionBank> => {
         const response = await internalApi.post('quiz/banks', data);
         return response.data.data;
     },
 
-    updateBank: async (id: string, data: { title?: string; description?: string; statusId?: string; tagIds?: number[] }): Promise<QuestionBank> => {
+    updateBank: async (id: string, data: UpdateBankQuizParams): Promise<QuestionBank> => {
         const response = await internalApi.patch(`quiz/banks/${id}`, data);
         return response.data.data;
     },
@@ -74,7 +67,7 @@ const QuizService = {
         await internalApi.delete(`quiz/banks/${id}`);
     },
 
-    uploadExcel: async (bankId: string, file: File, fileHash?: string): Promise<{ message: string }> => {
+    uploadExcel: async (bankId: string, file: File, fileHash?: string): Promise<UploadMessageResult> => {
         const formData = new FormData();
         formData.append('file', file);
         if (fileHash) formData.append('fileHash', fileHash);
@@ -92,17 +85,17 @@ const QuizService = {
         return response.data.data;
     },
 
-    verifyAnswer: async (questionId: string, selectedOptionId: string): Promise<{ isCorrect: boolean; correctOptionId?: string }> => {
+    verifyAnswer: async (questionId: string, selectedOptionId: string): Promise<VerifyAnswerResult> => {
         const response = await internalApi.post(`quiz/questions/${questionId}/verify`, { selectedOptionId });
         return { isCorrect: response.data.isCorrect, correctOptionId: response.data.correctOptionIds?.[0] };
     },
 
-    submitQuiz: async (bankId: string, answers: { questionId: string; selectedOptionId: string }[]): Promise<QuizResult> => {
+    submitQuiz: async (bankId: string, answers: QuizAnswer[]): Promise<QuizResult> => {
         const response = await internalApi.post(`quiz/banks/${bankId}/submit`, { answers });
         return response.data.data;
     },
 
-    updateQuestion: async (id: string, data: { content?: string; explanation?: string; answerOptions?: { optionLabel: string; content: string }[]; correctOptionLabels?: string[] }): Promise<Question> => {
+    updateQuestion: async (id: string, data: UpdateQuestionQuizParams): Promise<Question> => {
         const response = await internalApi.patch(`quiz/questions/${id}`, data);
         return response.data.data;
     },
@@ -125,19 +118,19 @@ const QuizService = {
         await internalApi.delete(`quiz/tags/${id}`);
     },
 
-    parseExcel: async (bankId: string, file: File): Promise<{ questions: any[] }> => {
+    parseExcel: async (bankId: string, file: File): Promise<ParseExcelResponse> => {
         const formData = new FormData();
         formData.append('file', file);
         const response = await internalApi.post(`quiz/banks/${bankId}/parse-excel`, formData);
         return response.data;
     },
 
-    getDerivedBanks: async (bankId: string): Promise<Array<{ id: string; title: string; createdAt: string; uploaderUsername: string }>> => {
+    getDerivedBanks: async (bankId: string): Promise<DerivedBank[]> => {
         const response = await internalApi.get(`quiz/banks/${bankId}/derived-banks`);
         return response.data.data;
     },
 
-    checkHash: async (hash: string): Promise<{ exists: boolean; bank?: QuestionBank }> => {
+    checkHash: async (hash: string): Promise<BankHashResult> => {
         try {
             const response = await internalApi.get(`quiz/banks/check-hash/${hash}`);
             return response.data;
