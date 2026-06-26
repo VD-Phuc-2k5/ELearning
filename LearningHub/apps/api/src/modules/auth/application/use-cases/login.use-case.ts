@@ -12,6 +12,7 @@ import { IHashService } from '../interfaces/i-hash.service';
 
 export interface LoginParams extends LoginDto {
   requireAdminRole?: boolean;
+  rejectAdminRole?: boolean;
 }
 
 export interface LoginResult {
@@ -48,12 +49,15 @@ export class LoginUseCase implements Usecase<LoginResult, LoginParams> {
     if (!isPasswordValid) {
       return left(AuthFailures.invalidPassword());
     }
-    if (params.requireAdminRole) {
+    if (params.requireAdminRole || params.rejectAdminRole) {
       const userRoles = await this.userRoleRepository.findByUserId(user.id);
       const isAdmin = userRoles.some(
         (ur) => ur.role.code === 'ADMIN' || ur.role.code === 'OWNER',
       );
-      if (!isAdmin) return left(AuthFailures.notAdmin());
+      if (params.requireAdminRole && !isAdmin)
+        return left(AuthFailures.notAdmin());
+      if (params.rejectAdminRole && isAdmin)
+        return left(AuthFailures.adminNotAllowed());
     }
     const accessToken = this.tokenService.generateAccessToken(user);
     const refreshToken = this.tokenService.generateRefreshToken();

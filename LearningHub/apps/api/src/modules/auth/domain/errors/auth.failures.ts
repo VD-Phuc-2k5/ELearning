@@ -55,6 +55,13 @@ export class AuthFailures extends Failure {
     return new AuthFailures('User does not have admin role', 'NOT_ADMIN');
   }
 
+  static adminNotAllowed(): AuthFailures {
+    return new AuthFailures(
+      'Admin accounts must use the admin portal',
+      'ADMIN_NOT_ALLOWED',
+    );
+  }
+
   static selfPermissionGrant(): AuthFailures {
     return new AuthFailures(
       'Cannot grant permission to yourself',

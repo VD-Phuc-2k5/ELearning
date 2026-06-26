@@ -18,6 +18,13 @@ async function bootstrap() {
       },
     }),
   );
+  app.enableCors({
+    origin: process.env.CORS_ORIGINS?.split(',') ?? [
+      'http://localhost:3001',
+      'http://localhost:3002',
+    ],
+    credentials: true,
+  });
   const globalPrefix = 'api';
   app.setGlobalPrefix(globalPrefix);
   const port = process.env.PORT || 3000;
