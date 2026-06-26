@@ -1,4 +1,4 @@
-import api from '../lib/api';
+import { internalApi } from '../lib/api';
 
 export interface Tag {
     id: number;
@@ -50,85 +50,81 @@ export interface QuizResult {
 
 const QuizService = {
     getBanks: async (params?: { page?: number; limit?: number; search?: string; tagId?: number; statusId?: string }) => {
-        const response = await api.get('/quiz/banks', { params });
+        const response = await internalApi.get('quiz/banks', { params });
         return response.data;
     },
 
     getBankDetail: async (id: string): Promise<QuestionBank> => {
-        const response = await api.get(`/quiz/banks/${id}`);
-        return response.data;
+        const response = await internalApi.get(`quiz/banks/${id}`);
+        return response.data.data;
     },
 
     createBank: async (data: { title: string; description?: string; tagIds?: number[] }): Promise<QuestionBank> => {
-        const response = await api.post('/quiz/banks', data);
-        return response.data;
+        const response = await internalApi.post('quiz/banks', data);
+        return response.data.data;
     },
 
     updateBank: async (id: string, data: { title?: string; description?: string; statusId?: string; tagIds?: number[] }): Promise<QuestionBank> => {
-        const response = await api.patch(`/quiz/banks/${id}`, data);
-        return response.data;
+        const response = await internalApi.patch(`quiz/banks/${id}`, data);
+        return response.data.data;
     },
 
     deleteBank: async (id: string): Promise<void> => {
-        await api.delete(`/quiz/banks/${id}`);
+        await internalApi.delete(`quiz/banks/${id}`);
     },
 
     uploadExcel: async (bankId: string, file: File, fileHash?: string): Promise<{ message: string }> => {
         const formData = new FormData();
         formData.append('file', file);
         if (fileHash) formData.append('fileHash', fileHash);
-        const response = await api.post(`/quiz/banks/${bankId}/upload-excel`, formData, {
-            headers: { 'Content-Type': 'multipart/form-data' },
-        });
+        const response = await internalApi.post(`quiz/banks/${bankId}/upload-excel`, formData);
         return response.data;
     },
 
     getUploadHistory: async (bankId: string): Promise<UploadHistory[]> => {
-        const response = await api.get(`/quiz/banks/${bankId}/upload-history`);
-        return response.data;
+        const response = await internalApi.get(`quiz/banks/${bankId}/upload-history`);
+        return response.data.data;
     },
 
     getQuestionsForQuiz: async (bankId: string): Promise<Question[]> => {
-        const response = await api.get(`/quiz/banks/${bankId}/questions`);
-        return response.data;
+        const response = await internalApi.get(`quiz/banks/${bankId}/questions`);
+        return response.data.data;
     },
 
     verifyAnswer: async (questionId: string, selectedOptionId: string): Promise<{ isCorrect: boolean; correctOptionId?: string }> => {
-        const response = await api.post(`/quiz/questions/${questionId}/verify`, { selectedOptionId });
+        const response = await internalApi.post(`quiz/questions/${questionId}/verify`, { selectedOptionId });
         return response.data;
     },
 
     submitQuiz: async (bankId: string, answers: { questionId: string; selectedOptionId: string }[]): Promise<QuizResult> => {
-        const response = await api.post(`/quiz/banks/${bankId}/submit`, { answers });
-        return response.data;
+        const response = await internalApi.post(`quiz/banks/${bankId}/submit`, { answers });
+        return response.data.data;
     },
 
     updateQuestion: async (id: string, data: { content?: string; explanation?: string; answerOptions?: { optionLabel: string; content: string }[]; correctOptionLabels?: string[] }): Promise<Question> => {
-        const response = await api.patch(`/quiz/questions/${id}`, data);
-        return response.data;
+        const response = await internalApi.patch(`quiz/questions/${id}`, data);
+        return response.data.data;
     },
 
     deleteQuestion: async (id: string): Promise<void> => {
-        await api.delete(`/quiz/questions/${id}`);
+        await internalApi.delete(`quiz/questions/${id}`);
     },
 
     getTags: async (): Promise<Tag[]> => {
-        const response = await api.get('/quiz/tags');
-        return response.data;
+        const response = await internalApi.get('quiz/tags');
+        return response.data.data;
     },
 
     parseExcel: async (bankId: string, file: File): Promise<{ questions: any[] }> => {
         const formData = new FormData();
         formData.append('file', file);
-        const response = await api.post(`/quiz/banks/${bankId}/parse-excel`, formData, {
-            headers: { 'Content-Type': 'multipart/form-data' },
-        });
+        const response = await internalApi.post(`quiz/banks/${bankId}/parse-excel`, formData);
         return response.data;
     },
 
     checkHash: async (hash: string): Promise<{ exists: boolean; bank?: QuestionBank }> => {
         try {
-            const response = await api.get(`/quiz/banks/check-hash/${hash}`);
+            const response = await internalApi.get(`quiz/banks/check-hash/${hash}`);
             return response.data;
         } catch {
             return { exists: false };

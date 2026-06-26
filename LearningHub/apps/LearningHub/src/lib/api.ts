@@ -57,3 +57,43 @@ api.interceptors.response.use(
 );
 
 export default api;
+
+// ponytail: separate instance for internal Next.js routes — same auth header, relative base
+export const internalApi = axios.create({ baseURL: '/api' });
+
+internalApi.interceptors.request.use((config) => {
+    if (accessToken && config.headers) {
+        config.headers.Authorization = `Bearer ${accessToken}`;
+    }
+    return config;
+});
+
+internalApi.interceptors.response.use(
+    (response) => response,
+    async (error) => {
+        const originalRequest = error.config;
+        if (error.response?.status === 401 && !originalRequest._retry) {
+            originalRequest._retry = true;
+            const refreshToken =
+                typeof window !== 'undefined' ? localStorage.getItem('refreshToken') : null;
+            if (refreshToken) {
+                try {
+                    const res = await axios.post('/api/auth/refresh', { refreshToken });
+                    const { accessToken: newToken, refreshToken: newRefresh } = res.data;
+                    setAccessToken(newToken);
+                    localStorage.setItem('refreshToken', newRefresh);
+                    originalRequest.headers.Authorization = `Bearer ${newToken}`;
+                    return internalApi(originalRequest);
+                } catch {
+                    setAccessToken(null);
+                    localStorage.removeItem('refreshToken');
+                    localStorage.removeItem('user');
+                    if (typeof window !== 'undefined') window.location.href = '/auth';
+                }
+            } else {
+                if (typeof window !== 'undefined') window.location.href = '/auth';
+            }
+        }
+        return Promise.reject(error);
+    }
+);
