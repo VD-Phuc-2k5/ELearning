@@ -5,8 +5,8 @@ import { useParams, useRouter } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import gsap from 'gsap';
-import QuizService, { type Question, type UploadHistory } from '../../../../services/quiz.service';
-import { Button } from '../../../../components/ui';
+import QuizService, { type Question, type Tag, type UploadHistory } from '../../../../services/quiz.service';
+import { Button, useConfirmModal } from '../../../../components/ui';
 import {
     ArrowLeft,
     BookOpen,
@@ -34,6 +34,8 @@ export default function BankDetailPage() {
     const queryClient = useQueryClient();
     const pageRef = useRef<HTMLDivElement>(null);
     const [tab, setTab] = useState<Tab>('questions');
+    const [tagOpen, setTagOpen] = useState(false);
+    const { modal: confirmModal, openConfirm } = useConfirmModal();
 
     const { data: bank, isLoading: bankLoading } = useQuery({
         queryKey: ['bank', id],
@@ -42,7 +44,7 @@ export default function BankDetailPage() {
 
     const { data: questions = [], isLoading: questionsLoading } = useQuery({
         queryKey: ['bank-questions', id],
-        queryFn: () => QuizService.getQuestionsForQuiz(id),
+        queryFn: () => QuizService.getQuestionsForQuiz(id, true),
         enabled: tab === 'questions',
     });
 
@@ -50,6 +52,52 @@ export default function BankDetailPage() {
         queryKey: ['bank-history', id],
         queryFn: () => QuizService.getUploadHistory(id),
         enabled: tab === 'history',
+    });
+
+    const { data: allTags = [] } = useQuery({
+        queryKey: ['tags'],
+        queryFn: () => QuizService.getTags(),
+    });
+
+    const invalidateBank = () => {
+        queryClient.invalidateQueries({ queryKey: ['bank', id] });
+        queryClient.invalidateQueries({ queryKey: ['my-banks'] });
+    };
+
+    const updateTagsMutation = useMutation({
+        mutationFn: (tagIds: number[]) => QuizService.updateBank(id, { tagIds }),
+        onSuccess: invalidateBank,
+    });
+
+    const publishMutation = useMutation({
+        mutationFn: (statusId: string) => QuizService.updateBank(id, { statusId }),
+        onSuccess: invalidateBank,
+    });
+
+    const [title, setTitle] = useState('');
+    const [description, setDescription] = useState('');
+    useEffect(() => {
+        if (bank) { setTitle(bank.title); setDescription(bank.description ?? ''); }
+    }, [bank?.id]);
+
+    const updateInfoMutation = useMutation({
+        mutationFn: (data: { title?: string; description?: string }) => QuizService.updateBank(id, data),
+        onSuccess: invalidateBank,
+    });
+
+    const [newTagName, setNewTagName] = useState('');
+    const [tagSearch, setTagSearch] = useState('');
+    const createTagMutation = useMutation({
+        mutationFn: (name: string) => QuizService.createTag(name),
+        onSuccess: (tag) => {
+            queryClient.invalidateQueries({ queryKey: ['tags'] });
+            updateTagsMutation.mutate([...(bank?.tags ?? []).map((t: Tag) => t.id), tag.id]);
+            setNewTagName('');
+        },
+    });
+    const deleteTagMutation = useMutation({
+        mutationFn: (tagId: number) => QuizService.deleteTag(tagId),
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['tags'] }),
     });
 
     useEffect(() => {
@@ -66,9 +114,7 @@ export default function BankDetailPage() {
     });
 
     const handleDeleteBank = () => {
-        if (confirm(`Delete bank "${bank?.title}"? All questions will be permanently deleted.`)) {
-            deleteBankMutation.mutate();
-        }
+        openConfirm(`Delete bank "${bank?.title}"? All questions will be permanently deleted.`, () => deleteBankMutation.mutate());
     };
 
     if (bankLoading) {
@@ -99,14 +145,100 @@ export default function BankDetailPage() {
                     <ArrowLeft className="h-5 w-5" />
                 </Link>
                 <div className="flex-1 min-w-0">
-                    <h2 className="text-3xl font-bold text-slate-900 truncate">{bank.title}</h2>
-                    <p className="text-slate-500 mt-1">{bank.description || 'No description'}</p>
+                    <input
+                        className="text-3xl font-bold text-slate-900 bg-transparent outline-none border-b-2 border-transparent focus:border-indigo-400 w-full truncate"
+                        value={title}
+                        onChange={e => setTitle(e.target.value)}
+                        onBlur={() => { if (title.trim() && title !== bank.title) updateInfoMutation.mutate({ title: title.trim() }); }}
+                    />
+                    <input
+                        className="text-slate-500 mt-1 bg-transparent outline-none border-b border-transparent focus:border-slate-300 w-full text-sm"
+                        value={description}
+                        onChange={e => setDescription(e.target.value)}
+                        onBlur={() => { if (description !== (bank.description ?? '')) updateInfoMutation.mutate({ description }); }}
+                        placeholder="No description"
+                    />
+                    <div className="flex flex-wrap items-center gap-2 mt-2 relative">
+                        {(bank.tags ?? []).map((t: Tag) => (
+                            <span key={t.id} className="flex items-center gap-1 text-xs bg-indigo-100 text-indigo-700 rounded-full px-2.5 py-0.5 font-medium">
+                                {t.name}
+                                <button onClick={() => updateTagsMutation.mutate((bank.tags ?? []).filter((x: Tag) => x.id !== t.id).map((x: Tag) => x.id))} className="hover:text-red-500 transition">
+                                    <X className="h-3 w-3" />
+                                </button>
+                            </span>
+                        ))}
+                        <div className="relative">
+                            <button onClick={() => setTagOpen(o => !o)} className="text-xs text-slate-500 border border-dashed border-slate-300 rounded-full px-2.5 py-0.5 hover:border-indigo-400 hover:text-indigo-600 transition">
+                                + Tag
+                            </button>
+                            {tagOpen && (
+                                <div className="absolute left-0 top-7 z-20 min-w-[200px] bg-white border border-slate-200 rounded-xl shadow-lg p-2 space-y-1">
+                                    <input
+                                        value={tagSearch}
+                                        onChange={(e) => setTagSearch(e.target.value)}
+                                        placeholder="Tìm tag…"
+                                        className="w-full text-xs px-2 py-1.5 border border-slate-200 rounded-lg outline-none focus:border-indigo-400 mb-1"
+                                        autoFocus
+                                    />
+                                    <div className="max-h-40 overflow-y-auto space-y-0.5">
+                                        {allTags.filter((t: Tag) => t.name.toLowerCase().includes(tagSearch.toLowerCase())).map((t: Tag) => {
+                                            const active = (bank.tags ?? []).some((x: Tag) => x.id === t.id);
+                                            return (
+                                                <div key={t.id} className="flex items-center gap-1">
+                                                    <button
+                                                        onClick={() => {
+                                                            const next = active
+                                                                ? (bank.tags ?? []).filter((x: Tag) => x.id !== t.id).map((x: Tag) => x.id)
+                                                                : [...(bank.tags ?? []).map((x: Tag) => x.id), t.id];
+                                                            updateTagsMutation.mutate(next);
+                                                        }}
+                                                        className={clsx('flex-1 text-left text-xs px-2 py-1.5 rounded-lg transition', active ? 'bg-indigo-50 text-indigo-700 font-medium' : 'hover:bg-slate-50 text-slate-700')}
+                                                    >
+                                                        {active ? '✓ ' : ''}{t.name}
+                                                    </button>
+                                                    <button
+                                                        onClick={() => openConfirm(`Xóa tag "${t.name}" khỏi hệ thống?`, () => deleteTagMutation.mutate(t.id))}
+                                                        className="p-1 text-slate-300 hover:text-red-500 transition rounded shrink-0"
+                                                        title="Xóa tag"
+                                                    >
+                                                        <X className="h-3 w-3" />
+                                                    </button>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                    <div className="border-t border-slate-100 pt-1 mt-1">
+                                        <form onSubmit={(e) => { e.preventDefault(); if (newTagName.trim()) createTagMutation.mutate(newTagName.trim()); }} className="flex gap-1">
+                                            <input
+                                                value={newTagName}
+                                                onChange={(e) => setNewTagName(e.target.value)}
+                                                placeholder="Tạo tag mới…"
+                                                className="flex-1 text-xs px-2 py-1 border border-slate-200 rounded-lg outline-none focus:border-indigo-400"
+                                            />
+                                            <button type="submit" disabled={!newTagName.trim() || createTagMutation.isPending} className="text-xs px-2 py-1 bg-indigo-600 text-white rounded-lg disabled:opacity-40 hover:bg-indigo-700 transition">
+                                                +
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                     <Link href={`/quiz/${id}`}>
-                        <Button icon={<Play className="h-4 w-4" />}>Start quiz</Button>
+                        <Button size="md" icon={<Play className="h-4 w-4" />}>Start quiz</Button>
                     </Link>
-                    <Button variant="secondary" size="sm" onClick={handleDeleteBank} isLoading={deleteBankMutation.isPending}>
+                    <Button
+                        variant="secondary"
+                        size="md"
+                        onClick={() => publishMutation.mutate(bank.statusId === 'published' ? 'draft' : 'published')}
+                        isLoading={publishMutation.isPending}
+                        className={bank.statusId === 'published' ? 'text-amber-600 border-amber-300 hover:bg-amber-50' : 'text-emerald-600 border-emerald-300 hover:bg-emerald-50'}
+                    >
+                        {bank.statusId === 'published' ? 'Unpublish' : 'Publish'}
+                    </Button>
+                    <Button variant="secondary" size="md" onClick={handleDeleteBank} isLoading={deleteBankMutation.isPending}>
                         <Trash2 className="h-4 w-4 text-red-500" />
                     </Button>
                 </div>
@@ -175,6 +307,7 @@ export default function BankDetailPage() {
                     )}
                 </div>
             </div>
+        {confirmModal}
         </div>
     );
 }
@@ -222,7 +355,14 @@ function QuestionCard({ question, index, onDeleted, onUpdated }: {
 }) {
     const [expanded, setExpanded] = useState(false);
     const [editing, setEditing] = useState(false);
+    const { modal: confirmModal, openConfirm } = useConfirmModal();
     const [content, setContent] = useState(question.content);
+    const [options, setOptions] = useState(() => [...question.answerOptions].sort((a, b) => a.optionLabel.localeCompare(b.optionLabel)).map(o => ({ ...o })));
+    const [correctLabels, setCorrectLabels] = useState<string[]>(() =>
+        question.answerOptions
+            .filter(o => question.correctAnswerOptionIds?.includes(o.id))
+            .map(o => o.optionLabel)
+    );
 
     const deleteMutation = useMutation({
         mutationFn: () => QuizService.deleteQuestion(question.id),
@@ -230,9 +370,20 @@ function QuestionCard({ question, index, onDeleted, onUpdated }: {
     });
 
     const updateMutation = useMutation({
-        mutationFn: () => QuizService.updateQuestion(question.id, { content }),
+        mutationFn: () => QuizService.updateQuestion(question.id, {
+            content,
+            answerOptions: options.map(o => ({ optionLabel: o.optionLabel, content: o.content })),
+            correctOptionLabels: correctLabels,
+        }),
         onSuccess: () => { setEditing(false); onUpdated(); },
     });
+
+    const cancelEdit = () => {
+        setEditing(false);
+        setContent(question.content);
+        setOptions(question.answerOptions.map(o => ({ ...o })));
+        setCorrectLabels(question.answerOptions.filter(o => question.correctAnswerOptionIds?.includes(o.id)).map(o => o.optionLabel));
+    };
 
     return (
         <div className="rounded-2xl border border-slate-100 bg-slate-50/50">
@@ -241,18 +392,40 @@ function QuestionCard({ question, index, onDeleted, onUpdated }: {
                     {index + 1}
                 </span>
                 {editing ? (
-                    <div className="flex-1 space-y-2">
+                    <div className="flex-1 space-y-3">
                         <textarea
                             className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 outline-none resize-none"
                             rows={3}
                             value={content}
                             onChange={e => setContent(e.target.value)}
                         />
+                        <div className="space-y-2">
+                            <p className="text-xs font-semibold text-slate-500">Đáp án (click radio để chọn đáp án đúng)</p>
+                            {options.map((opt, oi) => (
+                                <div key={opt.id} className="flex items-center gap-2">
+                                    <input
+                                        type="radio"
+                                        name={`correct-${question.id}`}
+                                        checked={correctLabels.includes(opt.optionLabel)}
+                                        onChange={() => setCorrectLabels([opt.optionLabel])}
+                                        className="accent-emerald-600 shrink-0"
+                                    />
+                                    <span className="h-5 w-5 rounded-full bg-slate-200 text-slate-600 text-xs font-bold flex items-center justify-center shrink-0">
+                                        {opt.optionLabel}
+                                    </span>
+                                    <input
+                                        className="flex-1 text-sm border border-slate-200 rounded-lg px-2 py-1 focus:border-indigo-400 outline-none"
+                                        value={opt.content}
+                                        onChange={e => setOptions(prev => prev.map((o, idx) => idx === oi ? { ...o, content: e.target.value } : o))}
+                                    />
+                                </div>
+                            ))}
+                        </div>
                         <div className="flex gap-2">
                             <Button size="sm" isLoading={updateMutation.isPending} onClick={() => updateMutation.mutate()} icon={<Save className="h-3 w-3" />}>
                                 Save
                             </Button>
-                            <Button size="sm" variant="ghost" onClick={() => { setEditing(false); setContent(question.content); }}>
+                            <Button size="sm" variant="ghost" onClick={cancelEdit}>
                                 <X className="h-3 w-3" />
                             </Button>
                         </div>
@@ -267,31 +440,38 @@ function QuestionCard({ question, index, onDeleted, onUpdated }: {
                         </button>
                     )}
                     <button
-                        onClick={() => { if (confirm('Delete this question?')) deleteMutation.mutate(); }}
+                        onClick={() => openConfirm('Delete this question?', () => deleteMutation.mutate())}
                         disabled={deleteMutation.isPending}
                         className="p-1.5 text-slate-400 hover:text-red-600 transition rounded-lg hover:bg-red-50"
                     >
                         <Trash2 className="h-4 w-4" />
                     </button>
-                    <button onClick={() => setExpanded(v => !v)} className="p-1.5 text-slate-400 hover:text-slate-700 transition rounded-lg hover:bg-slate-100">
-                        {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                    </button>
+                    {!editing && (
+                        <button onClick={() => setExpanded(v => !v)} className="p-1.5 text-slate-400 hover:text-slate-700 transition rounded-lg hover:bg-slate-100">
+                            {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                        </button>
+                    )}
                 </div>
             </div>
-            {expanded && question.answerOptions.length > 0 && (
+            {!editing && expanded && question.answerOptions.length > 0 && (
                 <div className="px-4 pb-4 border-t border-slate-100 pt-3">
-                    <div className="grid gap-2">
-                        {question.answerOptions.map(opt => (
-                            <div key={opt.id} className="flex items-center gap-2 text-sm">
-                                <span className="h-6 w-6 rounded-full bg-slate-200 text-slate-600 text-xs font-bold flex items-center justify-center shrink-0">
-                                    {opt.optionLabel}
-                                </span>
-                                <span className="text-slate-700">{opt.content}</span>
-                            </div>
-                        ))}
+                    <div className="grid gap-1.5">
+                        {[...question.answerOptions].sort((a, b) => a.optionLabel.localeCompare(b.optionLabel)).map(opt => {
+                            const isCorrect = question.correctAnswerOptionIds?.includes(opt.id);
+                            return (
+                                <div key={opt.id} className={clsx('flex items-center gap-2 text-sm rounded-lg px-2 py-1.5', isCorrect ? 'bg-emerald-50 border border-emerald-200' : 'border border-transparent')}>
+                                    <span className={clsx('h-6 w-6 rounded-full text-xs font-bold flex items-center justify-center shrink-0', isCorrect ? 'bg-emerald-500 text-white' : 'bg-slate-200 text-slate-600')}>
+                                        {opt.optionLabel}
+                                    </span>
+                                    <span className={clsx('flex-1', isCorrect ? 'text-emerald-800 font-medium' : 'text-slate-700')}>{opt.content}</span>
+                                    {isCorrect && <span className="text-xs font-semibold text-emerald-600 bg-emerald-100 rounded-full px-2 py-0.5 shrink-0">Đúng</span>}
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
             )}
+            {confirmModal}
         </div>
     );
 }
@@ -381,8 +561,23 @@ function UploadTab({ bankId, onSuccess }: { bankId: string; onSuccess: () => voi
                                             ))}
                                         />
                                     </td>
-                                    <td className="px-4 py-3 text-xs font-bold text-emerald-700 align-top pt-4">
-                                        {q.correctOptionLabels.join(', ')}
+                                    <td className="px-4 py-3 space-y-1.5">
+                                        {q.answerOptions.map(opt => (
+                                            <label key={opt.optionLabel} className="flex items-center gap-1.5 cursor-pointer">
+                                                <input
+                                                    type="radio"
+                                                    name={`preview-correct-${i}`}
+                                                    checked={q.correctOptionLabels.includes(opt.optionLabel)}
+                                                    onChange={() => setPreview(prev => prev!.map((item, idx) =>
+                                                        idx === i ? { ...item, correctOptionLabels: [opt.optionLabel] } : item
+                                                    ))}
+                                                    className="accent-emerald-600 shrink-0"
+                                                />
+                                                <span className={clsx('text-xs font-bold', q.correctOptionLabels.includes(opt.optionLabel) ? 'text-emerald-700' : 'text-slate-500')}>
+                                                    {opt.optionLabel}
+                                                </span>
+                                            </label>
+                                        ))}
                                     </td>
                                     <td className="px-4 py-3 align-top pt-3">
                                         <button
@@ -517,7 +712,7 @@ function HistoryTab({ history, isLoading }: { history: UploadHistory[]; isLoadin
                         <p className="text-sm font-semibold text-slate-900">{h.fileName || 'Manual import'}</p>
                         <p className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
                             <Clock className="h-3 w-3" />
-                            {new Date(h.createdAt).toLocaleString('vi-VN')}
+                            {new Date(h.uploadedAt).toLocaleString('vi-VN')}
                         </p>
                     </div>
                     <span className="shrink-0 text-sm font-bold text-emerald-600 bg-emerald-50 rounded-full px-3 py-1">
