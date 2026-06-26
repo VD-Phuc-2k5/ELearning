@@ -21,8 +21,6 @@ const navigation = [
     { href: '/', label: 'Dashboard', Icon: LayoutDashboard },
     { href: '/community', label: 'Community', Icon: Users },
     { href: '/my-banks', label: 'Workshop', Icon: BookOpen },
-    { href: '/courses', label: 'My Courses', Icon: GraduationCap },
-    { href: '/settings', label: 'Settings', Icon: Settings },
 ];
 
 type AppShellProps = { children: ReactNode };
@@ -90,19 +88,18 @@ export function AppShell({ children }: AppShellProps) {
                 </div>
             </aside>
 
-            <header className="sticky top-0 z-30 px-4 border-b border-slate-100 bg-white/95 backdrop-blur lg:ml-64 lg:px-8">
-                <div className="flex items-center justify-between h-16 gap-3">
+            <header className="sticky top-0 z-30 p-6 border-b border-slate-100 bg-white/95 backdrop-blur lg:ml-64 lg:px-8">
+                <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center min-w-0 gap-3">
                         <div className="lg:hidden"><Brand compact /></div>
                         <div className="hidden min-w-0 lg:block">
-                            <p className="text-xs font-semibold uppercase tracking-widest text-indigo-500">LearningHub</p>
                             <h1 className="text-lg font-semibold truncate text-slate-900">Learning & Creative Space</h1>
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
                         <Button size="sm" variant="ghost">
-                            <HelpCircle className="h-4 w-4" />
-                            <span className="hidden sm:inline ml-1.5">Help</span>
+                            <HelpCircle className="h-4 w-full" />
+                            <span className="hidden sm:inline">Help</span>
                         </Button>
                         <Link href="/my-banks/create">
                             <Button size="sm" icon={<Plus className="h-4 w-4" />}>

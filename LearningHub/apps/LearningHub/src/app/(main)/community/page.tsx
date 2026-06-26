@@ -37,8 +37,8 @@ export default function CommunityPage() {
 
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                    <Button variant="secondary" size="sm" className="rounded-xl flex items-center gap-2">
-                        <Filter className="h-4 w-4" /> Filter
+                    <Button variant="secondary" size="sm" className="p-6 rounded-xl flex items-center gap-2">
+                        <Filter className="h-4 w-full" /> Filter
                     </Button>
                     <div className="hidden sm:flex gap-4 text-sm font-semibold">
                         <span className="text-indigo-600 cursor-pointer">Latest</span>

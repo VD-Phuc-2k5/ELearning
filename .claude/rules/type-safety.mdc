@@ -1,0 +1,43 @@
+---
+description: Type Safety Standards
+globs:
+  - "src/**/*.{ts,tsx}"
+---
+
+# Type Definition Standards
+
+## Rule
+
+Không được sử dụng object type inline (`{}`) để khai báo kiểu dữ liệu cho:
+- Function parameters
+- Function return types
+- Variables
+- Class properties
+- Generic constraints
+- DTOs
+- Service responses
+
+Thay vào đó phải:
+
+1. Định nghĩa một `interface` nếu kiểu dữ liệu đại diện cho một thực thể hoặc contract.
+2. Định nghĩa một `type` alias nếu cần union, intersection hoặc utility types.
+3. Tái sử dụng các interface/type đã tồn tại nếu phù hợp.
+4. Đặt tên rõ ràng, có ý nghĩa theo domain.
+
+## ❌ Không được
+
+```ts
+async createUser(data: {
+  name: string;
+  email: string;
+}) {}
+
+const user: {
+  id: string;
+  name: string;
+} = result;
+
+function calculate(input: {
+  score: number;
+  credit: number;
+}) {}

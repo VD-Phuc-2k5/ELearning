@@ -17,7 +17,7 @@ export default function DashboardPage() {
       <section>
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">Good day! 👋</h2>
+            <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">Good day!</h2>
             <p className="text-slate-500 mt-1">What would you like to learn or share today?</p>
           </div>
           <Link href="/my-banks/create" className="shrink-0">

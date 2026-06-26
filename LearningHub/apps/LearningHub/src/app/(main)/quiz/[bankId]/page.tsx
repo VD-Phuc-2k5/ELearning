@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
@@ -8,6 +8,7 @@ import gsap from 'gsap';
 import QuizService, { type Question, type QuizResult } from '../../../../services/quiz.service';
 import { Button } from '../../../../components/ui';
 import {
+    AlertCircle,
     ArrowLeft,
     CheckCircle2,
     XCircle,
@@ -36,11 +37,17 @@ export default function QuizPage() {
         queryFn: () => QuizService.getBankDetail(bankId),
     });
 
-    const { data: questions = [], isLoading } = useQuery({
+    const { data: rawQuestions = [], isLoading } = useQuery({
         queryKey: ['quiz-questions', bankId],
         queryFn: () => QuizService.getQuestionsForQuiz(bankId),
         enabled: mode !== 'select',
     });
+
+    // ponytail: shuffle once per load; stable until questions refetch
+    const questions = useMemo(
+        () => [...rawQuestions].sort(() => Math.random() - 0.5),
+        [rawQuestions],
+    );
 
     useEffect(() => {
         if (!pageRef.current) return;
@@ -104,7 +111,14 @@ function ModeSelect({ bank, onSelectMode, onBack }: {
                 </div>
             </div>
 
-            <div className="grid gap-4">
+            {bank?.statusId !== 'published' && (
+                <div className="flex items-center gap-3 rounded-2xl bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-700">
+                    <AlertCircle className="h-5 w-5 shrink-0" />
+                    Ngân hàng đang ở trạng thái <strong>draft</strong> — không thể làm quiz. Hãy publish trước.
+                </div>
+            )}
+
+            <div className={clsx('grid gap-4', bank?.statusId !== 'published' && 'pointer-events-none opacity-40')}>
                 <ModeCard
                     icon={<Zap className="h-8 w-8" />}
                     title="Luyện tập"
@@ -231,7 +245,7 @@ function PracticeMode({ questions, onExit }: { questions: Question[]; onExit: ()
                 <p className="text-lg font-semibold text-slate-900 leading-relaxed">{question.content}</p>
 
                 <div className="grid gap-3">
-                    {question.answerOptions.map(opt => {
+                    {[...question.answerOptions].sort((a, b) => a.optionLabel.localeCompare(b.optionLabel)).map(opt => {
                         const isSelected = selected === opt.id;
                         const isCorrect = feedback?.correctOptionId === opt.id;
                         const isWrong = isSelected && feedback && !feedback.isCorrect;
@@ -396,7 +410,7 @@ function ExamMode({ bankId, questions, timeLimitSeconds, onFinish, onExit }: {
                 <p className="text-lg font-semibold text-slate-900 leading-relaxed">{question.content}</p>
 
                 <div className="grid gap-3">
-                    {question.answerOptions.map(opt => (
+                    {[...question.answerOptions].sort((a, b) => a.optionLabel.localeCompare(b.optionLabel)).map(opt => (
                         <button
                             key={opt.id}
                             onClick={() => setAnswers(prev => ({ ...prev, [question.id]: opt.id }))}
