@@ -40,15 +40,46 @@ export interface UploadHistory {
   readonly uploadedAt: string;
 }
 
+export interface QuizResultAnswer {
+  readonly questionId: string;
+  readonly isCorrect: boolean;
+  readonly correctOptionId: string;
+}
+
 export interface QuizResult {
   readonly totalQuestions: number;
   readonly correctCount: number;
   readonly score: number;
-  readonly answers: ReadonlyArray<{
-    readonly questionId: string;
-    readonly isCorrect: boolean;
-    readonly correctOptionId: string;
-  }>;
+  readonly answers: ReadonlyArray<QuizResultAnswer>;
+}
+
+export interface QuizAnswer {
+  readonly questionId: string;
+  readonly selectedOptionId: string;
+}
+
+export interface AnswerOptionInput {
+  readonly optionLabel: string;
+  readonly content: string;
+}
+
+export interface BankHashResult {
+  readonly exists: boolean;
+  readonly bank?: QuestionBank;
+}
+
+export interface UploadExcelResult {
+  readonly message: string;
+  readonly totalQuestionsImported: number;
+}
+
+export interface VerifyAnswerResult {
+  readonly isCorrect: boolean;
+  readonly correctOptionId?: string;
+}
+
+export interface ParseExcelResult {
+  readonly questions: unknown[];
 }
 
 export interface BankList {

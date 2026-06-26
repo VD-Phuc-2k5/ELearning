@@ -1,9 +1,10 @@
 import { Either, Failure, Usecase } from '@learning-hub/core';
+import { AuthTokens, LoginParams } from '../entities/entities';
 import { IAuthRepository } from '../repositories/IAuthRepository';
 
-export class AdminLoginUsecase implements Usecase<{ accessToken: string; refreshToken: string }, any> {
+export class AdminLoginUsecase implements Usecase<AuthTokens, LoginParams> {
   constructor(private repository: IAuthRepository) {}
-  async execute(params: any): Promise<Either<Failure, { accessToken: string; refreshToken: string }>> {
+  async execute(params: LoginParams): Promise<Either<Failure, AuthTokens>> {
     return this.repository.adminLogin(params);
   }
 }

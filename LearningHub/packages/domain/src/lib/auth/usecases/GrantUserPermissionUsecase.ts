@@ -1,9 +1,16 @@
 import { Either, Failure, Usecase } from '@learning-hub/core';
+import { GrantPermissionParams } from '../entities/entities';
 import { IAuthRepository } from '../repositories/IAuthRepository';
 
-export class GrantUserPermissionUsecase implements Usecase<void, any> {
+export interface GrantUserPermissionParams {
+  userId: string;
+  permissionId: number;
+  isGranted: boolean;
+}
+
+export class GrantUserPermissionUsecase implements Usecase<void, GrantUserPermissionParams> {
   constructor(private repository: IAuthRepository) {}
-  async execute(params: any): Promise<Either<Failure, void>> {
-    return this.repository.grantUserPermission(params.userId, params)
+  async execute(params: GrantUserPermissionParams): Promise<Either<Failure, void>> {
+    return this.repository.grantUserPermission(params.userId, { permissionId: params.permissionId, isGranted: params.isGranted })
   }
 }
