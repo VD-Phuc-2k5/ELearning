@@ -1,11 +1,11 @@
 import { Either, Failure, right, left, UnknownFailure } from '@learning-hub/core';
-import { IAuthRepository, User, Role, Permission } from '@learning-hub/domain';
+import { AuthTokens, CreatePermissionParams, CreateRoleParams, GrantPermissionParams, IAuthRepository, LoginParams, Permission, RegisterParams, Role, UpdateRoleParams, User } from '@learning-hub/domain';
 import { IAuthRemoteDataSource } from '../datasources/AuthRemoteDataSourceImpl';
 
 export class AuthRepositoryImpl implements IAuthRepository {
     constructor(private dataSource: IAuthRemoteDataSource, private token?: string) { }
 
-    async register(data: any): Promise<Either<Failure, User>> {
+    async register(data: RegisterParams): Promise<Either<Failure, User>> {
         try {
             const res = await (this.dataSource as any).register(data);
             return right(res.user);
@@ -14,25 +14,25 @@ export class AuthRepositoryImpl implements IAuthRepository {
         }
     }
 
-    async login(data: any): Promise<Either<Failure, { accessToken: string; refreshToken: string }>> {
+    async login(data: LoginParams): Promise<Either<Failure, AuthTokens>> {
         try {
             const res = await (this.dataSource as any).login(data);
-            return right(res);
+            return right(res as AuthTokens);
         } catch (e) {
             return left(new UnknownFailure());
         }
     }
 
-    async adminLogin(data: any): Promise<Either<Failure, { accessToken: string; refreshToken: string }>> {
+    async adminLogin(data: LoginParams): Promise<Either<Failure, AuthTokens>> {
         try {
             const res = await (this.dataSource as any).adminLogin(data);
-            return right(res);
+            return right(res as AuthTokens);
         } catch (e) {
             return left(new UnknownFailure());
         }
     }
 
-    async registerAdmin(data: any): Promise<Either<Failure, User>> {
+    async registerAdmin(data: RegisterParams): Promise<Either<Failure, User>> {
         try {
             const res = await (this.dataSource as any).registerAdmin(data, this.token);
             return right(res.user);
@@ -41,10 +41,10 @@ export class AuthRepositoryImpl implements IAuthRepository {
         }
     }
 
-    async refreshToken(token: string): Promise<Either<Failure, { accessToken: string; refreshToken: string }>> {
+    async refreshToken(token: string): Promise<Either<Failure, AuthTokens>> {
         try {
             const res = await (this.dataSource as any).refreshToken({ refreshToken: token });
-            return right(res);
+            return right(res as AuthTokens);
         } catch (e) {
             return left(new UnknownFailure());
         }
@@ -62,7 +62,7 @@ export class AuthRepositoryImpl implements IAuthRepository {
     async getProfile(): Promise<Either<Failure, User>> {
         try {
             const res = await (this.dataSource as any).getProfile(this.token);
-            return right(res);
+            return right(res as AuthTokens);
         } catch (e) {
             return left(new UnknownFailure());
         }
@@ -86,19 +86,19 @@ export class AuthRepositoryImpl implements IAuthRepository {
         }
     }
 
-    async createRole(data: any): Promise<Either<Failure, Role>> {
+    async createRole(data: CreateRoleParams): Promise<Either<Failure, Role>> {
         try {
             const res = await (this.dataSource as any).createRole(data, this.token);
-            return right(res);
+            return right(res as AuthTokens);
         } catch (e) {
             return left(new UnknownFailure());
         }
     }
 
-    async updateRole(id: number, data: any): Promise<Either<Failure, Role>> {
+    async updateRole(id: number, data: UpdateRoleParams): Promise<Either<Failure, Role>> {
         try {
             const res = await (this.dataSource as any).updateRole(id, data, this.token);
-            return right(res);
+            return right(res as AuthTokens);
         } catch (e) {
             return left(new UnknownFailure());
         }
@@ -131,10 +131,10 @@ export class AuthRepositoryImpl implements IAuthRepository {
         }
     }
 
-    async createPermission(data: any): Promise<Either<Failure, Permission>> {
+    async createPermission(data: CreatePermissionParams): Promise<Either<Failure, Permission>> {
         try {
             const res = await (this.dataSource as any).createPermission(data, this.token);
-            return right(res);
+            return right(res as AuthTokens);
         } catch (e) {
             return left(new UnknownFailure());
         }
@@ -152,7 +152,7 @@ export class AuthRepositoryImpl implements IAuthRepository {
     async getRolePermissions(roleId: number): Promise<Either<Failure, number[]>> {
         try {
             const data = await (this.dataSource as any).getRolePermissions(roleId, this.token);
-            return right(data.map((rp: any) => rp.permissionId));
+            return right(data.map((rp: { permissionId: number }) => rp.permissionId));
         } catch (e) {
             return left(new UnknownFailure());
         }
@@ -179,7 +179,7 @@ export class AuthRepositoryImpl implements IAuthRepository {
     async getUserRoles(userId: string): Promise<Either<Failure, Role[]>> {
         try {
             const res = await (this.dataSource as any).getUserRoles(userId, this.token);
-            return right(res);
+            return right(res as AuthTokens);
         } catch (e) {
             return left(new UnknownFailure());
         }
@@ -203,16 +203,16 @@ export class AuthRepositoryImpl implements IAuthRepository {
         }
     }
 
-    async getUserPermissions(userId: string): Promise<Either<Failure, any[]>> {
+    async getUserPermissions(userId: string): Promise<Either<Failure, Permission[]>> {
         try {
             const res = await (this.dataSource as any).getUserPermissions(userId, this.token);
-            return right(res);
+            return right(res as AuthTokens);
         } catch (e) {
             return left(new UnknownFailure());
         }
     }
 
-    async grantUserPermission(userId: string, data: any): Promise<Either<Failure, void>> {
+    async grantUserPermission(userId: string, data: GrantPermissionParams): Promise<Either<Failure, void>> {
         try {
             await (this.dataSource as any).grantUserPermission(userId, data, this.token);
             return right(undefined);
