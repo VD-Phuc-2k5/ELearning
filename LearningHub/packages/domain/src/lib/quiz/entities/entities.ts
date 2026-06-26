@@ -55,3 +55,10 @@ export interface BankList {
   readonly data: QuestionBank[];
   readonly total: number;
 }
+
+export interface DerivedBank {
+  readonly id: string;
+  readonly title: string;
+  readonly createdAt: string;
+  readonly uploaderUsername: string;
+}

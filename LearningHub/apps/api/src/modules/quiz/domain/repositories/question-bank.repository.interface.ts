@@ -21,6 +21,7 @@ export interface UpdateQuestionBankInput {
   description?: string;
   statusId?: string;
   tagIds?: number[];
+  fileHash?: string;
 }
 
 export interface IQuestionBankRepository {
@@ -35,7 +36,21 @@ export interface IQuestionBankRepository {
     input: UpdateQuestionBankInput,
   ): Promise<QuestionBankDomain>;
   delete(id: string): Promise<void>;
-  findByHash(hash: string): Promise<QuestionBankDomain | null>;
+  findByHash(
+    hash: string,
+    uploaderId?: string,
+  ): Promise<QuestionBankDomain | null>;
+  findDerivedBanks(
+    fileHash: string,
+    excludeUploaderId: string,
+  ): Promise<
+    Array<{
+      id: string;
+      title: string;
+      createdAt: Date;
+      uploaderUsername: string;
+    }>
+  >;
 }
 
 export const QUESTION_BANK_REPOSITORY = Symbol('IQuestionBankRepository');

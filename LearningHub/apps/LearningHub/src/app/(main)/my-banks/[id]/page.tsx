@@ -23,10 +23,12 @@ import {
     ChevronUp,
     X,
     Save,
+    BarChart2,
+    Users,
 } from 'lucide-react';
 import { clsx } from 'clsx';
 
-type Tab = 'questions' | 'upload' | 'history';
+type Tab = 'questions' | 'upload' | 'history' | 'stats';
 
 export default function BankDetailPage() {
     const { id } = useParams<{ id: string }>();
@@ -52,6 +54,12 @@ export default function BankDetailPage() {
         queryKey: ['bank-history', id],
         queryFn: () => QuizService.getUploadHistory(id),
         enabled: tab === 'history',
+    });
+
+    const { data: derivedBanks = [], isLoading: statsLoading } = useQuery({
+        queryKey: ['bank-derived', id],
+        queryFn: () => QuizService.getDerivedBanks(id),
+        enabled: tab === 'stats',
     });
 
     const { data: allTags = [] } = useQuery({
@@ -265,6 +273,7 @@ export default function BankDetailPage() {
                         { key: 'questions', label: 'Questions', Icon: BookOpen },
                         { key: 'upload', label: 'Import Excel', Icon: Upload },
                         { key: 'history', label: 'Import History', Icon: History },
+                        { key: 'stats', label: 'Thống kê', Icon: BarChart2 },
                     ] as { key: Tab; label: string; Icon: React.ElementType }[]).map(({ key, label, Icon }) => (
                         <button
                             key={key}
@@ -304,6 +313,9 @@ export default function BankDetailPage() {
                     )}
                     {tab === 'history' && (
                         <HistoryTab history={history} isLoading={historyLoading} />
+                    )}
+                    {tab === 'stats' && (
+                        <StatsTab derivedBanks={derivedBanks} isLoading={statsLoading} hasFileHash={!!bank?.fileHash} />
                     )}
                 </div>
             </div>
@@ -678,6 +690,55 @@ function UploadTab({ bankId, onSuccess }: { bankId: string; onSuccess: () => voi
             <Button onClick={() => parseMutation.mutate()} disabled={!file} isLoading={parseMutation.isPending} icon={<FileText className="h-4 w-4" />}>
                 Xem trước câu hỏi
             </Button>
+        </div>
+    );
+}
+
+// ─── Stats Tab ─────────────────────────────────────────────────────────────────
+
+function StatsTab({ derivedBanks, isLoading, hasFileHash }: {
+    derivedBanks: Array<{ id: string; title: string; createdAt: string; uploaderUsername: string }>;
+    isLoading: boolean;
+    hasFileHash: boolean;
+}) {
+    if (!hasFileHash) {
+        return (
+            <div className="flex flex-col items-center py-12 text-center text-slate-500">
+                <BarChart2 className="h-10 w-10 mb-3 text-slate-300" />
+                <p className="font-medium">Chưa có file đính kèm</p>
+                <p className="text-sm mt-1">Upload file Excel để bật tính năng theo dõi sử dụng.</p>
+            </div>
+        );
+    }
+    if (isLoading) {
+        return (
+            <div className="space-y-3">
+                {[1, 2, 3].map(i => <div key={i} className="h-14 animate-pulse bg-slate-100 rounded-xl" />)}
+            </div>
+        );
+    }
+    if (!derivedBanks.length) {
+        return (
+            <div className="flex flex-col items-center py-12 text-center text-slate-500">
+                <Users className="h-10 w-10 mb-3 text-slate-300" />
+                <p className="font-medium">Chưa có ai dùng cùng file này</p>
+            </div>
+        );
+    }
+    return (
+        <div className="space-y-3">
+            <p className="text-sm text-slate-500">{derivedBanks.length} người dùng đã upload cùng file này.</p>
+            {derivedBanks.map(b => (
+                <div key={b.id} className="flex items-center gap-4 rounded-2xl border border-slate-100 bg-slate-50/50 p-4">
+                    <div className="h-10 w-10 rounded-xl bg-violet-100 text-violet-600 flex items-center justify-center shrink-0">
+                        <Users className="h-5 w-5" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-slate-900 truncate">{b.title}</p>
+                        <p className="text-xs text-slate-500 mt-0.5">@{b.uploaderUsername} · {new Date(b.createdAt).toLocaleDateString('vi-VN')}</p>
+                    </div>
+                </div>
+            ))}
         </div>
     );
 }

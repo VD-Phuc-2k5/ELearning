@@ -130,9 +130,30 @@ export class QuizBankController {
 
   @Get('banks/check-hash/:hash')
   @ApiOperation({ summary: 'Kiểm tra ngân hàng câu hỏi qua mã Hash' })
-  async getBankByHash(@Param('hash') hash: string) {
-    const bank = await this.questionBankRepository.findByHash(hash);
+  async getBankByHash(@Param('hash') hash: string, @Request() req: any) {
+    const bank = await this.questionBankRepository.findByHash(
+      hash,
+      req.user.id,
+    );
     return { exists: !!bank, bank };
+  }
+
+  @Get('banks/:id/derived-banks')
+  @ApiOperation({ summary: 'Thống kê ai đã dùng cùng file với bank này' })
+  async getDerivedBanks(@Param('id') id: string, @Request() req: any) {
+    const bank = await this.questionBankRepository.findById(id);
+    if (!bank || bank.uploaderId !== req.user.id) return { data: [] };
+    if (!bank.fileHash) return { data: [] };
+    const derived = await this.questionBankRepository.findDerivedBanks(
+      bank.fileHash,
+      bank.uploaderId,
+    );
+    // ponytail: first uploader = original owner; if any derived bank predates this one, this is a copy not the original
+    const bankCreatedAt = new Date(bank.createdAt);
+    const isOriginal = derived.every(
+      (d) => new Date(d.createdAt) > bankCreatedAt,
+    );
+    return isOriginal ? { data: derived } : { data: [] };
   }
 
   @Patch('banks/:id')

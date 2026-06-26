@@ -1,6 +1,7 @@
 import { Either, Failure } from '@learning-hub/core';
 import {
   BankList,
+  DerivedBank,
   Question,
   QuestionBank,
   QuizResult,
@@ -84,4 +85,5 @@ export interface IQuizRepository {
   checkBankHash(
     hash: string,
   ): Promise<Either<Failure, { exists: boolean; bank?: QuestionBank }>>;
+  getDerivedBanks(bankId: string): Promise<Either<Failure, DerivedBank[]>>;
 }

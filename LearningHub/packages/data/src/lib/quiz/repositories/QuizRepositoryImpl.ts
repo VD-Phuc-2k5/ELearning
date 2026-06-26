@@ -13,6 +13,7 @@ import {
   UpdateBankQuizParams,
   UpdateQuestionQuizParams,
   BankList,
+  DerivedBank,
   Question,
   QuestionBank,
   QuizResult,
@@ -228,6 +229,17 @@ export class QuizRepositoryImpl implements IQuizRepository {
   ): Promise<Either<Failure, { exists: boolean; bank?: QuestionBank }>> {
     try {
       return right(await this.dataSource.checkBankHash(hash, this.token));
+    } catch (e) {
+      return left(toFailure(e));
+    }
+  }
+
+  async getDerivedBanks(
+    bankId: string,
+  ): Promise<Either<Failure, DerivedBank[]>> {
+    try {
+      const res = await this.dataSource.getDerivedBanks(bankId, this.token);
+      return right(res.data ?? []);
     } catch (e) {
       return left(toFailure(e));
     }

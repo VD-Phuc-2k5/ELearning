@@ -178,4 +178,11 @@ export class QuizRemoteDataSourceImpl {
     });
     return res.data;
   }
+
+  async getDerivedBanks(bankId: string, token: string) {
+    const res = await this.api.get(`/api/quiz/banks/${bankId}/derived-banks`, {
+      headers: this.auth(token),
+    });
+    return res.data;
+  }
 }

@@ -23,7 +23,7 @@ export class UploadExcelUseCase {
     private readonly questionBankRepository: IQuestionBankRepository,
     @Inject(UPLOAD_REPOSITORY)
     private readonly uploadRepository: IUploadRepository,
-  ) { }
+  ) {}
 
   async execute(
     bankId: string,
@@ -34,11 +34,13 @@ export class UploadExcelUseCase {
   ): Promise<{ message: string; totalQuestionsImported: number }> {
     const bank = await this.questionBankRepository.findById(bankId);
     if (!bank) {
-      throw new NotFoundException(`Không tìm thấy ngân hàng câu hỏi với ID: ${bankId}`);
+      throw new NotFoundException(
+        `Không tìm thấy ngân hàng câu hỏi với ID: ${bankId}`,
+      );
     }
 
     if (fileHash) {
-      await this.questionBankRepository.update(bankId, { fileHash } as any);
+      await this.questionBankRepository.update(bankId, { fileHash });
     }
 
     const parsedQuestions = await this.excelParserService.parse(fileBuffer);
@@ -53,8 +55,14 @@ export class UploadExcelUseCase {
 
     await this.questionRepository.createMany(createInputs);
 
-    const allQuestions = await this.questionRepository.findByBankId(bankId, false);
-    await this.questionBankRepository.updateTotalQuestions(bankId, allQuestions.length);
+    const allQuestions = await this.questionRepository.findByBankId(
+      bankId,
+      false,
+    );
+    await this.questionBankRepository.updateTotalQuestions(
+      bankId,
+      allQuestions.length,
+    );
 
     await this.uploadRepository.create({
       questionBankId: bankId,

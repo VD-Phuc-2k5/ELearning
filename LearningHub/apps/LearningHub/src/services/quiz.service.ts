@@ -132,6 +132,11 @@ const QuizService = {
         return response.data;
     },
 
+    getDerivedBanks: async (bankId: string): Promise<Array<{ id: string; title: string; createdAt: string; uploaderUsername: string }>> => {
+        const response = await internalApi.get(`quiz/banks/${bankId}/derived-banks`);
+        return response.data.data;
+    },
+
     checkHash: async (hash: string): Promise<{ exists: boolean; bank?: QuestionBank }> => {
         try {
             const response = await internalApi.get(`quiz/banks/check-hash/${hash}`);

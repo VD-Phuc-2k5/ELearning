@@ -44,3 +44,4 @@ export * from './lib/quiz/usecases/GetTagsQuizUsecase';
 export * from './lib/quiz/usecases/CreateTagQuizUsecase';
 export * from './lib/quiz/usecases/DeleteTagQuizUsecase';
 export * from './lib/quiz/usecases/CheckBankHashQuizUsecase';
+export * from './lib/quiz/usecases/GetDerivedBanksQuizUsecase';

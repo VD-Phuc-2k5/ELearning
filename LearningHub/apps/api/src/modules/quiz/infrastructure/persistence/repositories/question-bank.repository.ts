@@ -106,6 +106,7 @@ export class QuestionBankRepository implements IQuestionBankRepository {
     if (input.title !== undefined) entity.title = input.title;
     if (input.description !== undefined) entity.description = input.description;
     if (input.statusId !== undefined) entity.statusId = input.statusId;
+    if (input.fileHash !== undefined) entity.fileHash = input.fileHash;
     if (input.tagIds !== undefined) {
       entity.tags = input.tagIds.map((tagId) => ({ id: tagId })) as any;
     }
@@ -133,12 +134,41 @@ export class QuestionBankRepository implements IQuestionBankRepository {
     });
   }
 
-  async findByHash(hash: string): Promise<QuestionBankDomain | null> {
+  async findByHash(
+    hash: string,
+    uploaderId?: string,
+  ): Promise<QuestionBankDomain | null> {
     const entity = await this.repo.findOne({
-      where: { fileHash: hash },
+      where: { fileHash: hash, ...(uploaderId ? { uploaderId } : {}) },
       relations: { tags: true, status: true },
     });
     if (!entity) return null;
     return this.toDomain(entity);
+  }
+
+  async findDerivedBanks(
+    fileHash: string,
+    excludeUploaderId: string,
+  ): Promise<
+    Array<{
+      id: string;
+      title: string;
+      createdAt: Date;
+      uploaderUsername: string;
+    }>
+  > {
+    const rows = await this.repo
+      .createQueryBuilder('bank')
+      .leftJoin('bank.uploader', 'uploader')
+      .select(['bank.id', 'bank.title', 'bank.createdAt', 'uploader.username'])
+      .where('bank.fileHash = :fileHash', { fileHash })
+      .andWhere('bank.uploaderId != :excludeUploaderId', { excludeUploaderId })
+      .getRawMany();
+    return rows.map((r) => ({
+      id: r.bank_id,
+      title: r.bank_title,
+      createdAt: r.bank_created_at,
+      uploaderUsername: r.uploader_username,
+    }));
   }
 }
