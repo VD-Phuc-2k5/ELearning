@@ -13,6 +13,15 @@ import {
   UploadedFile,
   BadRequestException,
 } from '@nestjs/common';
+
+interface AuthenticatedRequest {
+  user: { id: string };
+}
+
+interface UploadedFile {
+  buffer: Buffer;
+  originalname: string;
+}
 import {
   ApiBearerAuth,
   ApiConsumes,
@@ -34,6 +43,10 @@ import { UpdateQuestionUseCase } from '../../application/use-cases/update-questi
 import { DeleteQuestionUseCase } from '../../application/use-cases/delete-question.use-case';
 import { UploadExcelUseCase } from '../../application/use-cases/upload-excel.use-case';
 import { GetUploadHistoryUseCase } from '../../application/use-cases/get-upload-history.use-case';
+import { CheckBankHashUseCase } from '../../application/use-cases/check-bank-hash.use-case';
+import { GetDerivedBanksUseCase } from '../../application/use-cases/get-derived-banks.use-case';
+import { UploadQuestionsUseCase } from '../../application/use-cases/upload-questions.use-case';
+import { ParseExcelUseCase } from '../../application/use-cases/parse-excel.use-case';
 import {
   CreateQuestionBankRequestDto,
   UploadQuestionsRequestDto,
@@ -42,20 +55,6 @@ import {
   UpdateQuestionBankRequestDto,
   UpdateQuestionRequestDto,
 } from '../dto/quiz.request.dto';
-import { Inject } from '@nestjs/common';
-import {
-  IQuestionRepository,
-  QUESTION_REPOSITORY,
-} from '../../domain/repositories/question.repository.interface';
-import {
-  IQuestionBankRepository,
-  QUESTION_BANK_REPOSITORY,
-} from '../../domain/repositories/question-bank.repository.interface';
-import {
-  IUploadRepository,
-  UPLOAD_REPOSITORY,
-} from '../../domain/repositories/upload.repository.interface';
-import { ExcelParserService } from '../../infrastructure/services/excel-parser.service';
 
 @ApiTags('Quiz - Ngân hàng câu hỏi')
 @ApiBearerAuth()
@@ -75,13 +74,10 @@ export class QuizBankController {
     private readonly deleteQuestionUseCase: DeleteQuestionUseCase,
     private readonly uploadExcelUseCase: UploadExcelUseCase,
     private readonly getUploadHistoryUseCase: GetUploadHistoryUseCase,
-    @Inject(QUESTION_REPOSITORY)
-    private readonly questionRepository: IQuestionRepository,
-    @Inject(QUESTION_BANK_REPOSITORY)
-    private readonly questionBankRepository: IQuestionBankRepository,
-    @Inject(UPLOAD_REPOSITORY)
-    private readonly uploadRepository: IUploadRepository,
-    private readonly excelParserService: ExcelParserService,
+    private readonly checkBankHashUseCase: CheckBankHashUseCase,
+    private readonly getDerivedBanksUseCase: GetDerivedBanksUseCase,
+    private readonly uploadQuestionsUseCase: UploadQuestionsUseCase,
+    private readonly parseExcelUseCase: ParseExcelUseCase,
   ) {}
 
   // ─── Ngân hàng câu hỏi ───────────────────────────────────────────────────
@@ -90,7 +86,7 @@ export class QuizBankController {
   @ApiOperation({ summary: 'Tạo mới một ngân hàng câu hỏi (Admin/Uploader)' })
   async createBank(
     @Body() dto: CreateQuestionBankRequestDto,
-    @Request() req: any,
+    @Request() req: AuthenticatedRequest,
   ) {
     return this.createQuestionBankUseCase.execute(dto, req.user.id);
   }
@@ -105,7 +101,7 @@ export class QuizBankController {
   @ApiQuery({ name: 'tagId', required: false, type: Number })
   @ApiQuery({ name: 'statusId', required: false, type: String })
   async getBankList(
-    @Request() req: any,
+    @Request() req: AuthenticatedRequest,
     @Query('page') page?: number,
     @Query('limit') limit?: number,
     @Query('search') search?: string,
@@ -130,30 +126,20 @@ export class QuizBankController {
 
   @Get('banks/check-hash/:hash')
   @ApiOperation({ summary: 'Kiểm tra ngân hàng câu hỏi qua mã Hash' })
-  async getBankByHash(@Param('hash') hash: string, @Request() req: any) {
-    const bank = await this.questionBankRepository.findByHash(
-      hash,
-      req.user.id,
-    );
-    return { exists: !!bank, bank };
+  async getBankByHash(
+    @Param('hash') hash: string,
+    @Request() req: AuthenticatedRequest,
+  ) {
+    return this.checkBankHashUseCase.execute(hash, req.user.id);
   }
 
   @Get('banks/:id/derived-banks')
   @ApiOperation({ summary: 'Thống kê ai đã dùng cùng file với bank này' })
-  async getDerivedBanks(@Param('id') id: string, @Request() req: any) {
-    const bank = await this.questionBankRepository.findById(id);
-    if (!bank || bank.uploaderId !== req.user.id) return { data: [] };
-    if (!bank.fileHash) return { data: [] };
-    const derived = await this.questionBankRepository.findDerivedBanks(
-      bank.fileHash,
-      bank.uploaderId,
-    );
-    // ponytail: first uploader = original owner; if any derived bank predates this one, this is a copy not the original
-    const bankCreatedAt = new Date(bank.createdAt);
-    const isOriginal = derived.every(
-      (d) => new Date(d.createdAt) > bankCreatedAt,
-    );
-    return isOriginal ? { data: derived } : { data: [] };
+  async getDerivedBanks(
+    @Param('id') id: string,
+    @Request() req: AuthenticatedRequest,
+  ) {
+    return this.getDerivedBanksUseCase.execute(id, req.user.id);
   }
 
   @Patch('banks/:id')
@@ -176,31 +162,13 @@ export class QuizBankController {
   async uploadQuestions(
     @Param('id') bankId: string,
     @Body() dto: UploadQuestionsRequestDto,
-    @Request() req: any,
+    @Request() req: AuthenticatedRequest,
   ) {
-    await this.questionRepository.createMany(
-      dto.questions.map((q) => ({
-        questionBankId: bankId,
-        content: q.content,
-        explanation: q.explanation,
-        answerOptions: q.answerOptions,
-        correctOptionLabels: q.correctOptionLabels,
-      })),
-    );
-    const questions = await this.questionRepository.findByBankId(bankId, false);
-    await this.questionBankRepository.updateTotalQuestions(
+    return this.uploadQuestionsUseCase.execute(
       bankId,
-      questions.length,
+      dto.questions,
+      req.user.id,
     );
-
-    await this.uploadRepository.create({
-      questionBankId: bankId,
-      uploadedBy: req.user.id,
-      fileName: null,
-      totalQuestionsImported: dto.questions.length,
-    });
-
-    return { message: `Đã thêm ${dto.questions.length} câu hỏi thành công.` };
   }
 
   @Post('banks/:id/upload-excel')
@@ -209,18 +177,19 @@ export class QuizBankController {
   @ApiOperation({ summary: 'Import câu hỏi từ file Excel (.xlsx)' })
   async uploadExcel(
     @Param('id') bankId: string,
-    @UploadedFile() file: any,
-    @Request() req: any,
+    @UploadedFile() file: UploadedFile,
+    @Request() req: AuthenticatedRequest,
+    @Body('fileHash') fileHash?: string,
   ) {
     if (!file) {
-      throw new Error('Vui lòng chọn file Excel để upload.');
+      throw new BadRequestException('Vui lòng chọn file Excel để upload.');
     }
     return this.uploadExcelUseCase.execute(
       bankId,
       file.buffer,
       file.originalname,
       req.user.id,
-      req.body.fileHash,
+      fileHash,
     );
   }
 
@@ -231,10 +200,13 @@ export class QuizBankController {
     summary:
       'Parse file Excel, trả về danh sách câu hỏi để preview (không lưu DB)',
   })
-  async parseExcel(@Param('id') _bankId: string, @UploadedFile() file: any) {
+  async parseExcel(
+    @Param('id') _bankId: string,
+    @UploadedFile() file: UploadedFile,
+  ) {
     if (!file)
       throw new BadRequestException('Vui lòng chọn file Excel để parse.');
-    const questions = await this.excelParserService.parse(file.buffer);
+    const questions = await this.parseExcelUseCase.execute(file.buffer);
     return { questions };
   }
 

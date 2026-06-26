@@ -1,9 +1,23 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
-import { Inject } from '@nestjs/common';
-import { ITagRepository, TAG_REPOSITORY } from '../../domain/repositories/tag.repository.interface';
-import { CreateTagRequestDto, UpdateTagRequestDto } from '../dto/quiz.request.dto';
+import { GetAllTagsUseCase } from '../../application/use-cases/get-all-tags.use-case';
+import { CreateTagUseCase } from '../../application/use-cases/create-tag.use-case';
+import { UpdateTagUseCase } from '../../application/use-cases/update-tag.use-case';
+import { DeleteTagUseCase } from '../../application/use-cases/delete-tag.use-case';
+import {
+  CreateTagRequestDto,
+  UpdateTagRequestDto,
+} from '../dto/quiz.request.dto';
 
 @ApiTags('Quiz - Tags')
 @ApiBearerAuth()
@@ -11,35 +25,34 @@ import { CreateTagRequestDto, UpdateTagRequestDto } from '../dto/quiz.request.dt
 @Controller('quiz/tags')
 export class QuizTagController {
   constructor(
-    @Inject(TAG_REPOSITORY)
-    private readonly tagRepository: ITagRepository,
+    private readonly getAllTagsUseCase: GetAllTagsUseCase,
+    private readonly createTagUseCase: CreateTagUseCase,
+    private readonly updateTagUseCase: UpdateTagUseCase,
+    private readonly deleteTagUseCase: DeleteTagUseCase,
   ) {}
 
   @Get()
   @ApiOperation({ summary: 'Lấy toàn bộ danh sách tag' })
-  async getAllTags() {
-    return this.tagRepository.findAll();
+  getAllTags() {
+    return this.getAllTagsUseCase.execute();
   }
 
   @Post()
   @ApiOperation({ summary: 'Tạo tag mới (Admin)' })
-  async createTag(@Body() dto: CreateTagRequestDto) {
-    return this.tagRepository.create(dto.name, dto.description);
+  createTag(@Body() dto: CreateTagRequestDto) {
+    return this.createTagUseCase.execute(dto.name, dto.description);
   }
 
   @Patch(':id')
   @ApiOperation({ summary: 'Cập nhật tag (Admin)' })
-  async updateTag(
-    @Param('id') id: number,
-    @Body() dto: UpdateTagRequestDto,
-  ) {
-    return this.tagRepository.update(id, dto.name, dto.description);
+  updateTag(@Param('id') id: number, @Body() dto: UpdateTagRequestDto) {
+    return this.updateTagUseCase.execute(id, dto.name, dto.description);
   }
 
   @Delete(':id')
   @ApiOperation({ summary: 'Xóa tag (Admin)' })
   async deleteTag(@Param('id') id: number) {
-    await this.tagRepository.delete(id);
+    await this.deleteTagUseCase.execute(id);
     return { message: 'Đã xóa tag thành công.' };
   }
 }
