@@ -1,0 +1,352 @@
+---
+description: NestJS Clean Architecture Standards
+globs:
+  - "src/**/*.ts"
+---
+
+# NestJS Clean Architecture Standards
+
+## Architecture Overview
+
+The project must follow Clean Architecture principles.
+
+Dependency flow:
+
+```txt
+Presentation
+    ↓
+Application
+    ↓
+Domain
+
+Infrastructure
+    ↑
+```
+
+Dependencies must always point inward.
+
+---
+
+## Module Structure
+
+Every feature module must follow:
+
+```txt
+src/modules/<module-name>/
+├── domain/
+│   ├── entities/
+│   ├── value-objects/
+│   ├── enums/
+│   └── repositories/
+│
+├── application/
+│   ├── dto/
+│   ├── use-cases/
+│   ├── interfaces/
+│   └── mappers/
+│
+├── infrastructure/
+│   ├── persistence/
+│   │   ├── entities/
+│   │   └── repositories/
+│   ├── providers/
+│   ├── services/
+│   ├── guards/
+│   └── strategies/
+│
+├── presentation/
+│   ├── controllers/
+│   ├── requests/
+│   └── responses/
+│
+└── <module>.module.ts
+```
+
+---
+
+## Domain Layer
+
+Domain contains business entities and business rules.
+
+Allowed:
+
+- Entities
+- Value Objects
+- Enums
+- Repository Contracts
+- Domain Events
+
+Forbidden:
+
+- NestJS decorators
+- TypeORM decorators
+- Prisma models
+- HTTP logic
+- Database queries
+- JWT logic
+- Redis logic
+- External APIs
+
+Example:
+
+```ts
+export class User {
+  constructor(
+    public readonly id: string,
+    public email: string,
+  ) {}
+}
+```
+
+Never use:
+
+```ts
+@Entity()
+export class User {}
+```
+
+inside the Domain layer.
+
+---
+
+## Application Layer
+
+Application contains Use Cases.
+
+Each use case must represent a single business action.
+
+Naming:
+
+```txt
+create-user.use-case.ts
+update-user.use-case.ts
+delete-user.use-case.ts
+login.use-case.ts
+refresh-token.use-case.ts
+```
+
+Use cases should expose:
+
+```ts
+execute()
+```
+
+Example:
+
+```ts
+export class CreateUserUseCase {
+  async execute(dto: CreateUserDto) {}
+}
+```
+
+Forbidden:
+
+- TypeORM Repository
+- Prisma Client
+- Raw SQL
+- Axios
+- HTTP requests
+
+Application must depend only on abstractions.
+
+---
+
+## Repository Pattern
+
+Repository interfaces belong to:
+
+```txt
+domain/repositories
+```
+
+Example:
+
+```ts
+export interface IUserRepository {
+  findById(id: string): Promise<User | null>;
+  create(user: User): Promise<User>;
+}
+```
+
+Repository implementations belong to:
+
+```txt
+infrastructure/persistence/repositories
+```
+
+Example:
+
+```ts
+export class UserRepository
+  implements IUserRepository {}
+```
+
+---
+
+## Infrastructure Layer
+
+Infrastructure contains all external integrations.
+
+Examples:
+
+- TypeORM
+- PostgreSQL
+- Redis
+- JWT
+- RabbitMQ
+- Kafka
+- AWS S3
+- Cloudinary
+- Mail Providers
+
+Infrastructure implements contracts defined by Domain/Application.
+
+Business logic must never be placed here.
+
+---
+
+## Presentation Layer
+
+Presentation handles communication with clients.
+
+Allowed:
+
+- Controllers
+- GraphQL Resolvers
+- WebSocket Gateways
+- Request Validation
+- Response Mapping
+
+Controllers must remain thin.
+
+Example:
+
+```ts
+@Post()
+create(@Body() dto: CreateUserDto) {
+  return this.createUserUseCase.execute(dto);
+}
+```
+
+Never:
+
+```ts
+@Post()
+async create() {
+  return this.userRepository.save(...);
+}
+```
+
+---
+
+## Entity Separation
+
+Always separate:
+
+### Domain Entity
+
+```txt
+domain/entities/user.ts
+```
+
+### Database Entity
+
+```txt
+infrastructure/persistence/entities/user.entity.ts
+```
+
+Never use TypeORM entities as domain entities.
+
+---
+
+## Dependency Injection
+
+Use constructor injection only.
+
+Example:
+
+```ts
+constructor(
+  private readonly createUserUseCase: CreateUserUseCase,
+) {}
+```
+
+Avoid service locator patterns.
+
+---
+
+## Shared Folder
+
+Shared contains reusable cross-module components.
+
+Allowed:
+
+```txt
+shared/constants
+shared/decorators
+shared/exceptions
+shared/filters
+shared/guards
+shared/interceptors
+shared/pipes
+shared/types
+shared/utils
+```
+
+Forbidden:
+
+```txt
+shared/user.service.ts
+shared/auth.service.ts
+shared/order.use-case.ts
+```
+
+Business logic must remain inside feature modules.
+
+---
+
+## Naming Conventions
+
+Files:
+
+```txt
+create-user.use-case.ts
+update-user.use-case.ts
+
+user.repository.ts
+user.entity.ts
+
+auth.controller.ts
+
+jwt.strategy.ts
+roles.guard.ts
+```
+
+Classes:
+
+```txt
+CreateUserUseCase
+UpdateUserUseCase
+
+UserRepository
+
+AuthController
+
+JwtStrategy
+RolesGuard
+```
+
+---
+
+## Golden Rules
+
+1. Controllers must not contain business logic.
+2. Repositories must not contain business rules.
+3. Business logic belongs only in Use Cases.
+4. Domain must be framework-independent.
+5. Infrastructure implements abstractions.
+6. Use dependency inversion everywhere possible.
+7. Never inject TypeORM repositories directly into Controllers.
+8. Never access the database from the Presentation layer.
+9. One Use Case = One Business Action.
+10. Keep modules isolated and feature-based.
