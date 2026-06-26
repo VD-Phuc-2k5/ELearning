@@ -15,7 +15,7 @@ export class QuestionBankRepository implements IQuestionBankRepository {
   constructor(
     @InjectRepository(QuestionBankEntity)
     private readonly repo: Repository<QuestionBankEntity>,
-  ) {}
+  ) { }
 
   private toDomain(entity: QuestionBankEntity): QuestionBankDomain {
     return {
@@ -106,5 +106,14 @@ export class QuestionBankRepository implements IQuestionBankRepository {
 
   async delete(id: string): Promise<void> {
     await this.repo.delete(id);
+  }
+
+  async findByHash(hash: string): Promise<QuestionBankDomain | null> {
+    const entity = await this.repo.findOne({
+      where: { fileHash: hash },
+      relations: { tags: true, status: true },
+    });
+    if (!entity) return null;
+    return this.toDomain(entity);
   }
 }

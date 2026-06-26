@@ -11,6 +11,7 @@ import {
   UseGuards,
   UseInterceptors,
   UploadedFile,
+  BadRequestException,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiConsumes, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
@@ -48,6 +49,7 @@ import {
   IUploadRepository,
   UPLOAD_REPOSITORY,
 } from '../../domain/repositories/upload.repository.interface';
+import { ExcelParserService } from '../../infrastructure/services/excel-parser.service';
 
 @ApiTags('Quiz - Ngân hàng câu hỏi')
 @ApiBearerAuth()
@@ -73,7 +75,8 @@ export class QuizBankController {
     private readonly questionBankRepository: IQuestionBankRepository,
     @Inject(UPLOAD_REPOSITORY)
     private readonly uploadRepository: IUploadRepository,
-  ) {}
+    private readonly excelParserService: ExcelParserService,
+  ) { }
 
   // ─── Ngân hàng câu hỏi ───────────────────────────────────────────────────
 
@@ -107,6 +110,13 @@ export class QuizBankController {
   @ApiOperation({ summary: 'Xem chi tiết một ngân hàng câu hỏi' })
   async getBankDetail(@Param('id') id: string) {
     return this.getQuestionBankDetailUseCase.execute(id);
+  }
+
+  @Get('banks/check-hash/:hash')
+  @ApiOperation({ summary: 'Kiểm tra ngân hàng câu hỏi qua mã Hash' })
+  async getBankByHash(@Param('hash') hash: string) {
+    const bank = await this.questionBankRepository.findByHash(hash);
+    return { exists: !!bank, bank };
   }
 
   @Patch('banks/:id')
@@ -170,7 +180,21 @@ export class QuizBankController {
       file.buffer,
       file.originalname,
       req.user.id,
+      req.body.fileHash,
     );
+  }
+
+  @Post('banks/:id/parse-excel')
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'Parse file Excel, trả về danh sách câu hỏi để preview (không lưu DB)' })
+  async parseExcel(
+    @Param('id') _bankId: string,
+    @UploadedFile() file: any,
+  ) {
+    if (!file) throw new BadRequestException('Vui lòng chọn file Excel để parse.');
+    const questions = await this.excelParserService.parse(file.buffer);
+    return { questions };
   }
 
   @Get('banks/:id/upload-history')

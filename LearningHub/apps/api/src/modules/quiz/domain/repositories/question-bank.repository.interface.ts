@@ -29,6 +29,7 @@ export interface IQuestionBankRepository {
   updateTotalQuestions(id: string, total: number): Promise<void>;
   update(id: string, input: UpdateQuestionBankInput): Promise<QuestionBankDomain>;
   delete(id: string): Promise<void>;
+  findByHash(hash: string): Promise<QuestionBankDomain | null>;
 }
 
 export const QUESTION_BANK_REPOSITORY = Symbol('IQuestionBankRepository');

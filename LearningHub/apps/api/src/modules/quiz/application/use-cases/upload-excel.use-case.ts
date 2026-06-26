@@ -23,17 +23,22 @@ export class UploadExcelUseCase {
     private readonly questionBankRepository: IQuestionBankRepository,
     @Inject(UPLOAD_REPOSITORY)
     private readonly uploadRepository: IUploadRepository,
-  ) {}
+  ) { }
 
   async execute(
     bankId: string,
     fileBuffer: Buffer,
     fileName: string,
     uploaderId: string,
+    fileHash?: string,
   ): Promise<{ message: string; totalQuestionsImported: number }> {
     const bank = await this.questionBankRepository.findById(bankId);
     if (!bank) {
       throw new NotFoundException(`Không tìm thấy ngân hàng câu hỏi với ID: ${bankId}`);
+    }
+
+    if (fileHash) {
+      await this.questionBankRepository.update(bankId, { fileHash } as any);
     }
 
     const parsedQuestions = await this.excelParserService.parse(fileBuffer);
