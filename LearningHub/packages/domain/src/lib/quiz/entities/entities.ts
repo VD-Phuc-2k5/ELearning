@@ -28,6 +28,7 @@ export interface Question {
   readonly content: string;
   readonly explanation?: string;
   readonly answerOptions: AnswerOption[];
+  readonly correctAnswerOptionIds?: string[];
 }
 
 export interface UploadHistory {
@@ -36,7 +37,7 @@ export interface UploadHistory {
   readonly uploadedBy: string;
   readonly fileName?: string;
   readonly totalQuestionsImported: number;
-  readonly createdAt: string;
+  readonly uploadedAt: string;
 }
 
 export interface QuizResult {

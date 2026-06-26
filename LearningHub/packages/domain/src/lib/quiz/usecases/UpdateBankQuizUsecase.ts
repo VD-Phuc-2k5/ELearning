@@ -1,8 +1,8 @@
 import { Either, Failure, Usecase } from '@learning-hub/core';
-import { IQuizRepository, UpdateBankQuizParams } from '../repositories/IQuizRepository';
+import type { IQuizRepository, UpdateBankQuizParams } from '../repositories/IQuizRepository';
 import { QuestionBank } from '../entities/entities';
 
-export { UpdateBankQuizParams };
+export type { UpdateBankQuizParams };
 
 export class UpdateBankQuizParams2 {
   constructor(public id: string, public data: UpdateBankQuizParams) {}

@@ -3,12 +3,22 @@ import { IQuizRepository } from '../repositories/IQuizRepository';
 import { Question } from '../entities/entities';
 
 export class GetQuestionsForQuizParams {
-  constructor(public bankId: string) {}
+  constructor(
+    public bankId: string,
+    public showAnswers = false,
+  ) {}
 }
 
-export class GetQuestionsForQuizUsecase implements Usecase<Question[], GetQuestionsForQuizParams> {
+export class GetQuestionsForQuizUsecase
+  implements Usecase<Question[], GetQuestionsForQuizParams>
+{
   constructor(private repository: IQuizRepository) {}
-  execute(params: GetQuestionsForQuizParams): Promise<Either<Failure, Question[]>> {
-    return this.repository.getQuestionsForQuiz(params.bankId);
+  execute(
+    params: GetQuestionsForQuizParams,
+  ): Promise<Either<Failure, Question[]>> {
+    return this.repository.getQuestionsForQuiz(
+      params.bankId,
+      params.showAnswers,
+    );
   }
 }

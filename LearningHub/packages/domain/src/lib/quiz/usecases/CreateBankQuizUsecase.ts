@@ -1,8 +1,8 @@
 import { Either, Failure, Usecase } from '@learning-hub/core';
-import { IQuizRepository, CreateBankQuizParams } from '../repositories/IQuizRepository';
+import type { IQuizRepository, CreateBankQuizParams } from '../repositories/IQuizRepository';
 import { QuestionBank } from '../entities/entities';
 
-export { CreateBankQuizParams };
+export type { CreateBankQuizParams };
 
 export class CreateBankQuizUsecase implements Usecase<QuestionBank, CreateBankQuizParams> {
   constructor(private repository: IQuizRepository) {}

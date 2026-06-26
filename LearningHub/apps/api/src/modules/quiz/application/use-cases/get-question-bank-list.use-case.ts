@@ -11,6 +11,7 @@ export interface GetQuestionBankListDto {
   search?: string;
   tagId?: number;
   statusId?: string;
+  uploaderId?: string;
 }
 
 @Injectable()
@@ -22,7 +23,12 @@ export class GetQuestionBankListUseCase {
 
   async execute(
     dto: GetQuestionBankListDto,
-  ): Promise<{ data: QuestionBankDomain[]; total: number; page: number; limit: number }> {
+  ): Promise<{
+    data: QuestionBankDomain[];
+    total: number;
+    page: number;
+    limit: number;
+  }> {
     const page = dto.page ?? 1;
     const limit = dto.limit ?? 10;
     const { data, total } = await this.questionBankRepository.findAll({

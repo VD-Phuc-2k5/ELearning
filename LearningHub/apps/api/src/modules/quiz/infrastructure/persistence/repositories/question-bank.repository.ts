@@ -1,7 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { QuestionBankEntity } from '../entities/question-bank.entity';
+import { QuestionEntity } from '../entities/question.entity';
+import { AnswerOptionEntity } from '../entities/answer-option.entity';
+import { CorrectAnswerEntity } from '../entities/correct-answer.entity';
+import { QuestionBankUploadEntity } from '../entities/question-bank-upload.entity';
 import {
   IQuestionBankRepository,
   CreateQuestionBankInput,
@@ -15,7 +19,7 @@ export class QuestionBankRepository implements IQuestionBankRepository {
   constructor(
     @InjectRepository(QuestionBankEntity)
     private readonly repo: Repository<QuestionBankEntity>,
-  ) { }
+  ) {}
 
   private toDomain(entity: QuestionBankEntity): QuestionBankDomain {
     return {
@@ -47,12 +51,15 @@ export class QuestionBankRepository implements IQuestionBankRepository {
   async findAll(
     input: GetQuestionBankListInput,
   ): Promise<{ data: QuestionBankDomain[]; total: number }> {
-    const { page = 1, limit = 10, search, tagId, statusId } = input;
+    const { page = 1, limit = 10, search, tagId, statusId, uploaderId } = input;
     const qb = this.repo
       .createQueryBuilder('bank')
       .leftJoinAndSelect('bank.tags', 'tag')
       .leftJoinAndSelect('bank.status', 'status');
 
+    if (uploaderId) {
+      qb.andWhere('bank.uploaderId = :uploaderId', { uploaderId });
+    }
     if (search) {
       qb.andWhere('bank.title ILIKE :search', { search: `%${search}%` });
     }
@@ -84,7 +91,10 @@ export class QuestionBankRepository implements IQuestionBankRepository {
     await this.repo.update(id, { totalQuestions: total });
   }
 
-  async update(id: string, input: UpdateQuestionBankInput): Promise<QuestionBankDomain> {
+  async update(
+    id: string,
+    input: UpdateQuestionBankInput,
+  ): Promise<QuestionBankDomain> {
     const entity = await this.repo.findOne({
       where: { id },
       relations: { tags: true },
@@ -105,7 +115,22 @@ export class QuestionBankRepository implements IQuestionBankRepository {
   }
 
   async delete(id: string): Promise<void> {
-    await this.repo.delete(id);
+    await this.repo.manager.transaction(async (em) => {
+      const qIds = (
+        await em.find(QuestionEntity, {
+          where: { questionBankId: id },
+          select: { id: true },
+        })
+      ).map((q) => q.id);
+      if (qIds.length) {
+        await em.delete(CorrectAnswerEntity, { questionId: In(qIds) });
+        await em.delete(AnswerOptionEntity, { questionId: In(qIds) });
+      }
+      await em.delete(QuestionEntity, { questionBankId: id });
+      await em.delete(QuestionBankUploadEntity, { questionBankId: id });
+      await em.delete(QuestionBankEntity, { id });
+      // question_bank_tags: DB FK has ON DELETE CASCADE, no manual delete needed
+    });
   }
 
   async findByHash(hash: string): Promise<QuestionBankDomain | null> {

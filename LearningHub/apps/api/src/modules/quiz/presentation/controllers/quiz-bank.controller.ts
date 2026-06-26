@@ -13,7 +13,13 @@ import {
   UploadedFile,
   BadRequestException,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiConsumes, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiConsumes,
+  ApiOperation,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { CreateQuestionBankUseCase } from '../../application/use-cases/create-question-bank.use-case';
@@ -76,7 +82,7 @@ export class QuizBankController {
     @Inject(UPLOAD_REPOSITORY)
     private readonly uploadRepository: IUploadRepository,
     private readonly excelParserService: ExcelParserService,
-  ) { }
+  ) {}
 
   // ─── Ngân hàng câu hỏi ───────────────────────────────────────────────────
 
@@ -90,20 +96,30 @@ export class QuizBankController {
   }
 
   @Get('banks')
-  @ApiOperation({ summary: 'Lấy danh sách ngân hàng câu hỏi (có phân trang & lọc)' })
+  @ApiOperation({
+    summary: 'Lấy danh sách ngân hàng câu hỏi (có phân trang & lọc)',
+  })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'search', required: false, type: String })
   @ApiQuery({ name: 'tagId', required: false, type: Number })
   @ApiQuery({ name: 'statusId', required: false, type: String })
   async getBankList(
+    @Request() req: any,
     @Query('page') page?: number,
     @Query('limit') limit?: number,
     @Query('search') search?: string,
     @Query('tagId') tagId?: number,
     @Query('statusId') statusId?: string,
   ) {
-    return this.getQuestionBankListUseCase.execute({ page, limit, search, tagId, statusId });
+    return this.getQuestionBankListUseCase.execute({
+      page,
+      limit,
+      search,
+      tagId,
+      statusId,
+      uploaderId: req.user.id,
+    });
   }
 
   @Get('banks/:id')
@@ -151,7 +167,10 @@ export class QuizBankController {
       })),
     );
     const questions = await this.questionRepository.findByBankId(bankId, false);
-    await this.questionBankRepository.updateTotalQuestions(bankId, questions.length);
+    await this.questionBankRepository.updateTotalQuestions(
+      bankId,
+      questions.length,
+    );
 
     await this.uploadRepository.create({
       questionBankId: bankId,
@@ -187,12 +206,13 @@ export class QuizBankController {
   @Post('banks/:id/parse-excel')
   @UseInterceptors(FileInterceptor('file'))
   @ApiConsumes('multipart/form-data')
-  @ApiOperation({ summary: 'Parse file Excel, trả về danh sách câu hỏi để preview (không lưu DB)' })
-  async parseExcel(
-    @Param('id') _bankId: string,
-    @UploadedFile() file: any,
-  ) {
-    if (!file) throw new BadRequestException('Vui lòng chọn file Excel để parse.');
+  @ApiOperation({
+    summary:
+      'Parse file Excel, trả về danh sách câu hỏi để preview (không lưu DB)',
+  })
+  async parseExcel(@Param('id') _bankId: string, @UploadedFile() file: any) {
+    if (!file)
+      throw new BadRequestException('Vui lòng chọn file Excel để parse.');
     const questions = await this.excelParserService.parse(file.buffer);
     return { questions };
   }
@@ -207,10 +227,17 @@ export class QuizBankController {
 
   @Get('banks/:id/questions')
   @ApiOperation({
-    summary: 'Lấy danh sách câu hỏi để làm bài (đáp án đúng bị ẩn)',
+    summary: 'Lấy danh sách câu hỏi (showAnswers=true để lấy đáp án đúng)',
   })
-  async getQuestionsForQuiz(@Param('id') bankId: string) {
-    return this.getQuestionsForQuizUseCase.execute(bankId);
+  @ApiQuery({ name: 'showAnswers', required: false, type: Boolean })
+  async getQuestionsForQuiz(
+    @Param('id') bankId: string,
+    @Query('showAnswers') showAnswers?: string,
+  ) {
+    return this.getQuestionsForQuizUseCase.execute(
+      bankId,
+      showAnswers === 'true',
+    );
   }
 
   @Post('questions/:id/verify')
