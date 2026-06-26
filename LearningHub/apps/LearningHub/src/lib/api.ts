@@ -17,83 +17,64 @@ export const setAccessToken = (token: string | null) => {
     }
 };
 
-api.interceptors.request.use((config) => {
-    if (accessToken && config.headers) {
-        config.headers.Authorization = `Bearer ${accessToken}`;
-    }
-    return config;
-});
+// ponytail: shared promise prevents parallel refresh calls (token rotation race condition)
+let refreshPromise: Promise<string> | null = null;
 
-api.interceptors.response.use(
-    (response) => response,
-    async (error) => {
+const doRefresh = (): Promise<string> => {
+    if (refreshPromise) return refreshPromise;
+    const refreshToken = typeof window !== 'undefined' ? localStorage.getItem('refreshToken') : null;
+    if (!refreshToken) {
+        if (typeof window !== 'undefined') window.location.href = '/auth';
+        return Promise.reject(new Error('No refresh token'));
+    }
+    refreshPromise = axios
+        .post('/api/auth/refresh', { refreshToken })
+        .then((res) => {
+            const { accessToken: newToken, refreshToken: newRefresh } = res.data;
+            setAccessToken(newToken);
+            localStorage.setItem('refreshToken', newRefresh);
+            return newToken as string;
+        })
+        .catch((err) => {
+            setAccessToken(null);
+            localStorage.removeItem('refreshToken');
+            localStorage.removeItem('user');
+            if (typeof window !== 'undefined') window.location.href = '/auth';
+            throw err;
+        })
+        .finally(() => { refreshPromise = null; });
+    return refreshPromise;
+};
+
+const makeErrorHandler = (instance: typeof api | typeof internalApi) =>
+    async (error: any) => {
         const originalRequest = error.config;
-        if (error.response?.status === 401 && !originalRequest._retry) {
+        const is401 = error.response?.status === 401 || error.response?.data?.error === 'Unauthorized';
+        if (is401 && !originalRequest._retry) {
             originalRequest._retry = true;
-            const refreshToken =
-                typeof window !== 'undefined' ? localStorage.getItem('refreshToken') : null;
-            if (refreshToken) {
-                try {
-                    const res = await axios.post(`${api.defaults.baseURL}/auth/refresh`, {
-                        refreshToken,
-                    });
-                    const { accessToken: newToken, refreshToken: newRefresh } = res.data;
-                    setAccessToken(newToken);
-                    localStorage.setItem('refreshToken', newRefresh);
-                    originalRequest.headers.Authorization = `Bearer ${newToken}`;
-                    return api(originalRequest);
-                } catch {
-                    setAccessToken(null);
-                    localStorage.removeItem('refreshToken');
-                    localStorage.removeItem('user');
-                    if (typeof window !== 'undefined') window.location.href = '/auth';
-                }
-            } else {
-                if (typeof window !== 'undefined') window.location.href = '/auth';
+            try {
+                const newToken = await doRefresh();
+                originalRequest.headers.Authorization = `Bearer ${newToken}`;
+                return instance(originalRequest);
+            } catch {
+                // doRefresh already redirects
             }
         }
         return Promise.reject(error);
-    }
-);
+    };
+
+const attachInterceptors = (instance: typeof api | typeof internalApi) => {
+    instance.interceptors.request.use((config) => {
+        if (accessToken && config.headers) config.headers.Authorization = `Bearer ${accessToken}`;
+        return config;
+    });
+    instance.interceptors.response.use((r) => r, makeErrorHandler(instance));
+};
+
+attachInterceptors(api);
 
 export default api;
 
 // ponytail: separate instance for internal Next.js routes — same auth header, relative base
 export const internalApi = axios.create({ baseURL: '/api' });
-
-internalApi.interceptors.request.use((config) => {
-    if (accessToken && config.headers) {
-        config.headers.Authorization = `Bearer ${accessToken}`;
-    }
-    return config;
-});
-
-internalApi.interceptors.response.use(
-    (response) => response,
-    async (error) => {
-        const originalRequest = error.config;
-        if (error.response?.status === 401 && !originalRequest._retry) {
-            originalRequest._retry = true;
-            const refreshToken =
-                typeof window !== 'undefined' ? localStorage.getItem('refreshToken') : null;
-            if (refreshToken) {
-                try {
-                    const res = await axios.post('/api/auth/refresh', { refreshToken });
-                    const { accessToken: newToken, refreshToken: newRefresh } = res.data;
-                    setAccessToken(newToken);
-                    localStorage.setItem('refreshToken', newRefresh);
-                    originalRequest.headers.Authorization = `Bearer ${newToken}`;
-                    return internalApi(originalRequest);
-                } catch {
-                    setAccessToken(null);
-                    localStorage.removeItem('refreshToken');
-                    localStorage.removeItem('user');
-                    if (typeof window !== 'undefined') window.location.href = '/auth';
-                }
-            } else {
-                if (typeof window !== 'undefined') window.location.href = '/auth';
-            }
-        }
-        return Promise.reject(error);
-    }
-);
+attachInterceptors(internalApi);

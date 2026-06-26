@@ -9,6 +9,6 @@ export async function POST(req: NextRequest) {
     const usecase = new RefreshTokenUsecase(repository);
     const result = await usecase.execute(body.refreshToken);
     return result.type === 'right'
-        ? NextResponse.json({ status: 200, ...result.value })
-        : NextResponse.json({ status: 401, error: result.value.message });
+        ? NextResponse.json(result.value)
+        : NextResponse.json({ error: result.value.message }, { status: 401 });
 }
