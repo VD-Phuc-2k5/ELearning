@@ -31,18 +31,13 @@ export class CreatePermissionUseCase
     const code = `${params.resource}:${params.action}`;
     const existing = await this.permissionRepo.findByCode(code);
     if (existing) return left(AuthFailures.permissionAlreadyExists());
-    const permission = await this.permissionRepo.create(
-      new Permission(
-        undefined as any,
-        code,
-        params.name,
-        params.description ?? '',
-        params.resource,
-        params.action,
-        new Date(),
-        new Date(),
-      ),
-    );
+    const permission = await this.permissionRepo.create({
+      code,
+      name: params.name,
+      description: params.description ?? '',
+      resource: params.resource,
+      action: params.action,
+    });
     return right({ permission });
   }
 }
