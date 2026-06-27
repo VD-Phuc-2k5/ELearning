@@ -24,14 +24,9 @@
       "@learning-hub/domain/server": ["packages/domain/src/server.ts"],
       "@learning-hub/data": ["packages/data/src/index.ts"],
       "@learning-hub/data/server": ["packages/data/src/server.ts"]
-    },
-    "types": ["jest", "node"]
+    }
   },
-  "include": [
-    "src/**/*.ts",
-    "src/**/*.tsx",
-    "next-env.d.ts"
-  ],
+  "include": ["src/**/*.ts", "src/**/*.tsx", "next-env.d.ts"],
   "exclude": [
     "out-tsc",
     "dist",
