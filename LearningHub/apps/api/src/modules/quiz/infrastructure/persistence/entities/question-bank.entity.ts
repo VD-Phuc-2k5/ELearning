@@ -65,5 +65,13 @@ export class QuestionBankEntity {
   createdAt!: Date;
 
   @UpdateDateColumn({ name: 'updated_at' })
+  @Column({
+    name: 'passing_score',
+    type: 'decimal',
+    precision: 5,
+    scale: 2,
+    default: 60,
+  })
+  passingScore!: number;
   updatedAt!: Date;
 }

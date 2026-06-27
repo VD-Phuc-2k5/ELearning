@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 // Infrastructure - Entities
@@ -10,12 +10,17 @@ import { QuestionEntity } from './infrastructure/persistence/entities/question.e
 import { AnswerOptionEntity } from './infrastructure/persistence/entities/answer-option.entity';
 import { CorrectAnswerEntity } from './infrastructure/persistence/entities/correct-answer.entity';
 import { QuestionDifficultEntity } from './infrastructure/persistence/entities/question-difficult.entity';
+import { QuizAttemptEntity } from './infrastructure/persistence/entities/quiz-attempt.entity';
+import { QuizAttemptAnswerEntity } from './infrastructure/persistence/entities/quiz-attempt-answer.entity';
+import { UserBankProgressEntity } from './infrastructure/persistence/entities/user-bank-progress.entity';
 
-// Infrastructure - Repositories (implementations)
+// Infrastructure - Repositories
 import { QuestionBankRepository } from './infrastructure/persistence/repositories/question-bank.repository';
 import { QuestionRepository } from './infrastructure/persistence/repositories/question.repository';
 import { TagRepository } from './infrastructure/persistence/repositories/tag.repository';
 import { UploadRepository } from './infrastructure/persistence/repositories/upload.repository';
+import { QuizAttemptRepository } from './infrastructure/persistence/repositories/quiz-attempt.repository';
+import { UserBankProgressRepository } from './infrastructure/persistence/repositories/user-bank-progress.repository';
 
 // Infrastructure - Services
 import { ExcelParserService } from './infrastructure/services/excel-parser.service';
@@ -25,11 +30,11 @@ import { QUESTION_BANK_REPOSITORY } from './domain/repositories/question-bank.re
 import { QUESTION_REPOSITORY } from './domain/repositories/question.repository.interface';
 import { TAG_REPOSITORY } from './domain/repositories/tag.repository.interface';
 import { UPLOAD_REPOSITORY } from './domain/repositories/upload.repository.interface';
+import { QUIZ_ATTEMPT_REPOSITORY } from './domain/repositories/quiz-attempt.repository.interface';
+import { USER_BANK_PROGRESS_REPOSITORY } from './domain/repositories/user-bank-progress.repository.interface';
 
-// Application - Interface tokens
+// Application
 import { EXCEL_PARSER_SERVICE } from './application/interfaces/i-excel-parser.service';
-
-// Application - Use Cases
 import { CreateQuestionBankUseCase } from './application/use-cases/create-question-bank.use-case';
 import { GetQuestionBankListUseCase } from './application/use-cases/get-question-bank-list.use-case';
 import { GetQuestionsForQuizUseCase } from './application/use-cases/get-questions-for-quiz.use-case';
@@ -50,13 +55,16 @@ import { GetAllTagsUseCase } from './application/use-cases/get-all-tags.use-case
 import { CreateTagUseCase } from './application/use-cases/create-tag.use-case';
 import { UpdateTagUseCase } from './application/use-cases/update-tag.use-case';
 import { DeleteTagUseCase } from './application/use-cases/delete-tag.use-case';
+import { GetQuizAttemptsUseCase } from './application/use-cases/get-quiz-attempts.use-case';
+import { GetQuizAttemptDetailUseCase } from './application/use-cases/get-quiz-attempt-detail.use-case';
+import { GetBankProgressUseCase } from './application/use-cases/get-bank-progress.use-case';
+import { GetBankRoadmapsUseCase } from './application/use-cases/get-bank-roadmaps.use-case';
 
-// Multer config
 import { MulterModule } from '@nestjs/platform-express';
-
-// Presentation - Controllers
 import { QuizBankController } from './presentation/controllers/quiz-bank.controller';
+import { QuizAttemptController } from './presentation/controllers/quiz-attempt.controller';
 import { QuizTagController } from './presentation/controllers/quiz-tag.controller';
+import { RoadmapModule } from '../roadmap/roadmap.module';
 
 const entities = [
   QuestionBankEntity,
@@ -67,6 +75,9 @@ const entities = [
   AnswerOptionEntity,
   CorrectAnswerEntity,
   QuestionDifficultEntity,
+  QuizAttemptEntity,
+  QuizAttemptAnswerEntity,
+  UserBankProgressEntity,
 ];
 
 const useCases = [
@@ -90,6 +101,10 @@ const useCases = [
   CreateTagUseCase,
   UpdateTagUseCase,
   DeleteTagUseCase,
+  GetQuizAttemptsUseCase,
+  GetQuizAttemptDetailUseCase,
+  GetBankProgressUseCase,
+  GetBankRoadmapsUseCase,
 ];
 
 const repositoryProviders = [
@@ -97,27 +112,30 @@ const repositoryProviders = [
   { provide: QUESTION_REPOSITORY, useClass: QuestionRepository },
   { provide: TAG_REPOSITORY, useClass: TagRepository },
   { provide: UPLOAD_REPOSITORY, useClass: UploadRepository },
+  { provide: QUIZ_ATTEMPT_REPOSITORY, useClass: QuizAttemptRepository },
+  {
+    provide: USER_BANK_PROGRESS_REPOSITORY,
+    useClass: UserBankProgressRepository,
+  },
 ];
 
 @Module({
   imports: [
     TypeOrmModule.forFeature(entities),
-    MulterModule.register({
-      limits: {
-        fileSize: 5 * 1024 * 1024, // 5MB limit
-      },
-    }),
+    MulterModule.register({ limits: { fileSize: 5 * 1024 * 1024 } }),
+    forwardRef(() => RoadmapModule),
   ],
-  controllers: [QuizBankController, QuizTagController],
+  controllers: [QuizBankController, QuizAttemptController, QuizTagController],
   providers: [
     ...useCases,
     ...repositoryProviders,
     { provide: EXCEL_PARSER_SERVICE, useClass: ExcelParserService },
-    // Concrete classes registered so NestJS can resolve their TypeORM dependencies
-    QuestionBankRepository,
-    QuestionRepository,
-    TagRepository,
-    UploadRepository,
+  ],
+  exports: [
+    {
+      provide: USER_BANK_PROGRESS_REPOSITORY,
+      useClass: UserBankProgressRepository,
+    },
   ],
 })
 export class QuizModule {}

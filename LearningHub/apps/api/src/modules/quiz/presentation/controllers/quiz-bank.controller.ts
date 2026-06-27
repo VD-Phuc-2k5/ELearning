@@ -35,7 +35,6 @@ import { CreateQuestionBankUseCase } from '../../application/use-cases/create-qu
 import { GetQuestionBankListUseCase } from '../../application/use-cases/get-question-bank-list.use-case';
 import { GetQuestionsForQuizUseCase } from '../../application/use-cases/get-questions-for-quiz.use-case';
 import { VerifyQuestionAnswerUseCase } from '../../application/use-cases/verify-question-answer.use-case';
-import { SubmitQuizUseCase } from '../../application/use-cases/submit-quiz.use-case';
 import { GetQuestionBankDetailUseCase } from '../../application/use-cases/get-question-bank-detail.use-case';
 import { UpdateQuestionBankUseCase } from '../../application/use-cases/update-question-bank.use-case';
 import { DeleteQuestionBankUseCase } from '../../application/use-cases/delete-question-bank.use-case';
@@ -47,14 +46,14 @@ import { CheckBankHashUseCase } from '../../application/use-cases/check-bank-has
 import { GetDerivedBanksUseCase } from '../../application/use-cases/get-derived-banks.use-case';
 import { UploadQuestionsUseCase } from '../../application/use-cases/upload-questions.use-case';
 import { ParseExcelUseCase } from '../../application/use-cases/parse-excel.use-case';
+
 import {
   CreateQuestionBankRequestDto,
   UploadQuestionsRequestDto,
   VerifyQuestionAnswerRequestDto,
-  SubmitQuizRequestDto,
   UpdateQuestionBankRequestDto,
   UpdateQuestionRequestDto,
-} from '../dto/quiz.request.dto';
+} from '../dto/question-bank.request.dto';
 
 @ApiTags('Quiz - Ngân hàng câu hỏi')
 @ApiBearerAuth()
@@ -66,7 +65,6 @@ export class QuizBankController {
     private readonly getQuestionBankListUseCase: GetQuestionBankListUseCase,
     private readonly getQuestionsForQuizUseCase: GetQuestionsForQuizUseCase,
     private readonly verifyQuestionAnswerUseCase: VerifyQuestionAnswerUseCase,
-    private readonly submitQuizUseCase: SubmitQuizUseCase,
     private readonly getQuestionBankDetailUseCase: GetQuestionBankDetailUseCase,
     private readonly updateQuestionBankUseCase: UpdateQuestionBankUseCase,
     private readonly deleteQuestionBankUseCase: DeleteQuestionBankUseCase,
@@ -240,15 +238,6 @@ export class QuizBankController {
     @Body() dto: VerifyQuestionAnswerRequestDto,
   ) {
     return this.verifyQuestionAnswerUseCase.execute(questionId, dto);
-  }
-
-  @Post('banks/:id/submit')
-  @ApiOperation({ summary: 'Nộp toàn bộ bài thi và nhận kết quả chi tiết' })
-  async submitQuiz(
-    @Param('id') bankId: string,
-    @Body() dto: SubmitQuizRequestDto,
-  ) {
-    return this.submitQuizUseCase.execute(bankId, dto);
   }
 
   @Patch('questions/:id')

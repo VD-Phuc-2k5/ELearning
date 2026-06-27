@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './modules/auth/auth.module';
 import { QuizModule } from './modules/quiz/quiz.module';
+import { RoadmapModule } from './modules/roadmap/roadmap.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { QuizModule } from './modules/quiz/quiz.module';
     }),
     AuthModule,
     QuizModule,
+    RoadmapModule,
   ],
   controllers: [],
   providers: [],

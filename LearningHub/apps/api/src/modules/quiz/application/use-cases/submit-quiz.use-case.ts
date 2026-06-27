@@ -7,31 +7,36 @@ import {
   IQuestionBankRepository,
   QUESTION_BANK_REPOSITORY,
 } from '../../domain/repositories/question-bank.repository.interface';
+import {
+  IQuizAttemptRepository,
+  QUIZ_ATTEMPT_REPOSITORY,
+} from '../../domain/repositories/quiz-attempt.repository.interface';
+import {
+  IUserBankProgressRepository,
+  USER_BANK_PROGRESS_REPOSITORY,
+} from '../../domain/repositories/user-bank-progress.repository.interface';
+import {
+  IRoadmapItemRepository,
+  ROADMAP_ITEM_REPOSITORY,
+} from '../../../roadmap/domain/repositories/roadmap-item.repository.interface';
+import {
+  IUserRoadmapProgressRepository,
+  USER_ROADMAP_PROGRESS_REPOSITORY,
+} from '../../../roadmap/domain/repositories/user-roadmap-progress.repository.interface';
+import {
+  SubmitQuizDto,
+  SubmitQuizResult,
+  SubmitQuizResultDetail,
+  NextBankSuggestion,
+} from '../dto/submit-quiz.dto';
 
-export interface SubmitAnswerItem {
-  questionId: string;
-  selectedOptionId: string;
-}
-
-export interface SubmitQuizDto {
-  answers: SubmitAnswerItem[];
-}
-
-export interface SubmitQuizResultDetail {
-  questionId: string;
-  selectedOptionId: string;
-  isCorrect: boolean;
-  correctOptionIds: string[];
-  explanation: string | null;
-}
-
-export interface SubmitQuizResult {
-  totalQuestions: number;
-  correctCount: number;
-  wrongCount: number;
-  scorePercent: number;
-  details: SubmitQuizResultDetail[];
-}
+export type {
+  SubmitAnswerItem,
+  SubmitQuizDto,
+  SubmitQuizResultDetail,
+  NextBankSuggestion,
+  SubmitQuizResult,
+} from '../dto/submit-quiz.dto';
 
 @Injectable()
 export class SubmitQuizUseCase {
@@ -40,28 +45,37 @@ export class SubmitQuizUseCase {
     private readonly questionBankRepository: IQuestionBankRepository,
     @Inject(QUESTION_REPOSITORY)
     private readonly questionRepository: IQuestionRepository,
+    @Inject(QUIZ_ATTEMPT_REPOSITORY)
+    private readonly attemptRepository: IQuizAttemptRepository,
+    @Inject(USER_BANK_PROGRESS_REPOSITORY)
+    private readonly bankProgressRepository: IUserBankProgressRepository,
+    @Inject(ROADMAP_ITEM_REPOSITORY)
+    private readonly roadmapItemRepository: IRoadmapItemRepository,
+    @Inject(USER_ROADMAP_PROGRESS_REPOSITORY)
+    private readonly roadmapProgressRepository: IUserRoadmapProgressRepository,
   ) {}
 
-  async execute(bankId: string, dto: SubmitQuizDto): Promise<SubmitQuizResult> {
+  async execute(
+    bankId: string,
+    dto: SubmitQuizDto,
+    userId: string,
+  ): Promise<SubmitQuizResult> {
     const bank = await this.questionBankRepository.findById(bankId);
-    if (!bank) {
-      throw new NotFoundException(`Question bank with id ${bankId} not found`);
-    }
+    if (!bank) throw new NotFoundException(`Question bank ${bankId} not found`);
 
-    // Lấy đầy đủ câu hỏi có đáp án (hideAnswers = false)
     const questions = await this.questionRepository.findByBankId(bankId, false);
-
     const questionMap = new Map(questions.map((q) => [q.id, q]));
     const details: SubmitQuizResultDetail[] = [];
     let correctCount = 0;
+    const startedAt = new Date();
 
     for (const answer of dto.answers) {
       const question = questionMap.get(answer.questionId);
       if (!question) continue;
-
-      const isCorrect = question.correctAnswerOptionIds.includes(answer.selectedOptionId);
+      const isCorrect = question.correctAnswerOptionIds.includes(
+        answer.selectedOptionId,
+      );
       if (isCorrect) correctCount++;
-
       details.push({
         questionId: answer.questionId,
         selectedOptionId: answer.selectedOptionId,
@@ -74,8 +88,109 @@ export class SubmitQuizUseCase {
     const totalQuestions = dto.answers.length;
     const wrongCount = totalQuestions - correctCount;
     const scorePercent =
-      totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0;
+      totalQuestions > 0
+        ? Math.round((correctCount / totalQuestions) * 100)
+        : 0;
+    const passingScore = bank.passingScore;
+    const status: 'pass' | 'fail' =
+      scorePercent >= passingScore ? 'pass' : 'fail';
+    const finishedAt = new Date();
+    const durationSeconds = Math.round(
+      (finishedAt.getTime() - startedAt.getTime()) / 1000,
+    );
 
-    return { totalQuestions, correctCount, wrongCount, scorePercent, details };
+    const attempt = await this.attemptRepository.create({
+      userId,
+      questionBankId: bankId,
+      startedAt,
+      finishedAt,
+      durationSeconds,
+      scorePercent,
+      correctCount,
+      wrongCount,
+      totalQuestions,
+      status,
+      answers: dto.answers.map((a, i) => ({
+        questionId: a.questionId,
+        selectedOptionId: a.selectedOptionId,
+        isCorrect:
+          questionMap
+            .get(a.questionId)
+            ?.correctAnswerOptionIds.includes(a.selectedOptionId) ?? false,
+        questionOrder: i,
+      })),
+    });
+
+    await this.bankProgressRepository.upsertAfterAttempt({
+      userId,
+      questionBankId: bankId,
+      scorePercent,
+      passingScore,
+      attemptedAt: finishedAt,
+    });
+
+    let nextBank: NextBankSuggestion | null = null;
+    if (dto.roadmapId) {
+      nextBank = await this.updateRoadmapProgress(
+        dto.roadmapId,
+        userId,
+        bankId,
+        scorePercent,
+        passingScore,
+      );
+    }
+
+    return {
+      totalQuestions,
+      correctCount,
+      wrongCount,
+      scorePercent,
+      details,
+      attemptId: attempt.id,
+      nextBank,
+    };
+  }
+
+  private async updateRoadmapProgress(
+    roadmapId: string,
+    userId: string,
+    justCompletedBankId: string,
+    scorePercent: number,
+    passingScore: number,
+  ): Promise<NextBankSuggestion | null> {
+    const items = await this.roadmapItemRepository.findByRoadmapId(roadmapId);
+    if (!items.length) return null;
+
+    const bankIds = items.map((i) => i.questionBankId);
+    const completedIds = new Set(
+      await this.bankProgressRepository.findCompletedBankIds(userId, bankIds),
+    );
+    if (scorePercent >= passingScore) completedIds.add(justCompletedBankId);
+
+    const completedBanks = completedIds.size;
+    const totalBanks = items.length;
+    const progressPercent =
+      totalBanks > 0 ? Math.round((completedBanks / totalBanks) * 100) : 0;
+    const allDone = completedBanks >= totalBanks;
+
+    await this.roadmapProgressRepository.upsert({
+      userId,
+      roadmapId,
+      totalBanks,
+      completedBanks,
+      progressPercent,
+      status: allDone ? 'completed' : 'in_progress',
+      lastAccessedBankId: justCompletedBankId,
+      completedAt: allDone ? new Date() : null,
+    });
+
+    const nextItem = items.find((i) => !completedIds.has(i.questionBankId));
+    if (!nextItem) return null;
+    return {
+      bankId: nextItem.questionBankId,
+      bankTitle: nextItem.bankTitle ?? '',
+      position: nextItem.position,
+      totalBanks,
+    };
   }
 }

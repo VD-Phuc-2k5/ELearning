@@ -17,7 +17,7 @@ import { DeleteTagUseCase } from '../../application/use-cases/delete-tag.use-cas
 import {
   CreateTagRequestDto,
   UpdateTagRequestDto,
-} from '../dto/quiz.request.dto';
+} from '../dto/tag.request.dto';
 
 @ApiTags('Quiz - Tags')
 @ApiBearerAuth()
