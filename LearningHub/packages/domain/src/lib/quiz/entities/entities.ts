@@ -93,3 +93,72 @@ export interface DerivedBank {
   readonly createdAt: string;
   readonly uploaderUsername: string;
 }
+
+export interface NextBankSuggestion {
+  readonly bankId: string;
+  readonly bankTitle: string;
+  readonly position: number;
+  readonly totalBanks: number;
+}
+
+export interface QuizSubmitResult {
+  readonly totalQuestions: number;
+  readonly correctCount: number;
+  readonly wrongCount: number;
+  readonly scorePercent: number;
+  readonly attemptId: string;
+  readonly nextBank: NextBankSuggestion | null;
+}
+
+export interface QuizAttempt {
+  readonly id: string;
+  readonly userId: string;
+  readonly questionBankId: string;
+  readonly startedAt: string;
+  readonly finishedAt: string | null;
+  readonly durationSeconds: number | null;
+  readonly scorePercent: number | null;
+  readonly correctCount: number;
+  readonly wrongCount: number;
+  readonly totalQuestions: number;
+  readonly status: 'in_progress' | 'pass' | 'fail';
+  readonly createdAt: string;
+}
+
+export interface QuizAttemptAnswer {
+  readonly questionId: string;
+  readonly questionContent: string;
+  readonly explanation: string | null;
+  readonly selectedOptionId: string | null;
+  readonly correctOptionIds: string[];
+  readonly isCorrect: boolean;
+  readonly questionOrder: number;
+  readonly answerOptions: ReadonlyArray<{
+    id: string;
+    optionLabel: string;
+    content: string;
+  }>;
+}
+
+export interface QuizAttemptDetail {
+  readonly attempt: QuizAttempt;
+  readonly reviewDetails: QuizAttemptAnswer[];
+}
+
+export interface UserBankProgress {
+  readonly attemptCount: number;
+  readonly bestScore: number | null;
+  readonly latestScore: number | null;
+  readonly isCompleted: boolean;
+}
+
+export interface AttemptList {
+  readonly data: QuizAttempt[];
+  readonly total: number;
+}
+
+export interface BankRoadmapItem {
+  readonly roadmapId: string;
+  readonly roadmapTitle: string;
+  readonly position: number;
+}

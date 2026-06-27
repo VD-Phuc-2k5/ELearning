@@ -1,17 +1,21 @@
 import { Either, Failure } from '@learning-hub/core';
 import {
   AnswerOptionInput,
+  AttemptList,
   BankHashResult,
   BankList,
+  BankRoadmapItem,
   DerivedBank,
   ParseExcelResult,
   Question,
   QuestionBank,
   QuizAnswer,
-  QuizResult,
+  QuizAttemptDetail,
+  QuizSubmitResult,
   Tag,
   UploadExcelResult,
   UploadHistory,
+  UserBankProgress,
   VerifyAnswerResult,
 } from '../entities/entities';
 
@@ -41,6 +45,12 @@ export interface UpdateQuestionQuizParams {
   explanation?: string;
   answerOptions?: AnswerOptionInput[];
   correctOptionLabels?: string[];
+}
+
+export interface GetAttemptsParams {
+  page?: number;
+  limit?: number;
+  bankId?: string;
 }
 
 export interface IQuizRepository {
@@ -77,7 +87,13 @@ export interface IQuizRepository {
   submitQuiz(
     bankId: string,
     answers: QuizAnswer[],
-  ): Promise<Either<Failure, QuizResult>>;
+    roadmapId?: string | null,
+  ): Promise<Either<Failure, QuizSubmitResult>>;
+  getAttempts(params: GetAttemptsParams): Promise<Either<Failure, AttemptList>>;
+  getAttemptDetail(id: string): Promise<Either<Failure, QuizAttemptDetail>>;
+  getBankProgress(
+    bankId: string,
+  ): Promise<Either<Failure, UserBankProgress | null>>;
   updateQuestion(
     id: string,
     params: UpdateQuestionQuizParams,
@@ -88,4 +104,5 @@ export interface IQuizRepository {
   deleteTag(id: number): Promise<Either<Failure, void>>;
   checkBankHash(hash: string): Promise<Either<Failure, BankHashResult>>;
   getDerivedBanks(bankId: string): Promise<Either<Failure, DerivedBank[]>>;
+  getBankRoadmaps(bankId: string): Promise<Either<Failure, BankRoadmapItem[]>>;
 }

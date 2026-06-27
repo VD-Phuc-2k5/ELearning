@@ -3,33 +3,54 @@ import {
   Failure,
   UnknownFailure,
   AuthenticationFailure,
+  PermissionFailure,
+  NotFoundFailure,
+  NetworkFailure,
   left,
   right,
+  AuthenticationException,
+  PermissionException,
+  NotFoundException,
+  NetworkException,
 } from '@learning-hub/core';
 import {
   IQuizRepository,
   GetBanksQuizParams,
+  GetAttemptsParams,
   CreateBankQuizParams,
   UpdateBankQuizParams,
   UpdateQuestionQuizParams,
+  AttemptList,
+  BankHashResult,
   BankList,
+  BankRoadmapItem,
   DerivedBank,
+  ParseExcelResult,
   Question,
   QuestionBank,
-  QuizResult,
+  QuizAnswer,
+  QuizAttemptDetail,
+  QuizSubmitResult,
   Tag,
+  UploadExcelResult,
   UploadHistory,
+  UserBankProgress,
+  VerifyAnswerResult,
 } from '@learning-hub/domain';
-import { QuizRemoteDataSourceImpl } from '../datasources/QuizRemoteDataSourceImpl';
+import { IQuizRemoteDataSource } from '../datasources/IQuizRemoteDataSource';
 
-const toFailure = (e: unknown): Failure =>
-  (e as any)?.response?.status === 401
-    ? new AuthenticationFailure('Unauthorized')
-    : new UnknownFailure();
+function toFailure(e: unknown): Failure {
+  if (e instanceof AuthenticationException)
+    return new AuthenticationFailure(e.message);
+  if (e instanceof PermissionException) return new PermissionFailure();
+  if (e instanceof NotFoundException) return new NotFoundFailure();
+  if (e instanceof NetworkException) return new NetworkFailure();
+  return new UnknownFailure();
+}
 
 export class QuizRepositoryImpl implements IQuizRepository {
   constructor(
-    private dataSource: QuizRemoteDataSourceImpl,
+    private dataSource: IQuizRemoteDataSource,
     private token: string,
   ) {}
 
@@ -86,9 +107,7 @@ export class QuizRepositoryImpl implements IQuizRepository {
     file: Buffer,
     fileName: string,
     fileHash?: string,
-  ): Promise<
-    Either<Failure, { message: string; totalQuestionsImported: number }>
-  > {
+  ): Promise<Either<Failure, UploadExcelResult>> {
     try {
       return right(
         await this.dataSource.uploadExcel(
@@ -108,7 +127,7 @@ export class QuizRepositoryImpl implements IQuizRepository {
     bankId: string,
     file: Buffer,
     fileName: string,
-  ): Promise<Either<Failure, { questions: unknown[] }>> {
+  ): Promise<Either<Failure, ParseExcelResult>> {
     try {
       return right(
         await this.dataSource.parseExcel(bankId, file, fileName, this.token),
@@ -148,9 +167,7 @@ export class QuizRepositoryImpl implements IQuizRepository {
   async verifyAnswer(
     questionId: string,
     selectedOptionId: string,
-  ): Promise<
-    Either<Failure, { isCorrect: boolean; correctOptionId?: string }>
-  > {
+  ): Promise<Either<Failure, VerifyAnswerResult>> {
     try {
       return right(
         await this.dataSource.verifyAnswer(
@@ -166,12 +183,48 @@ export class QuizRepositoryImpl implements IQuizRepository {
 
   async submitQuiz(
     bankId: string,
-    answers: { questionId: string; selectedOptionId: string }[],
-  ): Promise<Either<Failure, QuizResult>> {
+    answers: QuizAnswer[],
+    roadmapId?: string | null,
+  ): Promise<Either<Failure, QuizSubmitResult>> {
     try {
       return right(
-        await this.dataSource.submitQuiz(bankId, answers, this.token),
+        await this.dataSource.submitQuiz(
+          bankId,
+          answers,
+          this.token,
+          roadmapId,
+        ),
       );
+    } catch (e) {
+      return left(toFailure(e));
+    }
+  }
+
+  async getAttempts(
+    params: GetAttemptsParams,
+  ): Promise<Either<Failure, AttemptList>> {
+    try {
+      return right(await this.dataSource.getAttempts(params, this.token));
+    } catch (e) {
+      return left(toFailure(e));
+    }
+  }
+
+  async getAttemptDetail(
+    id: string,
+  ): Promise<Either<Failure, QuizAttemptDetail>> {
+    try {
+      return right(await this.dataSource.getAttemptDetail(id, this.token));
+    } catch (e) {
+      return left(toFailure(e));
+    }
+  }
+
+  async getBankProgress(
+    bankId: string,
+  ): Promise<Either<Failure, UserBankProgress | null>> {
+    try {
+      return right(await this.dataSource.getBankProgress(bankId, this.token));
     } catch (e) {
       return left(toFailure(e));
     }
@@ -224,9 +277,7 @@ export class QuizRepositoryImpl implements IQuizRepository {
     }
   }
 
-  async checkBankHash(
-    hash: string,
-  ): Promise<Either<Failure, { exists: boolean; bank?: QuestionBank }>> {
+  async checkBankHash(hash: string): Promise<Either<Failure, BankHashResult>> {
     try {
       return right(await this.dataSource.checkBankHash(hash, this.token));
     } catch (e) {
@@ -238,8 +289,17 @@ export class QuizRepositoryImpl implements IQuizRepository {
     bankId: string,
   ): Promise<Either<Failure, DerivedBank[]>> {
     try {
-      const res = await this.dataSource.getDerivedBanks(bankId, this.token);
-      return right(res.data ?? []);
+      return right(await this.dataSource.getDerivedBanks(bankId, this.token));
+    } catch (e) {
+      return left(toFailure(e));
+    }
+  }
+
+  async getBankRoadmaps(
+    bankId: string,
+  ): Promise<Either<Failure, BankRoadmapItem[]>> {
+    try {
+      return right(await this.dataSource.getBankRoadmaps(bankId, this.token));
     } catch (e) {
       return left(toFailure(e));
     }
