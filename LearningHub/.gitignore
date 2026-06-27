@@ -51,3 +51,4 @@ test-output
 
 .env
 tsconfig.tsbuildinfo
+.claude/plans
