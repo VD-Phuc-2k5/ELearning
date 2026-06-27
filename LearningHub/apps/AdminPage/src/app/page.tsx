@@ -13,6 +13,7 @@ import {
   Edit3,
   Check,
 } from 'lucide-react';
+import '@aejkatappaja/phantom-ui';
 import type { Permission, Role, User } from '@learning-hub/domain';
 import { api } from '../lib/admin-api';
 import { useConfirmModal } from '../components/admin/modal';
@@ -74,7 +75,7 @@ export default function AdminDashboard() {
     enabled: !!token && activeTab === 'roles',
   });
 
-  const { data: permsData } = useQuery<Permission[]>({
+  const { data: permsData, isLoading: permsLoading } = useQuery<Permission[]>({
     queryKey: ['admin-permissions'],
     queryFn: () =>
       api.get<Permission[]>('/api/admin/permissions').then((r) => r.data),
@@ -222,31 +223,43 @@ export default function AdminDashboard() {
           />
         )}
 
-        {activeTab === 'users' && (
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-            <table className="w-full text-left">
-              <thead className="bg-slate-50 border-b border-slate-200">
-                <tr>
-                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">
-                    Thành viên
-                  </th>
-                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest text-right">
-                    Quản lý
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {usersLoading ? (
+        {activeTab === 'users' &&
+          (usersLoading ? (
+            <phantom-ui
+              loading
+              animation="pulse"
+              reveal={0.3}
+              className="block bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden"
+            >
+              <div className="h-12 bg-slate-50 border-b border-slate-200" />
+              {[0, 1, 2, 3].map((i) => (
+                <div
+                  key={i}
+                  className="flex items-center justify-between px-6 py-4 border-b border-slate-100"
+                >
+                  <div className="space-y-2">
+                    <div className="h-4 w-28 rounded bg-slate-200" />
+                    <div className="h-3 w-44 rounded bg-slate-100" />
+                  </div>
+                  <div className="h-4 w-4 rounded bg-slate-200" />
+                </div>
+              ))}
+            </phantom-ui>
+          ) : (
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+              <table className="w-full text-left">
+                <thead className="bg-slate-50 border-b border-slate-200">
                   <tr>
-                    <td
-                      colSpan={2}
-                      className="p-10 text-center animate-pulse text-slate-400"
-                    >
-                      Đang tải...
-                    </td>
+                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">
+                      Thành viên
+                    </th>
+                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest text-right">
+                      Quản lý
+                    </th>
                   </tr>
-                ) : (
-                  (usersData ?? []).map((u) => (
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {(usersData ?? []).map((u) => (
                     <tr
                       key={u.id}
                       className="hover:bg-slate-50 transition cursor-pointer"
@@ -262,19 +275,42 @@ export default function AdminDashboard() {
                         <Settings className="h-4 w-4 text-slate-400 inline" />
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        )}
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ))}
 
         {activeTab === 'roles' && (
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-x-auto">
             {matrixLoading ? (
-              <div className="p-20 text-center text-slate-400">
-                Đang xây dựng ma trận...
-              </div>
+              <phantom-ui
+                loading
+                animation="pulse"
+                reveal={0.3}
+                className="block p-6"
+              >
+                <div className="flex gap-3 border-b border-slate-100 pb-4 mb-3">
+                  <div className="w-64 h-10 rounded-lg bg-slate-200 shrink-0" />
+                  {[0, 1, 2, 3].map((i) => (
+                    <div
+                      key={i}
+                      className="h-10 flex-1 rounded-lg bg-slate-200"
+                    />
+                  ))}
+                </div>
+                {[0, 1, 2, 3, 4].map((i) => (
+                  <div key={i} className="flex gap-3 items-center py-2">
+                    <div className="w-64 h-4 rounded bg-slate-100 shrink-0" />
+                    {[0, 1, 2, 3].map((j) => (
+                      <div
+                        key={j}
+                        className="h-8 w-8 rounded-xl bg-slate-100 mx-auto flex-1 max-w-[32px]"
+                      />
+                    ))}
+                  </div>
+                ))}
+              </phantom-ui>
             ) : (
               <table className="w-full text-center">
                 <thead className="bg-slate-50 border-b border-slate-200">
@@ -363,38 +399,60 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {activeTab === 'permissions' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {(permsData ?? []).map((p) => (
-              <div
-                key={p.id}
-                className="group bg-white p-6 rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition relative"
-              >
-                <button
-                  onClick={() =>
-                    openConfirm(`Xóa quyền "${p.code}"?`, () =>
-                      deletePermission.mutate(p.id),
-                    )
-                  }
-                  disabled={deletePermission.isPending}
-                  className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-red-50 hover:text-red-600 text-slate-400 transition"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-                <div className="px-3 py-1 bg-slate-100 rounded-lg text-[10px] font-bold text-slate-500 uppercase tracking-tighter inline-block mb-4">
-                  {p.resource}
-                </div>
-                <h3 className="text-lg font-extrabold text-slate-900 mb-1">
-                  {p.action?.toUpperCase()}
-                </h3>
-                <p className="text-sm text-slate-500 font-medium">
-                  {p.name || p.code}
-                </p>
-                <p className="text-xs text-slate-400 mt-0.5">{p.code}</p>
+        {activeTab === 'permissions' &&
+          (permsLoading ? (
+            <phantom-ui
+              loading
+              animation="pulse"
+              reveal={0.3}
+              className="block"
+            >
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[0, 1, 2, 3, 4, 5].map((i) => (
+                  <div
+                    key={i}
+                    className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm"
+                  >
+                    <div className="h-5 w-16 rounded-lg bg-slate-100 mb-4" />
+                    <div className="h-6 w-24 rounded-lg bg-slate-200 mb-1" />
+                    <div className="h-4 w-32 rounded bg-slate-100 mt-0.5" />
+                    <div className="h-3 w-24 rounded bg-slate-100 mt-0.5" />
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        )}
+            </phantom-ui>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {(permsData ?? []).map((p) => (
+                <div
+                  key={p.id}
+                  className="group bg-white p-6 rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition relative"
+                >
+                  <button
+                    onClick={() =>
+                      openConfirm(`Xóa quyền "${p.code}"?`, () =>
+                        deletePermission.mutate(p.id),
+                      )
+                    }
+                    disabled={deletePermission.isPending}
+                    className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-red-50 hover:text-red-600 text-slate-400 transition"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                  <div className="px-3 py-1 bg-slate-100 rounded-lg text-[10px] font-bold text-slate-500 uppercase tracking-tighter inline-block mb-4">
+                    {p.resource}
+                  </div>
+                  <h3 className="text-lg font-extrabold text-slate-900 mb-1">
+                    {p.action?.toUpperCase()}
+                  </h3>
+                  <p className="text-sm text-slate-500 font-medium">
+                    {p.name || p.code}
+                  </p>
+                  <p className="text-xs text-slate-400 mt-0.5">{p.code}</p>
+                </div>
+              ))}
+            </div>
+          ))}
 
         {activeTab === 'monitoring' && (
           <div className="grid grid-cols-3 gap-6">

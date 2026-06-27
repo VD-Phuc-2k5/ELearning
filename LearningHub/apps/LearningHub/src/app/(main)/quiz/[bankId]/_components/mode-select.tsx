@@ -4,6 +4,7 @@ import { useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, AlertCircle, Zap, ClipboardList, Clock, ChevronRight } from 'lucide-react';
 import { clsx } from 'clsx';
+import '@aejkatappaja/phantom-ui';
 import type { QuestionBank } from '../../../../../services/quiz.service';
 import type { Mode } from './types';
 
@@ -22,10 +23,12 @@ export function ModeSelect({ bank, onSelectMode, onBack }: ModeSelectProps) {
                 <button onClick={onBack} className="p-2 rounded-xl hover:bg-slate-100 text-slate-500 transition">
                     <ArrowLeft className="h-5 w-5" />
                 </button>
-                <div>
-                    <h2 className="text-2xl font-bold text-slate-900">{bank?.title || 'Practice'}</h2>
-                    <p className="text-slate-500 text-sm">{bank?.totalQuestions || 0} câu hỏi</p>
-                </div>
+                <phantom-ui loading={!bank} animation="pulse" reveal={0.3}>
+                    <div>
+                        <h2 className="text-2xl font-bold text-slate-900">{bank?.title ?? 'Loading...'}</h2>
+                        <p className="text-slate-500 text-sm">{bank?.totalQuestions ?? 0} câu hỏi</p>
+                    </div>
+                </phantom-ui>
             </div>
 
             {bank?.statusId !== 'published' && (

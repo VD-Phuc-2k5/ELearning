@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import gsap from 'gsap';
+import '@aejkatappaja/phantom-ui';
 import QuizService, { type QuizResult } from '../../../../services/quiz.service';
 import type { Mode } from './_components/types';
 import { ModeSelect } from './_components/mode-select';
@@ -43,9 +44,27 @@ export default function QuizPage() {
 
     if (isLoading && mode !== 'select') {
         return (
-            <div className="flex items-center justify-center py-32">
-                <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-r-transparent" />
-            </div>
+            <phantom-ui loading animation="pulse" reveal={0.3} className="block max-w-2xl mx-auto">
+                <div className="space-y-6 py-8">
+                    <div className="flex items-center justify-between">
+                        <div className="h-6 w-24 rounded-lg bg-slate-200" />
+                        <div className="h-8 w-20 rounded-xl bg-slate-200" />
+                    </div>
+                    <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
+                        <div className="h-5 w-3/4 rounded-lg bg-slate-200 mb-2" />
+                        <div className="h-5 w-1/2 rounded-lg bg-slate-200 mb-6" />
+                        <div className="space-y-3">
+                            {[0, 1, 2, 3].map(i => (
+                                <div key={i} className="h-12 rounded-xl bg-slate-100" />
+                            ))}
+                        </div>
+                    </div>
+                    <div className="flex justify-between">
+                        <div className="h-10 w-24 rounded-xl bg-slate-200" />
+                        <div className="h-10 w-24 rounded-xl bg-slate-200" />
+                    </div>
+                </div>
+            </phantom-ui>
         );
     }
 
@@ -67,7 +86,6 @@ export default function QuizPage() {
                     questions={questions}
                     timeLimitSeconds={mode === 'timed-exam' ? timeLimitSeconds : undefined}
                     onFinish={(r) => { setResult(r); setMode('result'); }}
-                    onExit={() => setMode('select')}
                 />
             )}
             {mode === 'result' && result && (

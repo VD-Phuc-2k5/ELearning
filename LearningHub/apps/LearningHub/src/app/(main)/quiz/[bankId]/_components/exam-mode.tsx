@@ -13,14 +13,15 @@ interface ExamModeProps {
     questions: Question[];
     timeLimitSeconds?: number;
     onFinish: (result: QuizResult) => void;
-    onExit: () => void;
 }
 
-export function ExamMode({ bankId, questions, timeLimitSeconds, onFinish, onExit }: ExamModeProps) {
+export function ExamMode({ bankId, questions, timeLimitSeconds, onFinish }: ExamModeProps) {
     const [current, setCurrent] = useState(0);
     const [answers, setAnswers] = useState<Record<string, string>>({});
     const [timeLeft, setTimeLeft] = useState<number | undefined>(timeLimitSeconds);
     const cardRef = useRef<HTMLDivElement>(null);
+    // ponytail: ref keeps latest mutation state accessible from stable event listeners
+    const safeSubmitRef = useRef<() => void>(() => {});
 
     const submitMutation = useMutation({
         mutationFn: () => QuizService.submitQuiz(
@@ -31,6 +32,36 @@ export function ExamMode({ bankId, questions, timeLimitSeconds, onFinish, onExit
         ),
         onSuccess: onFinish,
     });
+
+    safeSubmitRef.current = () => {
+        if (!submitMutation.isPending && !submitMutation.isSuccess) {
+            submitMutation.mutate();
+        }
+    };
+
+    // Lock: block tab-switch, browser back, and page unload — auto-submit on each
+    useEffect(() => {
+        history.pushState(null, '', location.href);
+
+        const handlePopState = () => {
+            history.pushState(null, '', location.href);
+            safeSubmitRef.current();
+        };
+        const handleVisibilityChange = () => {
+            if (document.hidden) safeSubmitRef.current();
+        };
+        const handleBeforeUnload = (e: BeforeUnloadEvent) => { e.preventDefault(); };
+
+        window.addEventListener('popstate', handlePopState);
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        window.addEventListener('beforeunload', handleBeforeUnload);
+
+        return () => {
+            window.removeEventListener('popstate', handlePopState);
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+        };
+    }, []);
 
     useEffect(() => {
         if (!timeLimitSeconds) return;
@@ -58,7 +89,7 @@ export function ExamMode({ bankId, questions, timeLimitSeconds, onFinish, onExit
         if (answered < questions.length) {
             if (!confirm(`Còn ${questions.length - answered} câu chưa trả lời. Nộp bài?`)) return;
         }
-        submitMutation.mutate();
+        safeSubmitRef.current();
     };
 
     const fmt = (s: number) => `${Math.floor(s / 60).toString().padStart(2, '0')}:${(s % 60).toString().padStart(2, '0')}`;
@@ -66,7 +97,7 @@ export function ExamMode({ bankId, questions, timeLimitSeconds, onFinish, onExit
     return (
         <div className="space-y-6 py-4">
             <div className="flex items-center justify-between">
-                <button onClick={onExit} className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 transition">
+                <button onClick={() => safeSubmitRef.current()} className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 transition">
                     <ArrowLeft className="h-4 w-4" /> Thoát
                 </button>
                 <div className="flex items-center gap-4">
