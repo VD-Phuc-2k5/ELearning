@@ -46,14 +46,14 @@ export class UserRoadmapProgressEntity {
   @Column({ default: 'not_started' })
   status!: string;
 
-  @Column({ name: 'current_bank_id', nullable: true })
+  @Column({ name: 'current_bank_id', type: 'varchar', nullable: true })
   currentBankId!: string | null;
 
   @ManyToOne(() => QuestionBankEntity, { nullable: true })
   @JoinColumn({ name: 'current_bank_id' })
   currentBank!: QuestionBankEntity | null;
 
-  @Column({ name: 'last_accessed_bank_id', nullable: true })
+  @Column({ name: 'last_accessed_bank_id', type: 'varchar', nullable: true })
   lastAccessedBankId!: string | null;
 
   @Column({ name: 'started_at', nullable: true, type: 'timestamp' })

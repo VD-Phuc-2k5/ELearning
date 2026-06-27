@@ -20,15 +20,13 @@ export class QuizAttemptAnswerEntity {
   @ManyToOne(() => QuestionEntity)
   @JoinColumn({ name: 'question_id' })
   question!: QuestionEntity;
-  @Column({ name: 'selected_option_id', nullable: true }) selectedOptionId!:
-    | string
-    | null;
+  @Column({ name: 'selected_option_id', type: 'varchar', nullable: true })
+  selectedOptionId!: string | null;
   @ManyToOne(() => AnswerOptionEntity, { nullable: true })
   @JoinColumn({ name: 'selected_option_id' })
   selectedOption!: AnswerOptionEntity | null;
   @Column({ name: 'is_correct', default: false }) isCorrect!: boolean;
-  @Column({ name: 'time_spent_seconds', nullable: true }) timeSpentSeconds!:
-    | number
-    | null;
+  @Column({ name: 'time_spent_seconds', type: 'int', nullable: true })
+  timeSpentSeconds!: number | null;
   @Column({ name: 'question_order' }) questionOrder!: number;
 }

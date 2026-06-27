@@ -37,9 +37,10 @@ export class UserBankProgressEntity {
   })
   latestScore!: number | null;
   @Column({ name: 'is_completed', default: false }) isCompleted!: boolean;
-  @Column({ name: 'completed_at', nullable: true }) completedAt!: Date | null;
-  @Column({ name: 'first_attempt_at', nullable: true })
+  @Column({ name: 'completed_at', type: 'timestamp', nullable: true })
+  completedAt!: Date | null;
+  @Column({ name: 'first_attempt_at', type: 'timestamp', nullable: true })
   firstAttemptAt!: Date | null;
-  @Column({ name: 'last_accessed_at', nullable: true })
+  @Column({ name: 'last_accessed_at', type: 'timestamp', nullable: true })
   lastAccessedAt!: Date | null;
 }

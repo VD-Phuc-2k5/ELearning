@@ -110,7 +110,6 @@
     "ts-node": "10.9.1",
     "tsconfig-paths": "^4.2.0",
     "tslib": "^2.8.1",
-    "typeorm-ts-node-commonjs": "^0.3.20",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.59.4",
     "webpack-cli": "^5.1.4"

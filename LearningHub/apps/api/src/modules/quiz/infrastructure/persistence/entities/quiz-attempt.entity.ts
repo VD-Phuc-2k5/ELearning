@@ -25,9 +25,8 @@ export class QuizAttemptEntity {
   @Column({ name: 'started_at', type: 'timestamp' }) startedAt!: Date;
   @Column({ name: 'finished_at', nullable: true, type: 'timestamp' })
   finishedAt!: Date | null;
-  @Column({ name: 'duration_seconds', nullable: true }) durationSeconds!:
-    | number
-    | null;
+  @Column({ name: 'duration_seconds', type: 'int', nullable: true })
+  durationSeconds!: number | null;
   @Column({
     name: 'score_percent',
     type: 'decimal',
