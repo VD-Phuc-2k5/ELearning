@@ -1,0 +1,1 @@
+cd LearningHub && pnpm exec lint-staged
