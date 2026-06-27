@@ -4,48 +4,48 @@ import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Modal } from './modal';
 import {
-  api,
   VALID_ACTIONS,
   inputCls,
   btnPrimary,
   btnSecondary,
+  getAxiosMessage,
 } from '../../lib/admin-api';
+import {
+  getResources,
+  createPermission,
+} from '../../app/actions/admin.actions';
 
 interface AddPermissionModalProps {
   onClose: () => void;
 }
 
+interface PermissionForm {
+  resource: string;
+  action: (typeof VALID_ACTIONS)[number];
+  name: string;
+}
+
 export function AddPermissionModal({ onClose }: AddPermissionModalProps) {
   const qc = useQueryClient();
-  const [form, setForm] = useState<{
-    resource: string;
-    action: (typeof VALID_ACTIONS)[number];
-    name: string;
-  }>({
+  const [form, setForm] = useState<PermissionForm>({
     resource: '',
     action: 'create',
     name: '',
   });
   const [err, setErr] = useState('');
 
-  const { data: resourcesData } = useQuery<{ resources: string[] }>({
+  const { data: resources } = useQuery<string[]>({
     queryKey: ['perm-resources'],
-    queryFn: () =>
-      api
-        .get<{ resources: string[] }>('/api/admin/permissions/resources')
-        .then((r) => r.data),
+    queryFn: getResources,
   });
 
   const mut = useMutation({
-    mutationFn: () => api.post('/api/admin/permissions', form),
+    mutationFn: () => createPermission(form),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['admin-permissions'] });
       onClose();
     },
-    onError: (e: unknown) => {
-      const err = e as { response?: { data?: { message?: string } } };
-      setErr(err.response?.data?.message || 'Tạo quyền thất bại');
-    },
+    onError: (e: unknown) => setErr(getAxiosMessage(e, 'Tạo quyền thất bại')),
   });
 
   return (
@@ -63,7 +63,7 @@ export function AddPermissionModal({ onClose }: AddPermissionModalProps) {
             className={inputCls}
           >
             <option value="">-- Chọn resource --</option>
-            {(resourcesData?.resources ?? []).map((r) => (
+            {(resources ?? []).map((r) => (
               <option key={r} value={r}>
                 {r}
               </option>

@@ -4,7 +4,13 @@ import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { Role } from '@learning-hub/domain';
 import { Modal } from './modal';
-import { api, inputCls, btnPrimary, btnSecondary } from '../../lib/admin-api';
+import {
+  inputCls,
+  btnPrimary,
+  btnSecondary,
+  getAxiosMessage,
+} from '../../lib/admin-api';
+import { updateRole } from '../../app/actions/admin.actions';
 
 interface EditRoleModalProps {
   role: Role;
@@ -20,15 +26,12 @@ export function EditRoleModal({ role, onClose }: EditRoleModalProps) {
   const [err, setErr] = useState('');
 
   const mut = useMutation({
-    mutationFn: () => api.patch(`/api/admin/roles/${role.id}`, form),
+    mutationFn: () => updateRole(role.id, form),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['admin-matrix'] });
       onClose();
     },
-    onError: (e: unknown) => {
-      const err = e as { response?: { data?: { message?: string } } };
-      setErr(err.response?.data?.message || 'Cập nhật thất bại');
-    },
+    onError: (e: unknown) => setErr(getAxiosMessage(e, 'Cập nhật thất bại')),
   });
 
   return (

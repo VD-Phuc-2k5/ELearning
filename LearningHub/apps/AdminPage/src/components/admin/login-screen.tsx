@@ -1,8 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import axios from 'axios';
 import { Shield, Eye, EyeOff } from 'lucide-react';
+import { adminLoginAction } from '../../app/actions/auth.actions';
+import { getAxiosMessage } from '../../lib/admin-api';
 
 interface LoginScreenProps {
   onLogin: () => void;
@@ -20,15 +21,15 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
     setLoading(true);
     setErr('');
     try {
-      const { data } = await axios.post('/api/auth/admin/login', {
-        email,
-        password,
-      });
-      localStorage.setItem('adminToken', data.accessToken);
-      onLogin();
+      const res = await adminLoginAction({ email, password });
+      if (res.success) {
+        localStorage.setItem('adminToken', res.accessToken);
+        onLogin();
+      } else {
+        setErr(res.error);
+      }
     } catch (e) {
-      const err = e as { response?: { data?: { message?: string } } };
-      setErr(err.response?.data?.message || 'Đăng nhập thất bại');
+      setErr(getAxiosMessage(e, 'Đăng nhập thất bại'));
     } finally {
       setLoading(false);
     }

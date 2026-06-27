@@ -3,7 +3,13 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Modal } from './modal';
-import { api, inputCls, btnPrimary, btnSecondary } from '../../lib/admin-api';
+import {
+  inputCls,
+  btnPrimary,
+  btnSecondary,
+  getAxiosMessage,
+} from '../../lib/admin-api';
+import { registerAdmin } from '../../app/actions/admin.actions';
 
 interface CreateAdminModalProps {
   onClose: () => void;
@@ -30,15 +36,13 @@ export function CreateAdminModal({ onClose }: CreateAdminModalProps) {
   const [err, setErr] = useState('');
 
   const mut = useMutation({
-    mutationFn: () => api.post('/api/auth/admin/register', form),
+    mutationFn: () => registerAdmin(form),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['admin-users'] });
       onClose();
     },
-    onError: (e: unknown) => {
-      const err = e as { response?: { data?: { message?: string } } };
-      setErr(err.response?.data?.message || 'Tạo tài khoản thất bại');
-    },
+    onError: (e: unknown) =>
+      setErr(getAxiosMessage(e, 'Tạo tài khoản thất bại')),
   });
 
   return (

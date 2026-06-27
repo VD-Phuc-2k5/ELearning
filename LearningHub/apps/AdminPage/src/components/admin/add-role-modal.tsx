@@ -3,7 +3,13 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Modal } from './modal';
-import { api, inputCls, btnPrimary, btnSecondary } from '../../lib/admin-api';
+import {
+  inputCls,
+  btnPrimary,
+  btnSecondary,
+  getAxiosMessage,
+} from '../../lib/admin-api';
+import { createRole } from '../../app/actions/admin.actions';
 
 interface AddRoleModalProps {
   onClose: () => void;
@@ -15,15 +21,12 @@ export function AddRoleModal({ onClose }: AddRoleModalProps) {
   const [err, setErr] = useState('');
 
   const mut = useMutation({
-    mutationFn: () => api.post('/api/admin/roles', form),
+    mutationFn: () => createRole(form),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['admin-matrix'] });
       onClose();
     },
-    onError: (e: unknown) => {
-      const err = e as { response?: { data?: { message?: string } } };
-      setErr(err.response?.data?.message || 'Tạo vai trò thất bại');
-    },
+    onError: (e: unknown) => setErr(getAxiosMessage(e, 'Tạo vai trò thất bại')),
   });
 
   return (

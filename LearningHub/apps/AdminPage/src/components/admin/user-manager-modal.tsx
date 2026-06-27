@@ -5,7 +5,16 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { Check, Plus } from 'lucide-react';
 import type { Permission, Role, User } from '@learning-hub/domain';
 import { Modal } from './modal';
-import { api } from '../../lib/admin-api';
+import {
+  getRoles,
+  getPermissions,
+  getUserRoles,
+  getUserPermissions,
+  assignRoleToUser,
+  removeRoleFromUser,
+  grantUserPermission,
+  revokeUserPermission,
+} from '../../app/actions/admin.actions';
 
 interface UserManagerModalProps {
   user: User;
@@ -17,63 +26,41 @@ export function UserManagerModal({ user, onClose }: UserManagerModalProps) {
 
   const { data: allRoles = [] } = useQuery<Role[]>({
     queryKey: ['admin-roles-list'],
-    queryFn: () => api.get<Role[]>('/api/admin/roles').then((r) => r.data),
+    queryFn: getRoles,
   });
   const { data: allPerms = [] } = useQuery<Permission[]>({
     queryKey: ['admin-perms-list'],
-    queryFn: () =>
-      api.get<Permission[]>('/api/admin/permissions').then((r) => r.data),
+    queryFn: getPermissions,
   });
-  const { data: userRolesData, refetch: rfRoles } = useQuery<{ roles: Role[] }>(
-    {
-      queryKey: ['user-roles', user.id],
-      queryFn: () =>
-        api
-          .get<{ roles: Role[] }>(`/api/admin/users/${user.id}/roles`)
-          .then((r) => r.data),
-    },
-  );
-  const { data: userPermsData, refetch: rfPerms } = useQuery<{
-    permissions: Permission[];
-  }>({
+  const { data: userRoles, refetch: rfRoles } = useQuery<Role[]>({
+    queryKey: ['user-roles', user.id],
+    queryFn: () => getUserRoles(user.id),
+  });
+  const { data: userPerms, refetch: rfPerms } = useQuery<Permission[]>({
     queryKey: ['user-perms', user.id],
-    queryFn: () =>
-      api
-        .get<{
-          permissions: Permission[];
-        }>(`/api/admin/users/${user.id}/permissions`)
-        .then((r) => r.data),
+    queryFn: () => getUserPermissions(user.id),
     enabled: tab === 'permissions',
   });
 
-  const assignedRoleIds = new Set<number>(
-    (userRolesData?.roles ?? []).map((r) => r.id),
-  );
-  const grantedPermIds = new Set<number>(
-    (userPermsData?.permissions ?? []).map((p) => p.id),
-  );
+  const assignedRoleIds = new Set<number>((userRoles ?? []).map((r) => r.id));
+  const grantedPermIds = new Set<number>((userPerms ?? []).map((p) => p.id));
 
   const assignRole = useMutation({
-    mutationFn: (roleId: number) =>
-      api.post(`/api/admin/users/${user.id}/roles`, { roleId }),
+    mutationFn: (roleId: number) => assignRoleToUser(user.id, roleId),
     onSuccess: () => rfRoles(),
   });
   const removeRole = useMutation({
-    mutationFn: (roleId: number) =>
-      api.delete(`/api/admin/users/${user.id}/roles/${roleId}`),
+    mutationFn: (roleId: number) => removeRoleFromUser(user.id, roleId),
     onSuccess: () => rfRoles(),
   });
   const grantPerm = useMutation({
     mutationFn: (permissionId: number) =>
-      api.post(`/api/admin/users/${user.id}/permissions`, {
-        permissionId,
-        isGranted: true,
-      }),
+      grantUserPermission(user.id, permissionId),
     onSuccess: () => rfPerms(),
   });
   const revokePerm = useMutation({
     mutationFn: (permissionId: number) =>
-      api.delete(`/api/admin/users/${user.id}/permissions/${permissionId}`),
+      revokeUserPermission(user.id, permissionId),
     onSuccess: () => rfPerms(),
   });
 
