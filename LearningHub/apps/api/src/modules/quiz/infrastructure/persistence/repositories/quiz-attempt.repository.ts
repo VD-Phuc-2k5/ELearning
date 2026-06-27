@@ -17,8 +17,6 @@ export class QuizAttemptRepository implements IQuizAttemptRepository {
   constructor(
     @InjectRepository(QuizAttemptEntity)
     private readonly repo: Repository<QuizAttemptEntity>,
-    @InjectRepository(QuizAttemptAnswerEntity)
-    private readonly answerRepo: Repository<QuizAttemptAnswerEntity>,
   ) {}
 
   private toDomain(e: QuizAttemptEntity): QuizAttemptDomain {
