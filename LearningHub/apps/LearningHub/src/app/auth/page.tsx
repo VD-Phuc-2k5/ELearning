@@ -6,11 +6,12 @@ import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { loginSchema, type LoginInput } from '../../lib/schemas';
-import AuthService from '../../services/auth.service';
+import { loginAction } from '../actions/auth.actions';
+import { setAccessToken } from '../../lib/api';
 import { Button, Input } from '../../components/ui';
 import { useState } from 'react';
 import { AlertCircle } from 'lucide-react';
-import type { AxiosError } from 'axios';
+import { jwtDecode } from 'jwt-decode';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -25,12 +26,31 @@ export default function LoginPage() {
   });
 
   const loginMutation = useMutation({
-    mutationFn: AuthService.login,
-    onSuccess: () => {
+    mutationFn: loginAction,
+    onSuccess: (result) => {
+      if (!result.success) {
+        setError(result.error);
+        return;
+      }
+      setAccessToken(result.accessToken);
+      localStorage.setItem('refreshToken', result.refreshToken);
+      try {
+        const payload = jwtDecode<{ sub: string; email: string }>(
+          result.accessToken,
+        );
+        localStorage.setItem(
+          'user',
+          JSON.stringify({
+            id: payload.sub,
+            email: payload.email,
+            username: payload.email.split('@')[0],
+          }),
+        );
+      } catch {}
       router.push('/');
     },
-    onError: (err: AxiosError<{ message?: string }>) => {
-      setError(err.response?.data?.message || 'Sign in failed. Please try again.');
+    onError: () => {
+      setError('Sign in failed. Please try again.');
     },
   });
 
@@ -46,10 +66,15 @@ export default function LoginPage() {
           <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-600 text-white font-bold text-2xl shadow-lg shadow-indigo-200 mb-6">
             L
           </div>
-          <h2 className="text-3xl font-bold tracking-tight text-slate-900">Welcome back</h2>
+          <h2 className="text-3xl font-bold tracking-tight text-slate-900">
+            Welcome back
+          </h2>
           <p className="mt-2 text-sm text-slate-500">
             Don&apos;t have an account?{' '}
-            <Link href="/auth/register" className="font-semibold text-indigo-600 hover:text-indigo-500">
+            <Link
+              href="/auth/register"
+              className="font-semibold text-indigo-600 hover:text-indigo-500"
+            >
               Sign up for free
             </Link>
           </p>
@@ -88,12 +113,19 @@ export default function LoginPage() {
               />
               <span className="text-slate-600">Remember me</span>
             </label>
-            <a href="#" className="font-medium text-indigo-600 hover:text-indigo-500">
+            <a
+              href="#"
+              className="font-medium text-indigo-600 hover:text-indigo-500"
+            >
               Forgot password?
             </a>
           </div>
 
-          <Button type="submit" className="w-full" isLoading={loginMutation.isPending}>
+          <Button
+            type="submit"
+            className="w-full"
+            isLoading={loginMutation.isPending}
+          >
             Sign in
           </Button>
         </form>

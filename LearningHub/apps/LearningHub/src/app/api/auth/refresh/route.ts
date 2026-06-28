@@ -18,6 +18,12 @@ export async function POST(req: NextRequest) {
       path: '/',
       sameSite: 'lax',
     });
+    res.cookies.set('refreshToken', result.value.refreshToken, {
+      maxAge: 7 * 24 * 60 * 60,
+      path: '/',
+      sameSite: 'lax',
+      httpOnly: true,
+    });
     return res;
   }
   return NextResponse.json({ error: result.value.message }, { status: 401 });
