@@ -23,6 +23,7 @@ import {
   Permission,
   RegisterParams,
   Role,
+  UpdateAdminParams,
   UpdateRoleParams,
   User,
 } from '@learning-hub/domain';
@@ -72,6 +73,34 @@ export class AuthRepositoryImpl implements IAuthRepository {
     try {
       const res = await this.dataSource.registerAdmin(data, this.token);
       return right(res.user);
+    } catch (e) {
+      return left(toFailure(e));
+    }
+  }
+
+  async updateUser(
+    id: string,
+    data: UpdateAdminParams,
+  ): Promise<Either<Failure, User>> {
+    try {
+      return right(await this.dataSource.updateUser(id, data, this.token));
+    } catch (e) {
+      return left(toFailure(e));
+    }
+  }
+
+  async deleteUser(id: string): Promise<Either<Failure, void>> {
+    try {
+      await this.dataSource.deleteUser(id, this.token);
+      return right(undefined);
+    } catch (e) {
+      return left(toFailure(e));
+    }
+  }
+
+  async searchUsersByEmail(email: string): Promise<Either<Failure, User[]>> {
+    try {
+      return right(await this.dataSource.searchUsersByEmail(email, this.token));
     } catch (e) {
       return left(toFailure(e));
     }
@@ -185,7 +214,7 @@ export class AuthRepositoryImpl implements IAuthRepository {
   async getRolePermissions(roleId: number): Promise<Either<Failure, number[]>> {
     try {
       const data = await this.dataSource.getRolePermissions(roleId, this.token);
-      return right(data.map((rp) => rp.permissionId));
+      return right(data.map((p) => p.id));
     } catch (e) {
       return left(toFailure(e));
     }

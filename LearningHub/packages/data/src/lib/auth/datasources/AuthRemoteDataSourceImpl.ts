@@ -8,6 +8,7 @@ import {
   Permission,
   RegisterParams,
   Role,
+  UpdateAdminParams,
   UpdateRoleParams,
   User,
 } from '@learning-hub/domain';
@@ -31,8 +32,9 @@ export class AuthRemoteDataSourceImpl implements IAuthRemoteDataSource {
 
   private handleError(e: unknown): never {
     if (axios.isAxiosError(e)) {
-      const status = e.response?.status;
-      const message: string = e.response?.data?.message || e.message;
+      if (!e.response) throw new NetworkException();
+      const status = e.response.status;
+      const message: string = e.response.data?.message || e.message;
       if (status === 401) throw new AuthenticationException(message);
       if (status === 403) throw new PermissionException(message);
       if (status === 404) throw new NotFoundException(message);
@@ -103,7 +105,7 @@ export class AuthRemoteDataSourceImpl implements IAuthRemoteDataSource {
   async getUsers(token?: string): Promise<User[]> {
     try {
       const res = await this.api.get('/admin/users', {
-        params: { role: 'USER' },
+        params: { role: 'ADMIN' },
         headers: this.getAuthHeader(token),
       });
       return res.data;
@@ -118,6 +120,43 @@ export class AuthRemoteDataSourceImpl implements IAuthRemoteDataSource {
   ): Promise<{ user: User }> {
     try {
       const res = await this.api.post('/auth/admin/register', data, {
+        headers: this.getAuthHeader(token),
+      });
+      return res.data;
+    } catch (e) {
+      return this.handleError(e);
+    }
+  }
+
+  async updateUser(
+    id: string,
+    data: UpdateAdminParams,
+    token?: string,
+  ): Promise<User> {
+    try {
+      const res = await this.api.patch(`/admin/users/${id}`, data, {
+        headers: this.getAuthHeader(token),
+      });
+      return res.data;
+    } catch (e) {
+      return this.handleError(e);
+    }
+  }
+
+  async deleteUser(id: string, token?: string): Promise<void> {
+    try {
+      await this.api.delete(`/admin/users/${id}`, {
+        headers: this.getAuthHeader(token),
+      });
+    } catch (e) {
+      return this.handleError(e);
+    }
+  }
+
+  async searchUsersByEmail(email: string, token?: string): Promise<User[]> {
+    try {
+      const res = await this.api.get('/admin/users/search', {
+        params: { email },
         headers: this.getAuthHeader(token),
       });
       return res.data;
@@ -222,7 +261,7 @@ export class AuthRemoteDataSourceImpl implements IAuthRemoteDataSource {
   async getRolePermissions(
     roleId: number,
     token?: string,
-  ): Promise<Array<{ permissionId: number }>> {
+  ): Promise<Permission[]> {
     try {
       const res = await this.api.get(`/admin/roles/${roleId}/permissions`, {
         headers: this.getAuthHeader(token),
@@ -266,10 +305,10 @@ export class AuthRemoteDataSourceImpl implements IAuthRemoteDataSource {
 
   async getUserRoles(userId: string, token?: string): Promise<Role[]> {
     try {
-      const res = await this.api.get(`/admin/user-roles/${userId}`, {
+      const res = await this.api.get(`/admin/users/${userId}/roles`, {
         headers: this.getAuthHeader(token),
       });
-      return res.data;
+      return res.data.roles;
     } catch (e) {
       return this.handleError(e);
     }
@@ -282,7 +321,7 @@ export class AuthRemoteDataSourceImpl implements IAuthRemoteDataSource {
   ): Promise<void> {
     try {
       await this.api.post(
-        `/admin/user-roles/${userId}`,
+        `/admin/users/${userId}/roles`,
         { roleId },
         { headers: this.getAuthHeader(token) },
       );
@@ -297,7 +336,7 @@ export class AuthRemoteDataSourceImpl implements IAuthRemoteDataSource {
     token?: string,
   ): Promise<void> {
     try {
-      await this.api.delete(`/admin/user-roles/${userId}/${roleId}`, {
+      await this.api.delete(`/admin/users/${userId}/roles/${roleId}`, {
         headers: this.getAuthHeader(token),
       });
     } catch (e) {
@@ -313,7 +352,7 @@ export class AuthRemoteDataSourceImpl implements IAuthRemoteDataSource {
       const res = await this.api.get(`/admin/users/${userId}/permissions`, {
         headers: this.getAuthHeader(token),
       });
-      return res.data;
+      return res.data.permissions;
     } catch (e) {
       return this.handleError(e);
     }

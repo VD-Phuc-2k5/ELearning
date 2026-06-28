@@ -7,6 +7,7 @@ import {
   Permission,
   RegisterParams,
   Role,
+  UpdateAdminParams,
   UpdateRoleParams,
   User,
 } from '@learning-hub/domain';
@@ -20,6 +21,13 @@ export interface IAuthRemoteDataSource {
   getProfile(token?: string): Promise<User>;
   getUsers(token?: string): Promise<User[]>;
   registerAdmin(data: RegisterParams, token?: string): Promise<{ user: User }>;
+  updateUser(
+    id: string,
+    data: UpdateAdminParams,
+    token?: string,
+  ): Promise<User>;
+  deleteUser(id: string, token?: string): Promise<void>;
+  searchUsersByEmail(email: string, token?: string): Promise<User[]>;
   getRoles(token?: string): Promise<Role[]>;
   createRole(data: CreateRoleParams, token?: string): Promise<Role>;
   updateRole(id: number, data: UpdateRoleParams, token?: string): Promise<Role>;
@@ -31,10 +39,7 @@ export interface IAuthRemoteDataSource {
     token?: string,
   ): Promise<Permission>;
   deletePermission(id: number, token?: string): Promise<void>;
-  getRolePermissions(
-    roleId: number,
-    token?: string,
-  ): Promise<Array<{ permissionId: number }>>;
+  getRolePermissions(roleId: number, token?: string): Promise<Permission[]>;
   assignPermission(
     roleId: number,
     permissionId: number,

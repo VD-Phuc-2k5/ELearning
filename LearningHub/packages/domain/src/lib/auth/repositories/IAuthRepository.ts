@@ -8,6 +8,7 @@ import {
   Permission,
   RegisterParams,
   Role,
+  UpdateAdminParams,
   UpdateRoleParams,
   User,
 } from '../entities/entities';
@@ -24,6 +25,12 @@ export interface IAuthRepository {
   // Admin Users
   getUsers(): Promise<Either<Failure, User[]>>;
   registerAdmin(data: RegisterParams): Promise<Either<Failure, User>>;
+  updateUser(
+    id: string,
+    data: UpdateAdminParams,
+  ): Promise<Either<Failure, User>>;
+  deleteUser(id: string): Promise<Either<Failure, void>>;
+  searchUsersByEmail(email: string): Promise<Either<Failure, User[]>>;
 
   // Roles
   getRoles(): Promise<Either<Failure, Role[]>>;

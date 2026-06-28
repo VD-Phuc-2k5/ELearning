@@ -1,5 +1,7 @@
 export * from './AdminLoginUsecase';
 export * from './AdminRegisterUsecase';
+export * from './DeleteAdminUsecase';
+export * from './UpdateAdminUsecase';
 export * from './AssignPermissionToRoleUsecase';
 export * from './AssignRoleToUserUsecase';
 export * from './CreatePermissionUsecase';
@@ -22,4 +24,6 @@ export * from './RegisterUsecase';
 export * from './RemovePermissionFromRoleUsecase';
 export * from './RemoveRoleFromUserUsecase';
 export * from './RevokeUserPermissionUsecase';
+export * from './SearchUsersUsecase';
+export * from './UpdateAdminUsecase';
 export * from './UpdateRoleUsecase';

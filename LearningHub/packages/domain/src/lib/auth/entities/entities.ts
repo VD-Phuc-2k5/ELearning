@@ -2,6 +2,7 @@ export interface User {
   readonly id: string;
   readonly email: string;
   readonly username: string;
+  readonly isActive?: boolean;
   readonly roles?: Role[];
 }
 
@@ -56,4 +57,11 @@ export interface CreatePermissionParams {
 export interface GrantPermissionParams {
   permissionId: number;
   isGranted: boolean;
+}
+
+export interface UpdateAdminParams {
+  username?: string;
+  email?: string;
+  password?: string;
+  isActive?: boolean;
 }
