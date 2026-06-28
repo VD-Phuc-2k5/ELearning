@@ -17,14 +17,14 @@ export class RoadmapItemEntity {
   @Column({ name: 'roadmap_id' })
   roadmapId!: string;
 
-  @ManyToOne(() => RoadmapEntity)
+  @ManyToOne(() => RoadmapEntity, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'roadmap_id' })
   roadmap!: RoadmapEntity;
 
   @Column({ name: 'question_bank_id' })
   questionBankId!: string;
 
-  @ManyToOne(() => QuestionBankEntity)
+  @ManyToOne(() => QuestionBankEntity, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'question_bank_id' })
   questionBank!: QuestionBankEntity;
 

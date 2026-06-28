@@ -24,7 +24,7 @@ export class UserRoadmapProgressEntity {
   @Column({ name: 'roadmap_id' })
   roadmapId!: string;
 
-  @ManyToOne(() => RoadmapEntity)
+  @ManyToOne(() => RoadmapEntity, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'roadmap_id' })
   roadmap!: RoadmapEntity;
 
@@ -49,7 +49,7 @@ export class UserRoadmapProgressEntity {
   @Column({ name: 'current_bank_id', type: 'varchar', nullable: true })
   currentBankId!: string | null;
 
-  @ManyToOne(() => QuestionBankEntity, { nullable: true })
+  @ManyToOne(() => QuestionBankEntity, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'current_bank_id' })
   currentBank!: QuestionBankEntity | null;
 

@@ -16,7 +16,7 @@ export class UserBankProgressEntity {
   @JoinColumn({ name: 'user_id' })
   user!: UserEntity;
   @Column({ name: 'question_bank_id' }) questionBankId!: string;
-  @ManyToOne(() => QuestionBankEntity)
+  @ManyToOne(() => QuestionBankEntity, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'question_bank_id' })
   questionBank!: QuestionBankEntity;
   @Column({ name: 'attempt_count', default: 0 }) attemptCount!: number;

@@ -13,16 +13,16 @@ import { AnswerOptionEntity } from './answer-option.entity';
 export class QuizAttemptAnswerEntity {
   @PrimaryGeneratedColumn('uuid') id!: string;
   @Column({ name: 'attempt_id' }) attemptId!: string;
-  @ManyToOne(() => QuizAttemptEntity, (a) => a.answers)
+  @ManyToOne(() => QuizAttemptEntity, (a) => a.answers, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'attempt_id' })
   attempt!: QuizAttemptEntity;
   @Column({ name: 'question_id' }) questionId!: string;
-  @ManyToOne(() => QuestionEntity)
+  @ManyToOne(() => QuestionEntity, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'question_id' })
   question!: QuestionEntity;
   @Column({ name: 'selected_option_id', type: 'varchar', nullable: true })
   selectedOptionId!: string | null;
-  @ManyToOne(() => AnswerOptionEntity, { nullable: true })
+  @ManyToOne(() => AnswerOptionEntity, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'selected_option_id' })
   selectedOption!: AnswerOptionEntity | null;
   @Column({ name: 'is_correct', default: false }) isCorrect!: boolean;
