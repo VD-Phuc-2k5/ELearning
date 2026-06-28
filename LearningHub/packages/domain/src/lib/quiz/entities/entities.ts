@@ -75,7 +75,8 @@ export interface UploadExcelResult {
 
 export interface VerifyAnswerResult {
   readonly isCorrect: boolean;
-  readonly correctOptionId?: string;
+  readonly correctOptionIds: string[];
+  readonly explanation?: string | null;
 }
 
 export interface ParseExcelResult {
@@ -99,6 +100,7 @@ export interface NextBankSuggestion {
   readonly bankTitle: string;
   readonly position: number;
   readonly totalBanks: number;
+  readonly roadmapId: string;
 }
 
 export interface QuizSubmitResult {

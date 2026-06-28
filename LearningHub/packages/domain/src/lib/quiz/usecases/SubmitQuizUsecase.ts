@@ -7,6 +7,7 @@ export class SubmitQuizParams {
     public bankId: string,
     public answers: QuizAnswer[],
     public roadmapId?: string | null,
+    public durationSeconds?: number,
   ) {}
 }
 
@@ -21,6 +22,7 @@ export class SubmitQuizUsecase
       params.bankId,
       params.answers,
       params.roadmapId,
+      params.durationSeconds,
     );
   }
 }

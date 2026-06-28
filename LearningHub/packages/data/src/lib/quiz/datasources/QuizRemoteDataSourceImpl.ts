@@ -40,7 +40,7 @@ export class QuizRemoteDataSourceImpl implements IQuizRemoteDataSource {
 
   async getBanks(params: GetBanksQuizParams, token: string) {
     try {
-      const res = await this.api.get('/api/quiz/banks', {
+      const res = await this.api.get('/quiz/banks', {
         params,
         headers: this.auth(token),
       });
@@ -52,7 +52,7 @@ export class QuizRemoteDataSourceImpl implements IQuizRemoteDataSource {
 
   async getBankDetail(id: string, token: string) {
     try {
-      const res = await this.api.get(`/api/quiz/banks/${id}`, {
+      const res = await this.api.get(`/quiz/banks/${id}`, {
         headers: this.auth(token),
       });
       return res.data;
@@ -63,7 +63,7 @@ export class QuizRemoteDataSourceImpl implements IQuizRemoteDataSource {
 
   async createBank(params: CreateBankQuizParams, token: string) {
     try {
-      const res = await this.api.post('/api/quiz/banks', params, {
+      const res = await this.api.post('/quiz/banks', params, {
         headers: this.auth(token),
       });
       return res.data;
@@ -74,7 +74,7 @@ export class QuizRemoteDataSourceImpl implements IQuizRemoteDataSource {
 
   async updateBank(id: string, params: UpdateBankQuizParams, token: string) {
     try {
-      const res = await this.api.patch(`/api/quiz/banks/${id}`, params, {
+      const res = await this.api.patch(`/quiz/banks/${id}`, params, {
         headers: this.auth(token),
       });
       return res.data;
@@ -85,7 +85,7 @@ export class QuizRemoteDataSourceImpl implements IQuizRemoteDataSource {
 
   async deleteBank(id: string, token: string) {
     try {
-      await this.api.delete(`/api/quiz/banks/${id}`, {
+      await this.api.delete(`/quiz/banks/${id}`, {
         headers: this.auth(token),
       });
     } catch (e) {
@@ -105,7 +105,7 @@ export class QuizRemoteDataSourceImpl implements IQuizRemoteDataSource {
       form.append('file', new Blob([file]), fileName);
       if (fileHash) form.append('fileHash', fileHash);
       const res = await this.api.post(
-        `/api/quiz/banks/${bankId}/upload-excel`,
+        `/quiz/banks/${bankId}/upload-excel`,
         form,
         { headers: { ...this.auth(token) } },
       );
@@ -125,7 +125,7 @@ export class QuizRemoteDataSourceImpl implements IQuizRemoteDataSource {
       const form = new FormData();
       form.append('file', new Blob([file]), fileName);
       const res = await this.api.post(
-        `/api/quiz/banks/${bankId}/parse-excel`,
+        `/quiz/banks/${bankId}/parse-excel`,
         form,
         { headers: { ...this.auth(token) } },
       );
@@ -137,10 +137,9 @@ export class QuizRemoteDataSourceImpl implements IQuizRemoteDataSource {
 
   async getUploadHistory(bankId: string, token: string) {
     try {
-      const res = await this.api.get(
-        `/api/quiz/banks/${bankId}/upload-history`,
-        { headers: this.auth(token) },
-      );
+      const res = await this.api.get(`/quiz/banks/${bankId}/upload-history`, {
+        headers: this.auth(token),
+      });
       return res.data;
     } catch (e) {
       return this.handleError(e);
@@ -153,7 +152,7 @@ export class QuizRemoteDataSourceImpl implements IQuizRemoteDataSource {
     showAnswers = false,
   ) {
     try {
-      const res = await this.api.get(`/api/quiz/banks/${bankId}/questions`, {
+      const res = await this.api.get(`/quiz/banks/${bankId}/questions`, {
         headers: this.auth(token),
         params: showAnswers ? { showAnswers: 'true' } : undefined,
       });
@@ -170,7 +169,7 @@ export class QuizRemoteDataSourceImpl implements IQuizRemoteDataSource {
   ) {
     try {
       const res = await this.api.post(
-        `/api/quiz/questions/${questionId}/verify`,
+        `/quiz/questions/${questionId}/verify`,
         { selectedOptionId },
         { headers: this.auth(token) },
       );
@@ -185,11 +184,12 @@ export class QuizRemoteDataSourceImpl implements IQuizRemoteDataSource {
     answers: QuizAnswer[],
     token: string,
     roadmapId?: string | null,
+    durationSeconds?: number,
   ) {
     try {
       const res = await this.api.post(
-        `/api/quiz/banks/${bankId}/submit`,
-        { answers, roadmapId },
+        `/quiz/banks/${bankId}/submit`,
+        { answers, roadmapId, durationSeconds },
         { headers: this.auth(token) },
       );
       return res.data;
@@ -200,7 +200,7 @@ export class QuizRemoteDataSourceImpl implements IQuizRemoteDataSource {
 
   async getAttempts(params: GetAttemptsParams, token: string) {
     try {
-      const res = await this.api.get('/api/quiz/attempts', {
+      const res = await this.api.get('/quiz/attempts', {
         params,
         headers: this.auth(token),
       });
@@ -212,7 +212,7 @@ export class QuizRemoteDataSourceImpl implements IQuizRemoteDataSource {
 
   async getAttemptDetail(id: string, token: string) {
     try {
-      const res = await this.api.get(`/api/quiz/attempts/${id}`, {
+      const res = await this.api.get(`/quiz/attempts/${id}`, {
         headers: this.auth(token),
       });
       return res.data;
@@ -223,7 +223,7 @@ export class QuizRemoteDataSourceImpl implements IQuizRemoteDataSource {
 
   async getBankProgress(bankId: string, token: string) {
     try {
-      const res = await this.api.get(`/api/quiz/banks/${bankId}/my-progress`, {
+      const res = await this.api.get(`/quiz/banks/${bankId}/my-progress`, {
         headers: this.auth(token),
       });
       return res.data;
@@ -238,7 +238,7 @@ export class QuizRemoteDataSourceImpl implements IQuizRemoteDataSource {
     token: string,
   ) {
     try {
-      const res = await this.api.patch(`/api/quiz/questions/${id}`, params, {
+      const res = await this.api.patch(`/quiz/questions/${id}`, params, {
         headers: this.auth(token),
       });
       return res.data;
@@ -249,7 +249,7 @@ export class QuizRemoteDataSourceImpl implements IQuizRemoteDataSource {
 
   async deleteQuestion(id: string, token: string) {
     try {
-      await this.api.delete(`/api/quiz/questions/${id}`, {
+      await this.api.delete(`/quiz/questions/${id}`, {
         headers: this.auth(token),
       });
     } catch (e) {
@@ -259,7 +259,7 @@ export class QuizRemoteDataSourceImpl implements IQuizRemoteDataSource {
 
   async getTags(token: string) {
     try {
-      const res = await this.api.get('/api/quiz/tags', {
+      const res = await this.api.get('/quiz/tags', {
         headers: this.auth(token),
       });
       return res.data;
@@ -271,7 +271,7 @@ export class QuizRemoteDataSourceImpl implements IQuizRemoteDataSource {
   async createTag(name: string, token: string) {
     try {
       const res = await this.api.post(
-        '/api/quiz/tags',
+        '/quiz/tags',
         { name },
         { headers: this.auth(token) },
       );
@@ -283,7 +283,7 @@ export class QuizRemoteDataSourceImpl implements IQuizRemoteDataSource {
 
   async deleteTag(id: number, token: string) {
     try {
-      await this.api.delete(`/api/quiz/tags/${id}`, {
+      await this.api.delete(`/quiz/tags/${id}`, {
         headers: this.auth(token),
       });
     } catch (e) {
@@ -293,7 +293,7 @@ export class QuizRemoteDataSourceImpl implements IQuizRemoteDataSource {
 
   async checkBankHash(hash: string, token: string) {
     try {
-      const res = await this.api.get(`/api/quiz/banks/check-hash/${hash}`, {
+      const res = await this.api.get(`/quiz/banks/check-hash/${hash}`, {
         headers: this.auth(token),
       });
       return res.data;
@@ -304,10 +304,9 @@ export class QuizRemoteDataSourceImpl implements IQuizRemoteDataSource {
 
   async getDerivedBanks(bankId: string, token: string) {
     try {
-      const res = await this.api.get(
-        `/api/quiz/banks/${bankId}/derived-banks`,
-        { headers: this.auth(token) },
-      );
+      const res = await this.api.get(`/quiz/banks/${bankId}/derived-banks`, {
+        headers: this.auth(token),
+      });
       return res.data.data ?? [];
     } catch (e) {
       return this.handleError(e);
@@ -319,7 +318,7 @@ export class QuizRemoteDataSourceImpl implements IQuizRemoteDataSource {
     token: string,
   ): Promise<BankRoadmapItem[]> {
     try {
-      const res = await this.api.get(`/api/quiz/banks/${bankId}/roadmaps`, {
+      const res = await this.api.get(`/quiz/banks/${bankId}/roadmaps`, {
         headers: this.auth(token),
       });
       return res.data;

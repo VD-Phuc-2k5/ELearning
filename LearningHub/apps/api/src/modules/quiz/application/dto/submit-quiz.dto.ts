@@ -5,6 +5,7 @@ export interface SubmitAnswerItem {
 export interface SubmitQuizDto {
   answers: SubmitAnswerItem[];
   roadmapId?: string | null;
+  durationSeconds?: number;
 }
 
 export interface SubmitQuizResultDetail {
@@ -20,6 +21,7 @@ export interface NextBankSuggestion {
   bankTitle: string;
   position: number;
   totalBanks: number;
+  roadmapId: string;
 }
 
 export interface SubmitQuizResult {

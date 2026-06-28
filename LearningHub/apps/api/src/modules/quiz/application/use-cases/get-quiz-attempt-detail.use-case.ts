@@ -32,20 +32,20 @@ export class GetQuizAttemptDetailUseCase {
       attempt.questionBankId,
       false,
     );
-    const questionMap = new Map(questions.map((q) => [q.id, q]));
+    const answerMap = new Map(attempt.answers.map((a) => [a.questionId, a]));
 
-    const reviewDetails = attempt.answers
-      .map((a) => {
-        const q = questionMap.get(a.questionId);
+    const reviewDetails = questions
+      .map((q, idx) => {
+        const a = answerMap.get(q.id);
         return {
-          questionId: a.questionId,
-          questionContent: q?.content ?? '',
-          explanation: q?.explanation ?? null,
-          selectedOptionId: a.selectedOptionId,
-          correctOptionIds: q?.correctAnswerOptionIds ?? [],
-          isCorrect: a.isCorrect,
-          questionOrder: a.questionOrder,
-          answerOptions: q?.answerOptions ?? [],
+          questionId: q.id,
+          questionContent: q.content ?? '',
+          explanation: q.explanation ?? null,
+          selectedOptionId: a?.selectedOptionId ?? null,
+          correctOptionIds: q.correctAnswerOptionIds ?? [],
+          isCorrect: a?.isCorrect ?? false,
+          questionOrder: a?.questionOrder ?? idx,
+          answerOptions: q.answerOptions ?? [],
         };
       })
       .sort((a, b) => a.questionOrder - b.questionOrder);

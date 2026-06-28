@@ -95,9 +95,9 @@ export class SubmitQuizUseCase {
     const status: 'pass' | 'fail' =
       scorePercent >= passingScore ? 'pass' : 'fail';
     const finishedAt = new Date();
-    const durationSeconds = Math.round(
-      (finishedAt.getTime() - startedAt.getTime()) / 1000,
-    );
+    const durationSeconds =
+      dto.durationSeconds ??
+      Math.round((finishedAt.getTime() - startedAt.getTime()) / 1000);
 
     const attempt = await this.attemptRepository.create({
       userId,
@@ -129,15 +129,27 @@ export class SubmitQuizUseCase {
       attemptedAt: finishedAt,
     });
 
+    // Auto-sync all roadmaps that contain this bank, not just the explicitly selected one
+    const bankRoadmaps =
+      await this.roadmapItemRepository.findBankRoadmaps(bankId);
+    const roadmapIds = [
+      ...new Set([
+        ...bankRoadmaps.map((r) => r.roadmapId),
+        ...(dto.roadmapId ? [dto.roadmapId] : []),
+      ]),
+    ];
+
     let nextBank: NextBankSuggestion | null = null;
-    if (dto.roadmapId) {
-      nextBank = await this.updateRoadmapProgress(
-        dto.roadmapId,
+    for (const roadmapId of roadmapIds) {
+      const next = await this.updateRoadmapProgress(
+        roadmapId,
         userId,
         bankId,
         scorePercent,
         passingScore,
       );
+      if (roadmapId === dto.roadmapId) nextBank = next;
+      else if (!nextBank && !dto.roadmapId) nextBank = next;
     }
 
     return {
@@ -191,6 +203,7 @@ export class SubmitQuizUseCase {
       bankTitle: nextItem.bankTitle ?? '',
       position: nextItem.position,
       totalBanks,
+      roadmapId,
     };
   }
 }

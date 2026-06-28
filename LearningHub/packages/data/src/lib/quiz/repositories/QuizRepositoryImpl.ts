@@ -185,6 +185,7 @@ export class QuizRepositoryImpl implements IQuizRepository {
     bankId: string,
     answers: QuizAnswer[],
     roadmapId?: string | null,
+    durationSeconds?: number,
   ): Promise<Either<Failure, QuizSubmitResult>> {
     try {
       return right(
@@ -193,6 +194,7 @@ export class QuizRepositoryImpl implements IQuizRepository {
           answers,
           this.token,
           roadmapId,
+          durationSeconds,
         ),
       );
     } catch (e) {

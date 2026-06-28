@@ -88,6 +88,7 @@ export interface IQuizRepository {
     bankId: string,
     answers: QuizAnswer[],
     roadmapId?: string | null,
+    durationSeconds?: number,
   ): Promise<Either<Failure, QuizSubmitResult>>;
   getAttempts(params: GetAttemptsParams): Promise<Either<Failure, AttemptList>>;
   getAttemptDetail(id: string): Promise<Either<Failure, QuizAttemptDetail>>;

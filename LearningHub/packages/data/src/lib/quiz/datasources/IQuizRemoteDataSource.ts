@@ -64,6 +64,7 @@ export interface IQuizRemoteDataSource {
     answers: QuizAnswer[],
     token: string,
     roadmapId?: string | null,
+    durationSeconds?: number,
   ): Promise<QuizSubmitResult>;
   getAttempts(params: GetAttemptsParams, token: string): Promise<AttemptList>;
   getAttemptDetail(id: string, token: string): Promise<QuizAttemptDetail>;
