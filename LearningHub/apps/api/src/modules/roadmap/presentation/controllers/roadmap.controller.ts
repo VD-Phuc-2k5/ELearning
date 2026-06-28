@@ -79,6 +79,28 @@ export class RoadmapController {
     return this.getMyRoadmapProgressUseCase.execute(req.user.id);
   }
 
+  @Get('mine')
+  @ApiOperation({ summary: 'Danh sách roadmap do tôi tạo' })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'search', required: false })
+  @ApiQuery({ name: 'status', required: false })
+  mine(
+    @Request() req: AuthReq,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+    @Query('search') search?: string,
+    @Query('status') status?: string,
+  ) {
+    return this.getRoadmapListUseCase.execute({
+      creatorId: req.user.id,
+      page,
+      limit,
+      search,
+      status,
+    });
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Chi tiết roadmap + tiến độ của user' })
   detail(@Param('id') id: string, @Request() req: AuthReq) {

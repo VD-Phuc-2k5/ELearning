@@ -22,6 +22,7 @@ import {
   EnrollRoadmapParams,
   EnrollRoadmapUsecase,
   GetMyRoadmapProgressUsecase,
+  GetMyRoadmapsUsecase,
   GetRoadmapDetailParams,
   GetRoadmapDetailUsecase,
   GetRoadmapsUsecase,
@@ -47,6 +48,13 @@ export async function listRoadmaps(
 ): Promise<RoadmapList> {
   const repo = await getRepo();
   return unwrap(await new GetRoadmapsUsecase(repo).execute(params ?? {}));
+}
+
+export async function listMyRoadmaps(
+  params?: GetRoadmapsParams,
+): Promise<RoadmapList> {
+  const repo = await getRepo();
+  return unwrap(await new GetMyRoadmapsUsecase(repo).execute(params ?? {}));
 }
 
 export async function createRoadmap(

@@ -51,6 +51,16 @@ export class RoadmapRepositoryImpl implements IRoadmapRepository {
     }
   }
 
+  async getMyRoadmaps(
+    params: GetRoadmapsParams,
+  ): Promise<Either<Failure, RoadmapList>> {
+    try {
+      return right(await this.dataSource.getMyRoadmaps(params, this.token));
+    } catch (e) {
+      return left(toFailure(e));
+    }
+  }
+
   async createRoadmap(
     params: CreateRoadmapParams,
   ): Promise<Either<Failure, Roadmap>> {

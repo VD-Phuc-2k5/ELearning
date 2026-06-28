@@ -1,16 +1,32 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
-import { Plus, Map, ArrowUpRight, Edit2 } from 'lucide-react';
-import { Button } from '../../../../components/ui';
-import { listRoadmaps } from '../../../actions/roadmap.actions';
+import { Plus, Map, ArrowUpRight, Edit2, Trash2 } from 'lucide-react';
+import { Button, useConfirmModal } from '../../../../components/ui';
+import {
+  listMyRoadmaps,
+  deleteRoadmap,
+} from '../../../actions/roadmap.actions';
 
 export default function ManageRoadmapsPage() {
+  const qc = useQueryClient();
+  const { modal: confirmModal, openConfirm } = useConfirmModal();
   const { data, isLoading } = useQuery({
     queryKey: ['my-roadmaps'],
-    queryFn: () => listRoadmaps({ limit: 50 }),
+    queryFn: () => listMyRoadmaps({ limit: 50 }),
   });
+
+  const del = useMutation({
+    mutationFn: (id: string) => deleteRoadmap(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['my-roadmaps'] }),
+  });
+
+  const handleDelete = (id: string, title: string) => {
+    openConfirm(`Xóa roadmap "${title}"? Tất cả tiến độ học sẽ bị mất.`, () =>
+      del.mutate(id),
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -73,11 +89,19 @@ export default function ManageRoadmapsPage() {
                     Edit
                   </Button>
                 </Link>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  icon={<Trash2 className="h-3.5 w-3.5 text-red-500" />}
+                  isLoading={del.isPending && del.variables === r.id}
+                  onClick={() => handleDelete(r.id, r.title)}
+                />
               </div>
             </div>
           ))}
         </div>
       )}
+      {confirmModal}
     </div>
   );
 }

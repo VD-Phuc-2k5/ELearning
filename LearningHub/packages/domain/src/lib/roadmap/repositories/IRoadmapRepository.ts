@@ -29,6 +29,9 @@ export interface RoadmapList {
 
 export interface IRoadmapRepository {
   getRoadmaps(params: GetRoadmapsParams): Promise<Either<Failure, RoadmapList>>;
+  getMyRoadmaps(
+    params: GetRoadmapsParams,
+  ): Promise<Either<Failure, RoadmapList>>;
   createRoadmap(params: CreateRoadmapParams): Promise<Either<Failure, Roadmap>>;
   getRoadmapDetail(id: string): Promise<Either<Failure, RoadmapDetail>>;
   updateRoadmap(

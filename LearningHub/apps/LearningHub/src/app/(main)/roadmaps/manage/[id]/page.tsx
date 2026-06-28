@@ -9,12 +9,20 @@ import {
   Draggable,
   DropResult,
 } from '@hello-pangea/dnd';
-import { ArrowLeft, GripVertical, Trash2, Plus, X } from 'lucide-react';
-import { Button, Input } from '../../../../../components/ui';
+import {
+  ArrowLeft,
+  GripVertical,
+  Trash2,
+  Plus,
+  X,
+  AlertCircle,
+} from 'lucide-react';
+import { Button, Input, useConfirmModal } from '../../../../../components/ui';
 import {
   getRoadmapDetail,
   updateRoadmap,
   setRoadmapItems,
+  deleteRoadmap,
 } from '../../../../actions/roadmap.actions';
 import { getBanks } from '../../../../actions/quiz.actions';
 import type { QuestionBank } from '@learning-hub/domain';
@@ -41,6 +49,8 @@ export default function EditRoadmapPage() {
   >([]);
   const [showPicker, setShowPicker] = useState(false);
   const [pickerSearch, setPickerSearch] = useState('');
+  const [deleteErr, setDeleteErr] = useState('');
+  const { modal: confirmModal, openConfirm } = useConfirmModal();
 
   useEffect(() => {
     if (!data) return;
@@ -68,6 +78,28 @@ export default function EditRoadmapPage() {
       router.push(`/roadmaps/${id}`);
     },
   });
+
+  const delRoadmap = useMutation({
+    mutationFn: () => deleteRoadmap(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['my-roadmaps'] });
+      router.push('/roadmaps/manage');
+    },
+    onError: (e: unknown) => {
+      setDeleteErr(
+        e instanceof Error
+          ? e.message
+          : 'Xóa roadmap thất bại. Vui lòng thử lại.',
+      );
+    },
+  });
+
+  const handleDeleteRoadmap = () => {
+    openConfirm(
+      `Xóa roadmap "${data?.roadmap.title}"? Tất cả question banks và tiến độ học sẽ bị xoá.`,
+      () => delRoadmap.mutate(),
+    );
+  };
 
   const onDragEnd = (result: DropResult) => {
     if (!result.destination) return;
@@ -114,7 +146,33 @@ export default function EditRoadmapPage() {
           <ArrowLeft className="h-4 w-4 text-slate-600" />
         </button>
         <h1 className="text-xl font-bold text-slate-900">Edit Roadmap</h1>
+        <div className="ml-auto">
+          <Button
+            variant="secondary"
+            size="sm"
+            isLoading={delRoadmap.isPending}
+            onClick={handleDeleteRoadmap}
+            icon={<Trash2 className="h-4 w-4 text-red-500" />}
+          >
+            Delete
+          </Button>
+        </div>
       </div>
+
+      {deleteErr && (
+        <div className="flex items-start justify-between rounded-2xl bg-red-50 border border-red-100 px-4 py-3">
+          <div className="flex items-start gap-2 text-sm text-red-700">
+            <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+            <span>{deleteErr}</span>
+          </div>
+          <button
+            onClick={() => setDeleteErr('')}
+            className="text-red-500 hover:text-red-700"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
 
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 space-y-4">
         <div>
@@ -262,6 +320,7 @@ export default function EditRoadmapPage() {
           Save Changes
         </Button>
       </div>
+      {confirmModal}
     </div>
   );
 }

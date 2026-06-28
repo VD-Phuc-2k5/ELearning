@@ -1,4 +1,5 @@
 export * from './GetRoadmapsUsecase';
+export * from './GetMyRoadmapsUsecase';
 export * from './CreateRoadmapUsecase';
 export * from './GetRoadmapDetailUsecase';
 export * from './UpdateRoadmapUsecase';

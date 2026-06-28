@@ -55,6 +55,21 @@ export class RoadmapRemoteDataSourceImpl implements IRoadmapRemoteDataSource {
     }
   }
 
+  async getMyRoadmaps(
+    params: GetRoadmapsParams,
+    token: string,
+  ): Promise<RoadmapList> {
+    try {
+      const res = await this.api.get('/roadmaps/mine', {
+        params,
+        headers: this.auth(token),
+      });
+      return res.data;
+    } catch (e) {
+      return this.handleError(e);
+    }
+  }
+
   async createRoadmap(
     params: CreateRoadmapParams,
     token: string,

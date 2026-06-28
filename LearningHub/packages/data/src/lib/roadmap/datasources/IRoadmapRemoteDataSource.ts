@@ -11,6 +11,7 @@ import {
 
 export interface IRoadmapRemoteDataSource {
   getRoadmaps(params: GetRoadmapsParams, token: string): Promise<RoadmapList>;
+  getMyRoadmaps(params: GetRoadmapsParams, token: string): Promise<RoadmapList>;
   createRoadmap(params: CreateRoadmapParams, token: string): Promise<Roadmap>;
   getRoadmapDetail(id: string, token: string): Promise<RoadmapDetail>;
   updateRoadmap(
