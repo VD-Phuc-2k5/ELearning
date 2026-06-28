@@ -49,6 +49,15 @@ export class UserRepository implements IUserRepository {
     return entity ? this.toDomain(entity) : null;
   }
 
+  async searchByEmail(keyword: string): Promise<User[]> {
+    const qb = this.repository.createQueryBuilder('user');
+    if (keyword.trim()) {
+      qb.andWhere('user.email ILIKE :kw', { kw: `%${keyword.trim()}%` });
+    }
+    const entities = await qb.orderBy('user.createdAt', 'DESC').getMany();
+    return entities.map(this.toDomain.bind(this));
+  }
+
   async create(user: User): Promise<User> {
     const entity = await this.repository.save(this.fromDomain(user));
     return this.toDomain(entity);
