@@ -1,16 +1,22 @@
 'use client';
 
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { getBanks, type QuestionBank } from '../../actions/quiz.actions';
+import { getBanks } from '../../actions/quiz.actions';
+import type { QuestionBank } from '@learning-hub/domain';
 import { Button } from '../../../components/ui';
 import { Plus, BookOpen, Share2, Upload, FileQuestion } from 'lucide-react';
 import Link from 'next/link';
 
 export default function MyBanksPage() {
+  const [page, setPage] = useState(1);
+  const limit = 12;
   const { data, isLoading } = useQuery({
-    queryKey: ['my-banks'],
-    queryFn: () => getBanks(),
+    queryKey: ['my-banks', page],
+    queryFn: () => getBanks({ page, limit }),
   });
+  const total = data?.total ?? 0;
+  const totalPages = Math.ceil(total / limit);
 
   return (
     <div className="space-y-8">
@@ -107,6 +113,30 @@ export default function MyBanksPage() {
               </Button>
             </Link>
           </div>
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between pt-2">
+          <Button
+            variant="secondary"
+            size="sm"
+            disabled={page <= 1}
+            onClick={() => setPage((p) => p - 1)}
+          >
+            ← Previous
+          </Button>
+          <span className="text-sm text-slate-500">
+            Page {page} / {totalPages}
+          </span>
+          <Button
+            variant="secondary"
+            size="sm"
+            disabled={page >= totalPages}
+            onClick={() => setPage((p) => p + 1)}
+          >
+            Next →
+          </Button>
         </div>
       )}
     </div>

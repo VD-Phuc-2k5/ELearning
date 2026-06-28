@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import '@aejkatappaja/phantom-ui';
-import type { QuestionBank } from '../../../../actions/quiz.actions';
+import type { QuestionBank } from '@learning-hub/domain';
 import type { Mode } from './types';
 
 interface ModeSelectProps {

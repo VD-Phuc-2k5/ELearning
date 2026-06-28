@@ -1,15 +1,20 @@
 'use client';
 
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { getBanks, type QuestionBank } from '../../actions/quiz.actions';
+import { getBanks } from '../../actions/quiz.actions';
+import type { QuestionBank } from '@learning-hub/domain';
 import { Button } from '../../../components/ui';
 import { Search, BookOpen, Filter, Star, Clock } from 'lucide-react';
 
 export default function CommunityPage() {
+  const [page, setPage] = useState(1);
+  const limit = 12;
   const { data: banks, isLoading } = useQuery({
-    queryKey: ['community-banks'],
-    queryFn: () => getBanks({ limit: 10 }),
+    queryKey: ['community-banks', page],
+    queryFn: () => getBanks({ page, limit }),
   });
+  const totalPages = Math.ceil((banks?.total ?? 0) / limit);
 
   return (
     <div className="space-y-10">
@@ -116,6 +121,30 @@ export default function CommunityPage() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between pt-2">
+          <Button
+            variant="secondary"
+            size="sm"
+            disabled={page <= 1}
+            onClick={() => setPage((p) => p - 1)}
+          >
+            ← Previous
+          </Button>
+          <span className="text-sm text-slate-500">
+            Page {page} / {totalPages}
+          </span>
+          <Button
+            variant="secondary"
+            size="sm"
+            disabled={page >= totalPages}
+            onClick={() => setPage((p) => p + 1)}
+          >
+            Next →
+          </Button>
         </div>
       )}
     </div>

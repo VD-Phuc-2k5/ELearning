@@ -11,10 +11,7 @@ import {
   createBank,
   uploadExcel,
 } from '../../../actions/quiz.actions';
-import type {
-  BankHashResult,
-  QuestionBank,
-} from '../../../actions/quiz.actions';
+import type { BankHashResult, QuestionBank } from '@learning-hub/domain';
 import { useState, useRef } from 'react';
 import {
   Upload,

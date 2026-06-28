@@ -16,8 +16,8 @@ import { Button, useConfirmModal } from '../../../../../components/ui';
 import {
   deleteQuestion,
   updateQuestion,
-  type Question,
 } from '../../../../actions/quiz.actions';
+import type { Question } from '@learning-hub/domain';
 
 interface QuestionsTabProps {
   questions: Question[];

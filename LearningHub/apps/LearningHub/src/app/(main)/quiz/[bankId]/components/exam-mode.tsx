@@ -6,11 +6,8 @@ import gsap from 'gsap';
 import { ArrowLeft, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
 import { clsx } from 'clsx';
 import { Button } from '../../../../../components/ui';
-import {
-  submitQuiz,
-  type Question,
-  type QuizSubmitResult,
-} from '../../../../actions/quiz.actions';
+import { submitQuiz } from '../../../../actions/quiz.actions';
+import type { Question, QuizSubmitResult } from '@learning-hub/domain';
 
 interface ExamModeProps {
   bankId: string;
@@ -32,6 +29,7 @@ export function ExamMode({
   const [timeLeft, setTimeLeft] = useState<number | undefined>(
     timeLimitSeconds,
   );
+  const startTimeRef = useRef(Date.now());
   const cardRef = useRef<HTMLDivElement>(null);
   // ponytail: ref keeps latest mutation state accessible from stable event listeners
   const safeSubmitRef = useRef<() => void>(() => {});
@@ -47,6 +45,7 @@ export function ExamMode({
           }))
           .filter((a) => a.selectedOptionId),
         roadmapId,
+        Math.round((Date.now() - startTimeRef.current) / 1000),
       ),
     onSuccess: onFinish,
   });

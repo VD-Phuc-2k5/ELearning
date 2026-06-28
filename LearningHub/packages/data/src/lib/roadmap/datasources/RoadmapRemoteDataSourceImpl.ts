@@ -45,7 +45,7 @@ export class RoadmapRemoteDataSourceImpl implements IRoadmapRemoteDataSource {
     token: string,
   ): Promise<RoadmapList> {
     try {
-      const res = await this.api.get('/api/roadmaps', {
+      const res = await this.api.get('/roadmaps', {
         params,
         headers: this.auth(token),
       });
@@ -60,7 +60,7 @@ export class RoadmapRemoteDataSourceImpl implements IRoadmapRemoteDataSource {
     token: string,
   ): Promise<Roadmap> {
     try {
-      const res = await this.api.post('/api/roadmaps', params, {
+      const res = await this.api.post('/roadmaps', params, {
         headers: this.auth(token),
       });
       return res.data;
@@ -71,7 +71,7 @@ export class RoadmapRemoteDataSourceImpl implements IRoadmapRemoteDataSource {
 
   async getRoadmapDetail(id: string, token: string): Promise<RoadmapDetail> {
     try {
-      const res = await this.api.get(`/api/roadmaps/${id}`, {
+      const res = await this.api.get(`/roadmaps/${id}`, {
         headers: this.auth(token),
       });
       return res.data;
@@ -86,7 +86,7 @@ export class RoadmapRemoteDataSourceImpl implements IRoadmapRemoteDataSource {
     token: string,
   ): Promise<Roadmap> {
     try {
-      const res = await this.api.patch(`/api/roadmaps/${id}`, params, {
+      const res = await this.api.patch(`/roadmaps/${id}`, params, {
         headers: this.auth(token),
       });
       return res.data;
@@ -97,7 +97,7 @@ export class RoadmapRemoteDataSourceImpl implements IRoadmapRemoteDataSource {
 
   async deleteRoadmap(id: string, token: string): Promise<void> {
     try {
-      await this.api.delete(`/api/roadmaps/${id}`, {
+      await this.api.delete(`/roadmaps/${id}`, {
         headers: this.auth(token),
       });
     } catch (e) {
@@ -112,7 +112,7 @@ export class RoadmapRemoteDataSourceImpl implements IRoadmapRemoteDataSource {
   ): Promise<RoadmapItem[]> {
     try {
       const res = await this.api.put(
-        `/api/roadmaps/${id}/items`,
+        `/roadmaps/${id}/items`,
         { bankIds },
         { headers: this.auth(token) },
       );
@@ -125,7 +125,7 @@ export class RoadmapRemoteDataSourceImpl implements IRoadmapRemoteDataSource {
   async enrollRoadmap(id: string, token: string): Promise<UserRoadmapProgress> {
     try {
       const res = await this.api.post(
-        `/api/roadmaps/${id}/enroll`,
+        `/roadmaps/${id}/enroll`,
         {},
         { headers: this.auth(token) },
       );
@@ -137,7 +137,7 @@ export class RoadmapRemoteDataSourceImpl implements IRoadmapRemoteDataSource {
 
   async getMyRoadmapProgress(token: string): Promise<UserRoadmapProgress[]> {
     try {
-      const res = await this.api.get('/api/roadmaps/my-progress', {
+      const res = await this.api.get('/roadmaps/my-progress', {
         headers: this.auth(token),
       });
       return res.data;

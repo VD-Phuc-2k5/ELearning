@@ -1,7 +1,8 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { getBanks, type QuestionBank } from '../actions/quiz.actions';
+import { getBanks } from '../actions/quiz.actions';
+import type { QuestionBank } from '@learning-hub/domain';
 import { getMyRoadmapProgress } from '../actions/roadmap.actions';
 import { StatCard } from './components/stat-card';
 import { CompletedRoadmaps } from './components/completed-roadmaps';
@@ -56,7 +57,7 @@ export default function DashboardPage() {
                 <PlayCircle className="h-5 w-5 text-white" />
               </div>
               <div>
-                <p className="text-xs font-semibold text-indigo-200 uppercase tracking-wide">
+                <p className="mt-2 text-xs font-semibold text-indigo-200 uppercase tracking-wide">
                   Continue Learning
                 </p>
                 <p className="font-bold truncate max-w-xs">
@@ -77,10 +78,7 @@ export default function DashboardPage() {
               }
               className="shrink-0"
             >
-              <Button
-                className="bg-white text-indigo-700 hover:bg-indigo-50"
-                size="sm"
-              >
+              <Button className="text-indigo-600" size="sm">
                 Continue
               </Button>
             </Link>

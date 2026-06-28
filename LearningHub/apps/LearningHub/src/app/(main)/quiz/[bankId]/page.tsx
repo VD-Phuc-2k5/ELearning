@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import gsap from 'gsap';
 import '@aejkatappaja/phantom-ui';
 import Link from 'next/link';
@@ -10,8 +10,8 @@ import { useSearchParams } from 'next/navigation';
 import {
   getBankDetail,
   getQuestionsForQuiz,
-  type QuizSubmitResult,
 } from '../../../actions/quiz.actions';
+import type { QuizSubmitResult } from '@learning-hub/domain';
 import type { Mode } from './components/types';
 import { ModeSelect } from './components/mode-select';
 import { PracticeMode } from './components/practice-mode';
@@ -24,9 +24,16 @@ export default function QuizPage() {
   const { bankId } = useParams<{ bankId: string }>();
   const searchParams = useSearchParams();
   const roadmapId = searchParams.get('roadmapId') ?? undefined;
+  const autoMode = searchParams.get('mode') as Mode | null;
   const router = useRouter();
   const pageRef = useRef<HTMLDivElement>(null);
-  const [mode, setMode] = useState<Mode>('select');
+  const [mode, setMode] = useState<Mode>(
+    autoMode === 'practice' || autoMode === 'exam' || autoMode === 'timed-exam'
+      ? autoMode
+      : 'select',
+  );
+  const qc = useQueryClient();
+  const [lastQuizMode, setLastQuizMode] = useState<Mode>('exam');
   const [result, setResult] = useState<QuizSubmitResult | null>(null);
   const [reviewMode, setReviewMode] = useState(false);
   const [timeLimitSeconds, setTimeLimitSeconds] = useState<
@@ -135,8 +142,11 @@ export default function QuizPage() {
           }
           roadmapId={roadmapId}
           onFinish={(r) => {
+            setLastQuizMode(mode);
             setResult(r);
             setMode('result');
+            if (roadmapId)
+              qc.invalidateQueries({ queryKey: ['roadmap', roadmapId] });
           }}
         />
       )}
@@ -147,6 +157,7 @@ export default function QuizPage() {
               result={result}
               roadmapId={roadmapId}
               bankId={bankId}
+              quizMode={lastQuizMode}
               onRetry={() => {
                 setResult(null);
                 setMode('select');

@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useMemo, useState } from 'react';
+import { useQuery, useQueries } from '@tanstack/react-query';
 import Link from 'next/link';
 import { Clock, CheckCircle2, XCircle, ArrowUpRight } from 'lucide-react';
 import { clsx } from 'clsx';
 import { Button } from '../../../../components/ui';
 import { listAttempts } from '../../../actions/quiz-attempt.actions';
+import { getBankDetail } from '../../../actions/quiz.actions';
 import '@aejkatappaja/phantom-ui';
 
 const STATUS_BADGE: Record<string, { label: string; cls: string }> = {
@@ -26,6 +27,25 @@ export default function QuizHistoryPage() {
 
   const attempts = data?.data ?? [];
   const total = data?.total ?? 0;
+
+  const uniqueBankIds = useMemo(
+    () => [...new Set(attempts.map((a) => a.questionBankId))],
+    [attempts],
+  );
+  const bankQueries = useQueries({
+    queries: uniqueBankIds.map((id) => ({
+      queryKey: ['bank', id],
+      queryFn: () => getBankDetail(id),
+      enabled: uniqueBankIds.length > 0,
+    })),
+  });
+  const bankTitleMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    bankQueries.forEach((q) => {
+      if (q.data) map[q.data.id] = q.data.title;
+    });
+    return map;
+  }, [bankQueries]);
   const totalPages = Math.ceil(total / limit);
 
   const fmt = (iso: string) =>
@@ -37,7 +57,7 @@ export default function QuizHistoryPage() {
       minute: '2-digit',
     });
   const fmtDur = (s: number | null) =>
-    s ? `${Math.floor(s / 60)}m ${s % 60}s` : '—';
+    s !== null ? `${Math.floor(s / 60)}m ${s % 60}s` : '—';
 
   if (isLoading)
     return (
@@ -96,7 +116,12 @@ export default function QuizHistoryPage() {
                   return (
                     <tr key={a.id} className="hover:bg-slate-50 transition">
                       <td className="px-4 py-3 font-medium text-slate-800 truncate max-w-[200px]">
-                        {a.questionBankId}
+                        <Link
+                          href={`/my-banks/${a.questionBankId}`}
+                          className="hover:text-indigo-600 transition"
+                        >
+                          {bankTitleMap[a.questionBankId] ?? a.questionBankId}
+                        </Link>
                       </td>
                       <td className="px-4 py-3 text-slate-500 whitespace-nowrap">
                         {fmt(a.createdAt)}

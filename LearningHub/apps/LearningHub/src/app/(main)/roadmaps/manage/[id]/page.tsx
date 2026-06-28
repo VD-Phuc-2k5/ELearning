@@ -16,7 +16,8 @@ import {
   updateRoadmap,
   setRoadmapItems,
 } from '../../../../actions/roadmap.actions';
-import { getBanks, type QuestionBank } from '../../../../actions/quiz.actions';
+import { getBanks } from '../../../../actions/quiz.actions';
+import type { QuestionBank } from '@learning-hub/domain';
 
 export default function EditRoadmapPage() {
   const { id } = useParams<{ id: string }>();

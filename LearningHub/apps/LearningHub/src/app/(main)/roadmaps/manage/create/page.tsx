@@ -12,7 +12,7 @@ export default function CreateRoadmapPage() {
   const [form, setForm] = useState({ title: '', description: '' });
 
   const create = useMutation({
-    mutationFn: () => createRoadmap(form),
+    mutationFn: () => createRoadmap({ ...form }),
     onSuccess: (r) => router.push(`/roadmaps/manage/${r.id}`),
   });
 

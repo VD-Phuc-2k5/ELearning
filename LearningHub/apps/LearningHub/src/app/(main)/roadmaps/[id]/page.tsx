@@ -179,7 +179,7 @@ export default function RoadmapDetailPage() {
                 : '/quiz'
             }
           >
-            <Button className="w-full">Continue Learning →</Button>
+            <Button className="w-full mt-2">Continue Learning →</Button>
           </Link>
         )}
       </div>

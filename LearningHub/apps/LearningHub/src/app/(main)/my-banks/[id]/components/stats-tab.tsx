@@ -1,7 +1,7 @@
 'use client';
 
 import { BarChart2, Users } from 'lucide-react';
-import type { DerivedBank } from '../../../../actions/quiz.actions';
+import type { DerivedBank } from '@learning-hub/domain';
 
 interface StatsTabProps {
   derivedBanks: DerivedBank[];

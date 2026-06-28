@@ -5,13 +5,26 @@ import {
   QuizRemoteDataSourceImpl,
   QuizRepositoryImpl,
 } from '@learning-hub/data';
-import {
+import type {
   AnswerOptionInput,
   BankHashResult,
   BankRoadmapItem,
+  CreateBankQuizParams,
+  DerivedBank,
+  GetBanksQuizParams,
+  Question,
+  QuestionBank,
+  QuizAnswer,
+  QuizSubmitResult,
+  Tag,
+  UpdateBankQuizParams,
+  UpdateQuestionQuizParams,
+  UploadHistory,
+  VerifyAnswerResult,
+} from '@learning-hub/domain';
+import {
   CheckBankHashQuizParams,
   CheckBankHashQuizUsecase,
-  CreateBankQuizParams,
   CreateBankQuizUsecase,
   CreateTagQuizParams,
   CreateTagQuizUsecase,
@@ -21,12 +34,10 @@ import {
   DeleteQuestionQuizUsecase,
   DeleteTagQuizParams,
   DeleteTagQuizUsecase,
-  DerivedBank,
   GetBankDetailQuizParams,
   GetBankDetailQuizUsecase,
   GetBankRoadmapsQuizParams,
   GetBankRoadmapsQuizUsecase,
-  GetBanksQuizParams,
   GetBanksQuizUsecase,
   GetDerivedBanksQuizParams,
   GetDerivedBanksQuizUsecase,
@@ -37,45 +48,18 @@ import {
   GetUploadHistoryQuizUsecase,
   ParseExcelQuizParams,
   ParseExcelQuizUsecase,
-  Question,
-  QuestionBank,
-  QuizAnswer,
-  QuizSubmitResult,
   SubmitQuizParams,
   SubmitQuizUsecase,
-  Tag,
-  UpdateBankQuizParams,
   UpdateBankQuizParams2,
   UpdateBankQuizUsecase,
-  UpdateQuestionQuizParams,
   UpdateQuestionQuizParams2,
   UpdateQuestionQuizUsecase,
   UploadExcelQuizParams,
   UploadExcelQuizUsecase,
-  UploadHistory,
   VerifyAnswerQuizParams,
   VerifyAnswerQuizUsecase,
-  VerifyAnswerResult,
 } from '@learning-hub/domain';
 import { cookies } from 'next/headers';
-
-export type {
-  AnswerOptionInput,
-  BankHashResult,
-  BankRoadmapItem,
-  CreateBankQuizParams,
-  DerivedBank,
-  GetBanksQuizParams,
-  Question,
-  QuestionBank,
-  QuizAnswer,
-  QuizSubmitResult,
-  Tag,
-  UpdateBankQuizParams,
-  UpdateQuestionQuizParams,
-  UploadHistory,
-  VerifyAnswerResult,
-};
 
 export interface ParsedQuestion {
   content: string;
@@ -102,7 +86,8 @@ async function getRepo() {
 
 export async function getBanks(params?: GetBanksQuizParams) {
   const repo = await getRepo();
-  return unwrap(await new GetBanksQuizUsecase(repo).execute(params ?? {}));
+  const result = await new GetBanksQuizUsecase(repo).execute(params ?? {});
+  return result.type === 'right' ? result.value : [];
 }
 
 export async function getBankDetail(id: string): Promise<QuestionBank> {
@@ -193,11 +178,12 @@ export async function submitQuiz(
   bankId: string,
   answers: QuizAnswer[],
   roadmapId?: string | null,
+  durationSeconds?: number,
 ): Promise<QuizSubmitResult> {
   const repo = await getRepo();
   return unwrap(
     await new SubmitQuizUsecase(repo).execute(
-      new SubmitQuizParams(bankId, answers, roadmapId),
+      new SubmitQuizParams(bankId, answers, roadmapId, durationSeconds),
     ),
   );
 }

@@ -12,11 +12,8 @@ import {
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { Button } from '../../../../../components/ui';
-import {
-  verifyAnswer,
-  type Question,
-  type VerifyAnswerResult,
-} from '../../../../actions/quiz.actions';
+import { verifyAnswer } from '../../../../actions/quiz.actions';
+import type { Question, VerifyAnswerResult } from '@learning-hub/domain';
 
 interface PracticeModeProps {
   questions: Question[];
@@ -93,7 +90,8 @@ export function PracticeMode({ questions, onExit }: PracticeModeProps) {
             .sort((a, b) => a.optionLabel.localeCompare(b.optionLabel))
             .map((opt) => {
               const isSelected = selected === opt.id;
-              const isCorrect = feedback?.correctOptionId === opt.id;
+              const isCorrect =
+                feedback?.correctOptionIds?.includes(opt.id) ?? false;
               const isWrong = isSelected && feedback && !feedback.isCorrect;
 
               return (

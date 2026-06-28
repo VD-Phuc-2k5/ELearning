@@ -15,8 +15,8 @@ import {
   createTag,
   deleteTag,
   deleteBank,
-  type Tag,
 } from '../../../actions/quiz.actions';
+import type { Tag } from '@learning-hub/domain';
 import { Button, useConfirmModal } from '../../../../components/ui';
 import {
   ArrowLeft,
@@ -44,6 +44,7 @@ export default function BankDetailPage() {
   const pageRef = useRef<HTMLDivElement>(null);
   const [tab, setTab] = useState<Tab>('questions');
   const [tagOpen, setTagOpen] = useState(false);
+  const [deleteErr, setDeleteErr] = useState('');
   const { modal: confirmModal, openConfirm } = useConfirmModal();
 
   const { data: bank, isLoading: bankLoading } = useQuery({
@@ -136,6 +137,13 @@ export default function BankDetailPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['my-banks'] });
       router.push('/my-banks');
+    },
+    onError: (e: unknown) => {
+      setDeleteErr(
+        e instanceof Error
+          ? e.message
+          : 'Xóa ngân hàng câu hỏi thất bại. Vui lòng thử lại.',
+      );
     },
   });
 
@@ -357,6 +365,20 @@ export default function BankDetailPage() {
       </div>
 
       {/* Stats */}
+      {deleteErr && (
+        <div className="flex items-start justify-between rounded-2xl bg-red-50 border border-red-100 px-4 py-3">
+          <div className="flex items-start gap-2 text-sm text-red-700">
+            <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+            <span>{deleteErr}</span>
+          </div>
+          <button
+            onClick={() => setDeleteErr('')}
+            className="text-red-500 hover:text-red-700"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
       <div className="grid grid-cols-3 gap-4">
         {[
           { label: 'Total questions', value: bank.totalQuestions },

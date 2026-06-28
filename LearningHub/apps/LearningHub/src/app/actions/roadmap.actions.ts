@@ -5,8 +5,17 @@ import {
   RoadmapRemoteDataSourceImpl,
   RoadmapRepositoryImpl,
 } from '@learning-hub/data';
-import {
+import type {
   CreateRoadmapParams,
+  GetRoadmapsParams,
+  Roadmap,
+  RoadmapDetail,
+  RoadmapItem,
+  RoadmapList,
+  UpdateRoadmapParams,
+  UserRoadmapProgress,
+} from '@learning-hub/domain';
+import {
   CreateRoadmapUsecase,
   DeleteRoadmapParams,
   DeleteRoadmapUsecase,
@@ -15,28 +24,13 @@ import {
   GetMyRoadmapProgressUsecase,
   GetRoadmapDetailParams,
   GetRoadmapDetailUsecase,
-  GetRoadmapsParams,
   GetRoadmapsUsecase,
-  Roadmap,
-  RoadmapDetail,
-  RoadmapItem,
-  RoadmapList,
   SetRoadmapItemsParams,
   SetRoadmapItemsUsecase,
-  UpdateRoadmapParams,
   UpdateRoadmapUsecaseParams,
   UpdateRoadmapUsecase,
-  UserRoadmapProgress,
 } from '@learning-hub/domain';
 import { cookies } from 'next/headers';
-
-export type {
-  Roadmap,
-  RoadmapDetail,
-  RoadmapItem,
-  RoadmapList,
-  UserRoadmapProgress,
-};
 
 function unwrap<T>(r: Either<Failure, T>): T {
   if (r.type === 'left') throw new Error(r.value.message);
@@ -110,6 +104,12 @@ export async function enrollRoadmap(id: string): Promise<UserRoadmapProgress> {
 }
 
 export async function getMyRoadmapProgress(): Promise<UserRoadmapProgress[]> {
-  const repo = await getRepo();
-  return unwrap(await new GetMyRoadmapProgressUsecase(repo).execute({}));
+  const token = (await cookies()).get('accessToken')?.value;
+  if (!token) return [];
+  const repo = new RoadmapRepositoryImpl(
+    new RoadmapRemoteDataSourceImpl(),
+    token,
+  );
+  const result = await new GetMyRoadmapProgressUsecase(repo).execute({});
+  return result.type === 'right' ? result.value : [];
 }

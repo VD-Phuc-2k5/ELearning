@@ -5,21 +5,20 @@ import {
   QuizRemoteDataSourceImpl,
   QuizRepositoryImpl,
 } from '@learning-hub/data';
-import {
+import type {
   AttemptList,
+  QuizAttemptDetail,
+  UserBankProgress,
+} from '@learning-hub/domain';
+import {
   GetAttemptDetailQuizParams,
   GetAttemptDetailQuizUsecase,
   GetAttemptsQuizParams,
   GetAttemptsQuizUsecase,
   GetBankProgressQuizParams,
   GetBankProgressQuizUsecase,
-  QuizAttempt,
-  QuizAttemptDetail,
-  UserBankProgress,
 } from '@learning-hub/domain';
 import { cookies } from 'next/headers';
-
-export type { QuizAttempt, QuizAttemptDetail, UserBankProgress };
 
 function unwrap<T>(r: Either<Failure, T>): T {
   if (r.type === 'left') throw new Error(r.value.message);
@@ -37,11 +36,10 @@ export async function listAttempts(params?: {
   bankId?: string;
 }): Promise<AttemptList> {
   const repo = await getRepo();
-  return unwrap(
-    await new GetAttemptsQuizUsecase(repo).execute(
-      new GetAttemptsQuizParams(params?.page, params?.limit, params?.bankId),
-    ),
+  const result = await new GetAttemptsQuizUsecase(repo).execute(
+    new GetAttemptsQuizParams(params?.page, params?.limit, params?.bankId),
   );
+  return result.type === 'right' ? result.value : { data: [], total: 0 };
 }
 
 export async function getAttemptDetail(id: string): Promise<QuizAttemptDetail> {

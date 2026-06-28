@@ -2,16 +2,18 @@
 
 import { useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import gsap from 'gsap';
 import { Trophy, RotateCcw, BookOpen, ArrowRight } from 'lucide-react';
 import { clsx } from 'clsx';
 import { Button } from '../../../../../components/ui';
-import type { QuizSubmitResult } from '../../../../actions/quiz.actions';
+import type { QuizSubmitResult } from '@learning-hub/domain';
 
 interface ResultScreenProps {
   result: QuizSubmitResult;
   roadmapId?: string;
   bankId: string;
+  quizMode?: string;
   onRetry: () => void;
   onReview: () => void;
 }
@@ -19,10 +21,12 @@ interface ResultScreenProps {
 export function ResultScreen({
   result,
   roadmapId,
-  bankId: _bankId,
+  bankId,
+  quizMode,
   onRetry,
   onReview,
 }: ResultScreenProps) {
+  const router = useRouter();
   const scoreRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -103,17 +107,20 @@ export function ResultScreen({
             Next up · {next.position} / {next.totalBanks}
           </p>
           <p className="font-bold text-slate-900">{next.bankTitle}</p>
-          <Link
-            href={`/quiz/${next.bankId}?roadmapId=${roadmapId}`}
-            className="block"
+          <Button
+            className="mt-2 w-full"
+            icon={<ArrowRight className="h-4 w-4" />}
+            onClick={() => {
+              const url = `/quiz/${next.bankId}?roadmapId=${next.roadmapId || roadmapId}&mode=${quizMode ?? 'exam'}`;
+              if (next.bankId === bankId) {
+                onRetry();
+              } else {
+                router.push(url);
+              }
+            }}
           >
-            <Button
-              className="w-full"
-              icon={<ArrowRight className="h-4 w-4" />}
-            >
-              Continue Learning
-            </Button>
-          </Link>
+            Continue Learning
+          </Button>
         </div>
       )}
 

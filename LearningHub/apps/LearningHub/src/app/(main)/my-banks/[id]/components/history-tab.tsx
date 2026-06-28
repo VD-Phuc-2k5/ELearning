@@ -1,7 +1,7 @@
 'use client';
 
 import { History, FileText, Clock } from 'lucide-react';
-import type { UploadHistory } from '../../../../actions/quiz.actions';
+import type { UploadHistory } from '@learning-hub/domain';
 
 interface HistoryTabProps {
   history: UploadHistory[];
