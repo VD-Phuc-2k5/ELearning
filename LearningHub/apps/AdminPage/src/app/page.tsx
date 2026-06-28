@@ -1,7 +1,15 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Shield, Users, Key, Activity, Plus, Settings } from 'lucide-react';
+import {
+  Shield,
+  Users,
+  Key,
+  Activity,
+  Plus,
+  Settings,
+  UserCog,
+} from 'lucide-react';
 import '@aejkatappaja/phantom-ui';
 import type { Role, User } from '@learning-hub/domain';
 import { useConfirmModal } from '../components/admin/modal';
@@ -12,18 +20,21 @@ import { AddPermissionModal } from '../components/admin/add-permission-modal';
 import { AddRoleModal } from '../components/admin/add-role-modal';
 import { EditRoleModal } from '../components/admin/edit-role-modal';
 import { UserManagerModal } from '../components/admin/user-manager-modal';
+import { EditUserModal } from '../components/admin/edit-user-modal';
 import { UsersTab } from './tabs/users-tab';
 import { RolesTab } from './tabs/roles-tab';
 import { PermissionsTab } from './tabs/permissions-tab';
 import { MonitoringTab } from './tabs/monitoring-tab';
+import { UserAdminTab } from './tabs/user-admin-tab';
 
-type TabKey = 'monitoring' | 'users' | 'roles' | 'permissions';
+type TabKey = 'monitoring' | 'users' | 'roles' | 'permissions' | 'user-admin';
 
 const tabTitle: Record<TabKey, string> = {
   users: 'Quản lý Thành viên',
   roles: 'Ma trận Vai trò & Quyền',
   permissions: 'Danh mục Quyền hạn',
   monitoring: 'Giám sát Hệ thống',
+  'user-admin': 'Quản trị User',
 };
 
 export default function AdminDashboard() {
@@ -31,6 +42,7 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<TabKey>('users');
   const [showCreate, setShowCreate] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
   const [showCreatePerm, setShowCreatePerm] = useState(false);
   const [showCreateRole, setShowCreateRole] = useState(false);
   const [editingRole, setEditingRole] = useState<Role | null>(null);
@@ -79,6 +91,12 @@ export default function AdminDashboard() {
             onClick={() => setActiveTab('monitoring')}
             icon={<Activity className="h-5 w-5" />}
             label="Giám sát"
+          />
+          <TabButton
+            active={activeTab === 'user-admin'}
+            onClick={() => setActiveTab('user-admin')}
+            icon={<UserCog className="h-5 w-5" />}
+            label="Quản trị User"
           />
         </nav>
         <div className="p-4 border-t border-white/10">
@@ -136,6 +154,12 @@ export default function AdminDashboard() {
             onClose={() => setSelectedUser(null)}
           />
         )}
+        {editingUser && (
+          <EditUserModal
+            user={editingUser}
+            onClose={() => setEditingUser(null)}
+          />
+        )}
         {showCreatePerm && (
           <AddPermissionModal onClose={() => setShowCreatePerm(false)} />
         )}
@@ -149,7 +173,13 @@ export default function AdminDashboard() {
           />
         )}
 
-        {activeTab === 'users' && <UsersTab onSelectUser={setSelectedUser} />}
+        {activeTab === 'users' && (
+          <UsersTab
+            onSelectUser={setSelectedUser}
+            onEditUser={setEditingUser}
+            openConfirm={openConfirm}
+          />
+        )}
         {activeTab === 'roles' && (
           <RolesTab openConfirm={openConfirm} onEditRole={setEditingRole} />
         )}
@@ -157,6 +187,7 @@ export default function AdminDashboard() {
           <PermissionsTab openConfirm={openConfirm} />
         )}
         {activeTab === 'monitoring' && <MonitoringTab />}
+        {activeTab === 'user-admin' && <UserAdminTab />}
       </main>
       {confirmModal}
     </div>

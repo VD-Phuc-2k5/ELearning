@@ -5,14 +5,23 @@ import {
   AuthRemoteDataSourceImpl,
   AuthRepositoryImpl,
 } from '@learning-hub/data';
+import type {
+  CreatePermissionParams,
+  CreateRoleParams,
+  Permission,
+  RegisterParams,
+  Role,
+  UpdateAdminParams,
+  UpdateRoleParams,
+  User,
+} from '@learning-hub/domain';
 import {
   AdminRegisterUsecase,
   AssignPermissionToRoleUsecase,
   AssignRoleToUserUsecase,
-  CreatePermissionParams,
   CreatePermissionUsecase,
-  CreateRoleParams,
   CreateRoleUsecase,
+  DeleteAdminUsecase,
   DeletePermissionUsecase,
   DeleteRoleUsecase,
   GetPermissionsUsecase,
@@ -23,19 +32,14 @@ import {
   GetUserRolesUsecase,
   GetUsersUsecase,
   GrantUserPermissionUsecase,
-  Permission,
-  RegisterParams,
   RemovePermissionFromRoleUsecase,
   RemoveRoleFromUserUsecase,
   RevokeUserPermissionUsecase,
-  Role,
-  UpdateRoleParams,
+  SearchUsersUsecase,
+  UpdateAdminUsecase,
   UpdateRoleUsecase,
-  User,
 } from '@learning-hub/domain';
 import { cookies } from 'next/headers';
-
-export type { Permission, Role, User };
 
 export interface MatrixData {
   roles: Role[];
@@ -61,6 +65,32 @@ export async function getUsers(): Promise<User[]> {
 export async function registerAdmin(data: RegisterParams): Promise<User> {
   const repo = await getRepo();
   return unwrap(await new AdminRegisterUsecase(repo).execute(data));
+}
+
+export async function updateAdmin(
+  id: string,
+  data: UpdateAdminParams,
+): Promise<User> {
+  const repo = await getRepo();
+  return unwrap(await new UpdateAdminUsecase(repo).execute({ id, ...data }));
+}
+
+export async function deleteAdmin(id: string): Promise<void> {
+  const repo = await getRepo();
+  unwrap(await new DeleteAdminUsecase(repo).execute({ id }));
+}
+
+export async function searchUsers(email: string): Promise<User[]> {
+  const repo = await getRepo();
+  return unwrap(await new SearchUsersUsecase(repo).execute({ email }));
+}
+
+export async function toggleUserLock(
+  id: string,
+  isActive: boolean,
+): Promise<User> {
+  const repo = await getRepo();
+  return unwrap(await new UpdateAdminUsecase(repo).execute({ id, isActive }));
 }
 
 export async function getRoles(): Promise<Role[]> {

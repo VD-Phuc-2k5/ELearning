@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Eye, EyeOff } from 'lucide-react';
 import { Modal } from './modal';
 import {
   inputCls,
@@ -34,6 +35,7 @@ export function CreateAdminModal({ onClose }: CreateAdminModalProps) {
   const qc = useQueryClient();
   const [form, setForm] = useState(defaultForm);
   const [err, setErr] = useState('');
+  const [showPw, setShowPw] = useState(false);
 
   const mut = useMutation({
     mutationFn: () => registerAdmin(form),
@@ -48,22 +50,41 @@ export function CreateAdminModal({ onClose }: CreateAdminModalProps) {
   return (
     <Modal title="Tạo tài khoản Admin" onClose={onClose}>
       <div className="space-y-4">
-        {fields.map(({ key, label, type, ph }) => (
-          <div key={key}>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              {label}
-            </label>
-            <input
-              type={type}
-              value={form[key]}
-              placeholder={ph}
-              onChange={(e) =>
-                setForm((p) => ({ ...p, [key]: e.target.value }))
-              }
-              className={inputCls}
-            />
-          </div>
-        ))}
+        {fields.map(({ key, label, type, ph }) => {
+          const isPw = key === 'password';
+          const effectiveType = isPw ? (showPw ? 'text' : 'password') : type;
+          return (
+            <div key={key}>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                {label}
+              </label>
+              <div className="relative">
+                <input
+                  type={effectiveType}
+                  value={form[key]}
+                  placeholder={ph}
+                  onChange={(e) =>
+                    setForm((p) => ({ ...p, [key]: e.target.value }))
+                  }
+                  className={inputCls}
+                />
+                {isPw && (
+                  <button
+                    type="button"
+                    onClick={() => setShowPw((v) => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  >
+                    {showPw ? (
+                      <EyeOff className="h-5 w-5" />
+                    ) : (
+                      <Eye className="h-5 w-5" />
+                    )}
+                  </button>
+                )}
+              </div>
+            </div>
+          );
+        })}
         {err && (
           <p className="text-sm text-red-600 bg-red-50 rounded-xl px-4 py-3">
             {err}
