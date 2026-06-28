@@ -40,9 +40,5 @@
     "eslint.config.cjs",
     "eslint.config.mjs"
   ],
-  "references": [
-    {
-      "path": "../../packages/core"
-    }
-  ]
+  "references": []
 }

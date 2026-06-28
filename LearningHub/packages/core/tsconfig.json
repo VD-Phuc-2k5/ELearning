@@ -1,6 +1,5 @@
 {
   "compilerOptions": {
-    "composite": true,
     "jsx": "react-jsx",
     "allowJs": false,
     "esModuleInterop": false,
