@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { RefreshTokenEntity } from '../entities/refresh-token.entity';
+import { UserEntity } from '../entities/user.entity';
 import { RefreshToken } from '../../../domain/entities/refresh-token.entity';
 import { IRefreshTokenRepository } from '../../../domain/repositories/i-refresh-token.repository';
 
@@ -44,7 +45,7 @@ export class RefreshTokenRepository implements IRefreshTokenRepository {
     return {
       id: refreshToken.id,
       tokenHash: refreshToken.tokenHash,
-      user: { id: refreshToken.userId } as any,
+      user: { id: refreshToken.userId } as UserEntity,
       createdAt: refreshToken.createdAt,
       expiresAt: refreshToken.expiresAt,
       revokedAt: refreshToken.revokedAt,

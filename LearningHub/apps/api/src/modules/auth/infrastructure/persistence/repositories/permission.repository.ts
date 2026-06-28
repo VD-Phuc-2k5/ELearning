@@ -27,8 +27,16 @@ export class PermissionRepository implements IPermissionRepository {
     return entities.map((entity) => this.toDomain(entity));
   }
 
-  async create(permission: Permission): Promise<Permission> {
-    const entity = await this.repository.save(this.fromDomain(permission));
+  async create(
+    data: Omit<Permission, 'id' | 'createdAt' | 'updatedAt'>,
+  ): Promise<Permission> {
+    const entity = await this.repository.save({
+      code: data.code,
+      name: data.name,
+      description: data.description,
+      resource: data.resource,
+      action: data.action,
+    });
     return this.toDomain(entity);
   }
 

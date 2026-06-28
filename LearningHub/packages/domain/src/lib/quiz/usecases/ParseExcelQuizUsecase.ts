@@ -1,5 +1,6 @@
 import { Either, Failure, Usecase } from '@learning-hub/core';
 import { IQuizRepository } from '../repositories/IQuizRepository';
+import { ParseExcelResult } from '../entities/entities';
 
 export class ParseExcelQuizParams {
   constructor(
@@ -9,9 +10,9 @@ export class ParseExcelQuizParams {
   ) {}
 }
 
-export class ParseExcelQuizUsecase implements Usecase<{ questions: unknown[] }, ParseExcelQuizParams> {
+export class ParseExcelQuizUsecase implements Usecase<ParseExcelResult, ParseExcelQuizParams> {
   constructor(private repository: IQuizRepository) {}
-  execute(params: ParseExcelQuizParams): Promise<Either<Failure, { questions: unknown[] }>> {
+  execute(params: ParseExcelQuizParams): Promise<Either<Failure, ParseExcelResult>> {
     return this.repository.parseExcel(params.bankId, params.file, params.fileName);
   }
 }

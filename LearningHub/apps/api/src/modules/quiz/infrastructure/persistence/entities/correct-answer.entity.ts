@@ -10,11 +10,13 @@ export class CorrectAnswerEntity {
   @PrimaryColumn({ name: 'option_id', type: 'uuid' })
   optionId!: string;
 
-  @ManyToOne(() => QuestionEntity, (question) => question.correctAnswers)
+  @ManyToOne(() => QuestionEntity, (question) => question.correctAnswers, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'question_id' })
   question!: QuestionEntity;
 
-  @ManyToOne(() => AnswerOptionEntity)
+  @ManyToOne(() => AnswerOptionEntity, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'option_id' })
   option!: AnswerOptionEntity;
 }

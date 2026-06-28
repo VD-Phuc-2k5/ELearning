@@ -1,5 +1,37 @@
-# Add files here to ignore them from prettier formatting
-/dist
-/coverage
-/.nx/cache
-/.nx/workspace-data
+# Dependencies
+node_modules
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+
+# Build / cache outputs
+dist
+tmp
+out-tsc
+coverage
+.nx/cache
+.nx/workspace-data
+.next
+out
+
+# Generated / build artifacts (typically machine-written; do not reformat)
+next-env.d.ts
+tsconfig.tsbuildinfo
+**/*.tsbuildinfo
+jest.config.ts
+jest.config.cts
+
+# Binary / non-source assets
+*.xlsx
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+*.ico
+*.pdf
+*.zip
+
+# Lock / data files
+.env
+.env.*

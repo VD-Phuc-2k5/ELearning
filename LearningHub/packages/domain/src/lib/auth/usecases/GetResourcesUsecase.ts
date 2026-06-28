@@ -1,9 +1,9 @@
-import { Either, Failure, Usecase } from '@learning-hub/core';
+import { Either, Failure, NoParams, Usecase } from '@learning-hub/core';
 import { IAuthRepository } from '../repositories/IAuthRepository';
 
-export class GetResourcesUsecase implements Usecase<string[], any> {
+export class GetResourcesUsecase implements Usecase<string[], NoParams> {
   constructor(private repository: IAuthRepository) {}
-  async execute(params: any): Promise<Either<Failure, string[]>> {
+  async execute(_params: NoParams): Promise<Either<Failure, string[]>> {
     return this.repository.getResources();
   }
 }

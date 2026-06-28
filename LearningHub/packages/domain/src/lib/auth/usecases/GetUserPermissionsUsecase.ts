@@ -1,9 +1,13 @@
 import { Either, Failure, Usecase } from '@learning-hub/core';
 import { IAuthRepository } from '../repositories/IAuthRepository';
 
-export class GetUserPermissionsUsecase implements Usecase<any[], any> {
+export interface GetUserPermissionsParams {
+  userId: string;
+}
+
+export class GetUserPermissionsUsecase implements Usecase<import('../entities/entities').Permission[], GetUserPermissionsParams> {
   constructor(private repository: IAuthRepository) {}
-  async execute(params: any): Promise<Either<Failure, any[]>> {
+  async execute(params: GetUserPermissionsParams): Promise<Either<Failure, import('../entities/entities').Permission[]>> {
     return this.repository.getUserPermissions(params.userId)
   }
 }

@@ -19,7 +19,9 @@ export class QuestionEntity {
   @Column({ name: 'question_bank_id' })
   questionBankId!: string;
 
-  @ManyToOne(() => QuestionBankEntity, (bank) => bank.questions)
+  @ManyToOne(() => QuestionBankEntity, (bank) => bank.questions, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'question_bank_id' })
   questionBank!: QuestionBankEntity;
 

@@ -1,9 +1,9 @@
-import { Either, Failure, Usecase } from '@learning-hub/core';
+import { Either, Failure, NoParams, Usecase } from '@learning-hub/core';
 import { IAuthRepository } from '../repositories/IAuthRepository';
 
-export class LogoutUsecase implements Usecase<void, any> {
+export class LogoutUsecase implements Usecase<void, NoParams> {
   constructor(private repository: IAuthRepository) {}
-  async execute(params: any): Promise<Either<Failure, void>> {
+  async execute(_params: NoParams): Promise<Either<Failure, void>> {
     return this.repository.logout();
   }
 }

@@ -6,28 +6,29 @@ import { AuthFailures } from '../../domain/errors/auth.failures';
 import { CreateRoleDto } from '../dto/role.dto';
 
 export interface CreateRoleParams extends CreateRoleDto {}
-export interface CreateRoleResult { role: Role; }
+export interface CreateRoleResult {
+  role: Role;
+}
 
 @Injectable()
-export class CreateRoleUseCase implements Usecase<CreateRoleResult, CreateRoleParams> {
+export class CreateRoleUseCase
+  implements Usecase<CreateRoleResult, CreateRoleParams>
+{
   constructor(
     @Inject('IRoleRepository')
     private readonly roleRepo: IRoleRepository,
   ) {}
 
-  async execute(params: CreateRoleParams): Promise<Either<Failure, CreateRoleResult>> {
+  async execute(
+    params: CreateRoleParams,
+  ): Promise<Either<Failure, CreateRoleResult>> {
     const existing = await this.roleRepo.findByCode(params.code);
     if (existing) return left(AuthFailures.roleAlreadyExists());
-    const role = await this.roleRepo.create(
-      new Role(
-        undefined as any,
-        params.code,
-        params.name,
-        params.description ?? '',
-        new Date(),
-        new Date(),
-      ),
-    );
+    const role = await this.roleRepo.create({
+      code: params.code,
+      name: params.name,
+      description: params.description ?? '',
+    });
     return right({ role });
   }
 }

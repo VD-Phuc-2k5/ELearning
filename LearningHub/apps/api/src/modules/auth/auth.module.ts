@@ -40,6 +40,8 @@ import { LoginUseCase } from './application/use-cases/login.use-case';
 import { RefreshTokenUseCase } from './application/use-cases/refresh-token.use-case';
 import { LogoutUseCase } from './application/use-cases/logout.use-case';
 import { AdminRegisterUseCase } from './application/use-cases/admin-register.use-case';
+import { UpdateUserUseCase } from './application/use-cases/update-user.use-case';
+import { DeleteUserUseCase } from './application/use-cases/delete-user.use-case';
 
 // Use Cases — RBAC
 import { CreateRoleUseCase } from './application/use-cases/create-role.use-case';
@@ -138,6 +140,8 @@ import { UserPermissionController } from './presentation/controllers/user-permis
     AssignRoleToUserUseCase,
     RemoveRoleFromUserUseCase,
     GrantUserPermissionUseCase,
+    UpdateUserUseCase,
+    DeleteUserUseCase,
   ],
 })
 export class AuthModule {}

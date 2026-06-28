@@ -1,232 +1,318 @@
-import { Either, Failure, right, left, UnknownFailure } from '@learning-hub/core';
-import { IAuthRepository, User, Role, Permission } from '@learning-hub/domain';
-import { IAuthRemoteDataSource } from '../datasources/AuthRemoteDataSourceImpl';
+import {
+  Either,
+  Failure,
+  right,
+  left,
+  UnknownFailure,
+  AuthenticationFailure,
+  PermissionFailure,
+  NotFoundFailure,
+  NetworkFailure,
+  AuthenticationException,
+  PermissionException,
+  NotFoundException,
+  NetworkException,
+} from '@learning-hub/core';
+import {
+  AuthTokens,
+  CreatePermissionParams,
+  CreateRoleParams,
+  GrantPermissionParams,
+  IAuthRepository,
+  LoginParams,
+  Permission,
+  RegisterParams,
+  Role,
+  UpdateAdminParams,
+  UpdateRoleParams,
+  User,
+} from '@learning-hub/domain';
+import { IAuthRemoteDataSource } from '../datasources/IAuthRemoteDataSource';
+
+function toFailure(e: unknown): Failure {
+  if (e instanceof AuthenticationException)
+    return new AuthenticationFailure(e.message);
+  if (e instanceof PermissionException) return new PermissionFailure();
+  if (e instanceof NotFoundException) return new NotFoundFailure();
+  if (e instanceof NetworkException) return new NetworkFailure();
+  return new UnknownFailure();
+}
 
 export class AuthRepositoryImpl implements IAuthRepository {
-    constructor(private dataSource: IAuthRemoteDataSource, private token?: string) { }
+  constructor(
+    private dataSource: IAuthRemoteDataSource,
+    private token?: string,
+  ) {}
 
-    async register(data: any): Promise<Either<Failure, User>> {
-        try {
-            const res = await (this.dataSource as any).register(data);
-            return right(res.user);
-        } catch (e) {
-            return left(new UnknownFailure());
-        }
+  async register(data: RegisterParams): Promise<Either<Failure, User>> {
+    try {
+      const res = await this.dataSource.register(data);
+      return right(res.user);
+    } catch (e) {
+      return left(toFailure(e));
     }
+  }
 
-    async login(data: any): Promise<Either<Failure, { accessToken: string; refreshToken: string }>> {
-        try {
-            const res = await (this.dataSource as any).login(data);
-            return right(res);
-        } catch (e) {
-            return left(new UnknownFailure());
-        }
+  async login(data: LoginParams): Promise<Either<Failure, AuthTokens>> {
+    try {
+      return right(await this.dataSource.login(data));
+    } catch (e) {
+      return left(toFailure(e));
     }
+  }
 
-    async adminLogin(data: any): Promise<Either<Failure, { accessToken: string; refreshToken: string }>> {
-        try {
-            const res = await (this.dataSource as any).adminLogin(data);
-            return right(res);
-        } catch (e) {
-            return left(new UnknownFailure());
-        }
+  async adminLogin(data: LoginParams): Promise<Either<Failure, AuthTokens>> {
+    try {
+      return right(await this.dataSource.adminLogin(data));
+    } catch (e) {
+      return left(toFailure(e));
     }
+  }
 
-    async registerAdmin(data: any): Promise<Either<Failure, User>> {
-        try {
-            const res = await (this.dataSource as any).registerAdmin(data, this.token);
-            return right(res.user);
-        } catch (e) {
-            return left(new UnknownFailure());
-        }
+  async registerAdmin(data: RegisterParams): Promise<Either<Failure, User>> {
+    try {
+      const res = await this.dataSource.registerAdmin(data, this.token);
+      return right(res.user);
+    } catch (e) {
+      return left(toFailure(e));
     }
+  }
 
-    async refreshToken(token: string): Promise<Either<Failure, { accessToken: string; refreshToken: string }>> {
-        try {
-            const res = await (this.dataSource as any).refreshToken({ refreshToken: token });
-            return right(res);
-        } catch (e) {
-            return left(new UnknownFailure());
-        }
+  async updateUser(
+    id: string,
+    data: UpdateAdminParams,
+  ): Promise<Either<Failure, User>> {
+    try {
+      return right(await this.dataSource.updateUser(id, data, this.token));
+    } catch (e) {
+      return left(toFailure(e));
     }
+  }
 
-    async logout(): Promise<Either<Failure, void>> {
-        try {
-            await (this.dataSource as any).logout(this.token);
-            return right(undefined);
-        } catch (e) {
-            return left(new UnknownFailure());
-        }
+  async deleteUser(id: string): Promise<Either<Failure, void>> {
+    try {
+      await this.dataSource.deleteUser(id, this.token);
+      return right(undefined);
+    } catch (e) {
+      return left(toFailure(e));
     }
+  }
 
-    async getProfile(): Promise<Either<Failure, User>> {
-        try {
-            const res = await (this.dataSource as any).getProfile(this.token);
-            return right(res);
-        } catch (e) {
-            return left(new UnknownFailure());
-        }
+  async searchUsersByEmail(email: string): Promise<Either<Failure, User[]>> {
+    try {
+      return right(await this.dataSource.searchUsersByEmail(email, this.token));
+    } catch (e) {
+      return left(toFailure(e));
     }
+  }
 
-    async getUsers(): Promise<Either<Failure, User[]>> {
-        try {
-            const data = await (this.dataSource as any).getUsers(this.token);
-            return right(data);
-        } catch (e) {
-            return left(new UnknownFailure());
-        }
+  async refreshToken(token: string): Promise<Either<Failure, AuthTokens>> {
+    try {
+      return right(await this.dataSource.refreshToken({ refreshToken: token }));
+    } catch (e) {
+      return left(toFailure(e));
     }
+  }
 
-    async getRoles(): Promise<Either<Failure, Role[]>> {
-        try {
-            const data = await (this.dataSource as any).getRoles(this.token);
-            return right(data as Role[]);
-        } catch (e) {
-            return left(new UnknownFailure());
-        }
+  async logout(): Promise<Either<Failure, void>> {
+    try {
+      await this.dataSource.logout(this.token);
+      return right(undefined);
+    } catch (e) {
+      return left(toFailure(e));
     }
+  }
 
-    async createRole(data: any): Promise<Either<Failure, Role>> {
-        try {
-            const res = await (this.dataSource as any).createRole(data, this.token);
-            return right(res);
-        } catch (e) {
-            return left(new UnknownFailure());
-        }
+  async getProfile(): Promise<Either<Failure, User>> {
+    try {
+      return right(await this.dataSource.getProfile(this.token));
+    } catch (e) {
+      return left(toFailure(e));
     }
+  }
 
-    async updateRole(id: number, data: any): Promise<Either<Failure, Role>> {
-        try {
-            const res = await (this.dataSource as any).updateRole(id, data, this.token);
-            return right(res);
-        } catch (e) {
-            return left(new UnknownFailure());
-        }
+  async getUsers(): Promise<Either<Failure, User[]>> {
+    try {
+      return right(await this.dataSource.getUsers(this.token));
+    } catch (e) {
+      return left(toFailure(e));
     }
+  }
 
-    async deleteRole(id: number): Promise<Either<Failure, void>> {
-        try {
-            await (this.dataSource as any).deleteRole(id, this.token);
-            return right(undefined);
-        } catch (e) {
-            return left(new UnknownFailure());
-        }
+  async getRoles(): Promise<Either<Failure, Role[]>> {
+    try {
+      return right(await this.dataSource.getRoles(this.token));
+    } catch (e) {
+      return left(toFailure(e));
     }
+  }
 
-    async getPermissions(): Promise<Either<Failure, Permission[]>> {
-        try {
-            const data = await (this.dataSource as any).getPermissions(this.token);
-            return right(data as Permission[]);
-        } catch (e) {
-            return left(new UnknownFailure());
-        }
+  async createRole(data: CreateRoleParams): Promise<Either<Failure, Role>> {
+    try {
+      return right(await this.dataSource.createRole(data, this.token));
+    } catch (e) {
+      return left(toFailure(e));
     }
+  }
 
-    async getResources(): Promise<Either<Failure, string[]>> {
-        try {
-            const data = await (this.dataSource as any).getResources(this.token);
-            return right(data.resources);
-        } catch (e) {
-            return left(new UnknownFailure());
-        }
+  async updateRole(
+    id: number,
+    data: UpdateRoleParams,
+  ): Promise<Either<Failure, Role>> {
+    try {
+      return right(await this.dataSource.updateRole(id, data, this.token));
+    } catch (e) {
+      return left(toFailure(e));
     }
+  }
 
-    async createPermission(data: any): Promise<Either<Failure, Permission>> {
-        try {
-            const res = await (this.dataSource as any).createPermission(data, this.token);
-            return right(res);
-        } catch (e) {
-            return left(new UnknownFailure());
-        }
+  async deleteRole(id: number): Promise<Either<Failure, void>> {
+    try {
+      await this.dataSource.deleteRole(id, this.token);
+      return right(undefined);
+    } catch (e) {
+      return left(toFailure(e));
     }
+  }
 
-    async deletePermission(id: number): Promise<Either<Failure, void>> {
-        try {
-            await (this.dataSource as any).deletePermission(id, this.token);
-            return right(undefined);
-        } catch (e) {
-            return left(new UnknownFailure());
-        }
+  async getPermissions(): Promise<Either<Failure, Permission[]>> {
+    try {
+      return right(await this.dataSource.getPermissions(this.token));
+    } catch (e) {
+      return left(toFailure(e));
     }
+  }
 
-    async getRolePermissions(roleId: number): Promise<Either<Failure, number[]>> {
-        try {
-            const data = await (this.dataSource as any).getRolePermissions(roleId, this.token);
-            return right(data.map((rp: any) => rp.permissionId));
-        } catch (e) {
-            return left(new UnknownFailure());
-        }
+  async getResources(): Promise<Either<Failure, string[]>> {
+    try {
+      const data = await this.dataSource.getResources(this.token);
+      return right(data.resources);
+    } catch (e) {
+      return left(toFailure(e));
     }
+  }
 
-    async assignPermissionToRole(roleId: number, permissionId: number): Promise<Either<Failure, void>> {
-        try {
-            await (this.dataSource as any).assignPermission(roleId, permissionId, this.token);
-            return right(undefined);
-        } catch (e) {
-            return left(new UnknownFailure());
-        }
+  async createPermission(
+    data: CreatePermissionParams,
+  ): Promise<Either<Failure, Permission>> {
+    try {
+      return right(await this.dataSource.createPermission(data, this.token));
+    } catch (e) {
+      return left(toFailure(e));
     }
+  }
 
-    async removePermissionFromRole(roleId: number, permissionId: number): Promise<Either<Failure, void>> {
-        try {
-            await (this.dataSource as any).removePermission(roleId, permissionId, this.token);
-            return right(undefined);
-        } catch (e) {
-            return left(new UnknownFailure());
-        }
+  async deletePermission(id: number): Promise<Either<Failure, void>> {
+    try {
+      await this.dataSource.deletePermission(id, this.token);
+      return right(undefined);
+    } catch (e) {
+      return left(toFailure(e));
     }
+  }
 
-    async getUserRoles(userId: string): Promise<Either<Failure, Role[]>> {
-        try {
-            const res = await (this.dataSource as any).getUserRoles(userId, this.token);
-            return right(res);
-        } catch (e) {
-            return left(new UnknownFailure());
-        }
+  async getRolePermissions(roleId: number): Promise<Either<Failure, number[]>> {
+    try {
+      const data = await this.dataSource.getRolePermissions(roleId, this.token);
+      return right(data.map((p) => p.id));
+    } catch (e) {
+      return left(toFailure(e));
     }
+  }
 
-    async assignRoleToUser(userId: string, roleId: number): Promise<Either<Failure, void>> {
-        try {
-            await (this.dataSource as any).assignRoleToUser(userId, roleId, this.token);
-            return right(undefined);
-        } catch (e) {
-            return left(new UnknownFailure());
-        }
+  async assignPermissionToRole(
+    roleId: number,
+    permissionId: number,
+  ): Promise<Either<Failure, void>> {
+    try {
+      await this.dataSource.assignPermission(roleId, permissionId, this.token);
+      return right(undefined);
+    } catch (e) {
+      return left(toFailure(e));
     }
+  }
 
-    async removeRoleFromUser(userId: string, roleId: number): Promise<Either<Failure, void>> {
-        try {
-            await (this.dataSource as any).removeRoleFromUser(userId, roleId, this.token);
-            return right(undefined);
-        } catch (e) {
-            return left(new UnknownFailure());
-        }
+  async removePermissionFromRole(
+    roleId: number,
+    permissionId: number,
+  ): Promise<Either<Failure, void>> {
+    try {
+      await this.dataSource.removePermission(roleId, permissionId, this.token);
+      return right(undefined);
+    } catch (e) {
+      return left(toFailure(e));
     }
+  }
 
-    async getUserPermissions(userId: string): Promise<Either<Failure, any[]>> {
-        try {
-            const res = await (this.dataSource as any).getUserPermissions(userId, this.token);
-            return right(res);
-        } catch (e) {
-            return left(new UnknownFailure());
-        }
+  async getUserRoles(userId: string): Promise<Either<Failure, Role[]>> {
+    try {
+      return right(await this.dataSource.getUserRoles(userId, this.token));
+    } catch (e) {
+      return left(toFailure(e));
     }
+  }
 
-    async grantUserPermission(userId: string, data: any): Promise<Either<Failure, void>> {
-        try {
-            await (this.dataSource as any).grantUserPermission(userId, data, this.token);
-            return right(undefined);
-        } catch (e) {
-            return left(new UnknownFailure());
-        }
+  async assignRoleToUser(
+    userId: string,
+    roleId: number,
+  ): Promise<Either<Failure, void>> {
+    try {
+      await this.dataSource.assignRoleToUser(userId, roleId, this.token);
+      return right(undefined);
+    } catch (e) {
+      return left(toFailure(e));
     }
+  }
 
-    async revokeUserPermission(userId: string, permissionId: number): Promise<Either<Failure, void>> {
-        try {
-            await (this.dataSource as any).revokeUserPermission(userId, permissionId, this.token);
-            return right(undefined);
-        } catch (e) {
-            return left(new UnknownFailure());
-        }
+  async removeRoleFromUser(
+    userId: string,
+    roleId: number,
+  ): Promise<Either<Failure, void>> {
+    try {
+      await this.dataSource.removeRoleFromUser(userId, roleId, this.token);
+      return right(undefined);
+    } catch (e) {
+      return left(toFailure(e));
     }
+  }
+
+  async getUserPermissions(
+    userId: string,
+  ): Promise<Either<Failure, Permission[]>> {
+    try {
+      return right(
+        await this.dataSource.getUserPermissions(userId, this.token),
+      );
+    } catch (e) {
+      return left(toFailure(e));
+    }
+  }
+
+  async grantUserPermission(
+    userId: string,
+    data: GrantPermissionParams,
+  ): Promise<Either<Failure, void>> {
+    try {
+      await this.dataSource.grantUserPermission(userId, data, this.token);
+      return right(undefined);
+    } catch (e) {
+      return left(toFailure(e));
+    }
+  }
+
+  async revokeUserPermission(
+    userId: string,
+    permissionId: number,
+  ): Promise<Either<Failure, void>> {
+    try {
+      await this.dataSource.revokeUserPermission(
+        userId,
+        permissionId,
+        this.token,
+      );
+      return right(undefined);
+    } catch (e) {
+      return left(toFailure(e));
+    }
+  }
 }

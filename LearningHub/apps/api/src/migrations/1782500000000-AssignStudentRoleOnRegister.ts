@@ -16,6 +16,10 @@ export class AssignStudentRoleOnRegister1782500000000
       $$ LANGUAGE plpgsql;
     `);
 
+    await queryRunner.query(
+      `DROP TRIGGER IF EXISTS assign_student_role_after_insert ON "users"`,
+    );
+
     await queryRunner.query(`
       CREATE TRIGGER assign_student_role_after_insert
       AFTER INSERT ON "users"

@@ -27,8 +27,14 @@ export class RoleRepository implements IRoleRepository {
     return entities.map((entity) => this.toDomain(entity));
   }
 
-  async create(role: Role): Promise<Role> {
-    const entity = await this.repository.save(this.fromDomain(role));
+  async create(
+    data: Omit<Role, 'id' | 'createdAt' | 'updatedAt'>,
+  ): Promise<Role> {
+    const entity = await this.repository.save({
+      code: data.code,
+      name: data.name,
+      description: data.description,
+    });
     return this.toDomain(entity);
   }
 

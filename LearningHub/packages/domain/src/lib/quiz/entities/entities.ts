@@ -40,15 +40,47 @@ export interface UploadHistory {
   readonly uploadedAt: string;
 }
 
+export interface QuizResultAnswer {
+  readonly questionId: string;
+  readonly isCorrect: boolean;
+  readonly correctOptionId: string;
+}
+
 export interface QuizResult {
   readonly totalQuestions: number;
   readonly correctCount: number;
   readonly score: number;
-  readonly answers: ReadonlyArray<{
-    readonly questionId: string;
-    readonly isCorrect: boolean;
-    readonly correctOptionId: string;
-  }>;
+  readonly answers: ReadonlyArray<QuizResultAnswer>;
+}
+
+export interface QuizAnswer {
+  readonly questionId: string;
+  readonly selectedOptionId: string;
+}
+
+export interface AnswerOptionInput {
+  readonly optionLabel: string;
+  readonly content: string;
+}
+
+export interface BankHashResult {
+  readonly exists: boolean;
+  readonly bank?: QuestionBank;
+}
+
+export interface UploadExcelResult {
+  readonly message: string;
+  readonly totalQuestionsImported: number;
+}
+
+export interface VerifyAnswerResult {
+  readonly isCorrect: boolean;
+  readonly correctOptionIds: string[];
+  readonly explanation?: string | null;
+}
+
+export interface ParseExcelResult {
+  readonly questions: unknown[];
 }
 
 export interface BankList {
@@ -61,4 +93,74 @@ export interface DerivedBank {
   readonly title: string;
   readonly createdAt: string;
   readonly uploaderUsername: string;
+}
+
+export interface NextBankSuggestion {
+  readonly bankId: string;
+  readonly bankTitle: string;
+  readonly position: number;
+  readonly totalBanks: number;
+  readonly roadmapId: string;
+}
+
+export interface QuizSubmitResult {
+  readonly totalQuestions: number;
+  readonly correctCount: number;
+  readonly wrongCount: number;
+  readonly scorePercent: number;
+  readonly attemptId: string;
+  readonly nextBank: NextBankSuggestion | null;
+}
+
+export interface QuizAttempt {
+  readonly id: string;
+  readonly userId: string;
+  readonly questionBankId: string;
+  readonly startedAt: string;
+  readonly finishedAt: string | null;
+  readonly durationSeconds: number | null;
+  readonly scorePercent: number | null;
+  readonly correctCount: number;
+  readonly wrongCount: number;
+  readonly totalQuestions: number;
+  readonly status: 'in_progress' | 'pass' | 'fail';
+  readonly createdAt: string;
+}
+
+export interface QuizAttemptAnswer {
+  readonly questionId: string;
+  readonly questionContent: string;
+  readonly explanation: string | null;
+  readonly selectedOptionId: string | null;
+  readonly correctOptionIds: string[];
+  readonly isCorrect: boolean;
+  readonly questionOrder: number;
+  readonly answerOptions: ReadonlyArray<{
+    id: string;
+    optionLabel: string;
+    content: string;
+  }>;
+}
+
+export interface QuizAttemptDetail {
+  readonly attempt: QuizAttempt;
+  readonly reviewDetails: QuizAttemptAnswer[];
+}
+
+export interface UserBankProgress {
+  readonly attemptCount: number;
+  readonly bestScore: number | null;
+  readonly latestScore: number | null;
+  readonly isCompleted: boolean;
+}
+
+export interface AttemptList {
+  readonly data: QuizAttempt[];
+  readonly total: number;
+}
+
+export interface BankRoadmapItem {
+  readonly roadmapId: string;
+  readonly roadmapTitle: string;
+  readonly position: number;
 }

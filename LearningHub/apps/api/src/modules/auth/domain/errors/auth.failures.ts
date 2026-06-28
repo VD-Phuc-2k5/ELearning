@@ -82,4 +82,15 @@ export class AuthFailures extends Failure {
       'RESOURCE_NOT_FOUND',
     );
   }
+
+  static emailAlreadyInUse(): AuthFailures {
+    return new AuthFailures('Email already in use', 'EMAIL_ALREADY_IN_USE');
+  }
+
+  static cannotDeleteSelf(): AuthFailures {
+    return new AuthFailures(
+      'Cannot delete your own account',
+      'CANNOT_DELETE_SELF',
+    );
+  }
 }

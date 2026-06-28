@@ -1,10 +1,15 @@
 import { Either, Failure, Usecase } from '@learning-hub/core';
-import { Role } from '../entities/entities';
+import { Role, UpdateRoleParams } from '../entities/entities';
 import { IAuthRepository } from '../repositories/IAuthRepository';
 
-export class UpdateRoleUsecase implements Usecase<Role, any> {
+export interface UpdateRoleUsecaseParams {
+  id: number;
+  data: UpdateRoleParams;
+}
+
+export class UpdateRoleUsecase implements Usecase<Role, UpdateRoleUsecaseParams> {
   constructor(private repository: IAuthRepository) {}
-  async execute(params: any): Promise<Either<Failure, Role>> {
+  async execute(params: UpdateRoleUsecaseParams): Promise<Either<Failure, Role>> {
     return this.repository.updateRole(params.id, params.data)
   }
 }

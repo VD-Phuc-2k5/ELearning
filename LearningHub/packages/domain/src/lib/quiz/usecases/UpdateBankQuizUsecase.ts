@@ -1,16 +1,24 @@
 import { Either, Failure, Usecase } from '@learning-hub/core';
-import type { IQuizRepository, UpdateBankQuizParams } from '../repositories/IQuizRepository';
+import type {
+  IQuizRepository,
+  UpdateBankQuizParams,
+} from '../repositories/IQuizRepository';
 import { QuestionBank } from '../entities/entities';
 
-export type { UpdateBankQuizParams };
-
 export class UpdateBankQuizParams2 {
-  constructor(public id: string, public data: UpdateBankQuizParams) {}
+  constructor(
+    public id: string,
+    public data: UpdateBankQuizParams,
+  ) {}
 }
 
-export class UpdateBankQuizUsecase implements Usecase<QuestionBank, UpdateBankQuizParams2> {
+export class UpdateBankQuizUsecase
+  implements Usecase<QuestionBank, UpdateBankQuizParams2>
+{
   constructor(private repository: IQuizRepository) {}
-  execute(params: UpdateBankQuizParams2): Promise<Either<Failure, QuestionBank>> {
+  execute(
+    params: UpdateBankQuizParams2,
+  ): Promise<Either<Failure, QuestionBank>> {
     return this.repository.updateBank(params.id, params.data);
   }
 }

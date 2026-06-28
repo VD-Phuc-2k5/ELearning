@@ -1,12 +1,22 @@
 import { Either, Failure } from '@learning-hub/core';
 import {
+  AnswerOptionInput,
+  AttemptList,
+  BankHashResult,
   BankList,
+  BankRoadmapItem,
   DerivedBank,
+  ParseExcelResult,
   Question,
   QuestionBank,
-  QuizResult,
+  QuizAnswer,
+  QuizAttemptDetail,
+  QuizSubmitResult,
   Tag,
+  UploadExcelResult,
   UploadHistory,
+  UserBankProgress,
+  VerifyAnswerResult,
 } from '../entities/entities';
 
 export interface GetBanksQuizParams {
@@ -33,8 +43,14 @@ export interface UpdateBankQuizParams {
 export interface UpdateQuestionQuizParams {
   content?: string;
   explanation?: string;
-  answerOptions?: { optionLabel: string; content: string }[];
+  answerOptions?: AnswerOptionInput[];
   correctOptionLabels?: string[];
+}
+
+export interface GetAttemptsParams {
+  page?: number;
+  limit?: number;
+  bankId?: string;
 }
 
 export interface IQuizRepository {
@@ -53,14 +69,12 @@ export interface IQuizRepository {
     file: Buffer,
     fileName: string,
     fileHash?: string,
-  ): Promise<
-    Either<Failure, { message: string; totalQuestionsImported: number }>
-  >;
+  ): Promise<Either<Failure, UploadExcelResult>>;
   parseExcel(
     bankId: string,
     file: Buffer,
     fileName: string,
-  ): Promise<Either<Failure, { questions: unknown[] }>>;
+  ): Promise<Either<Failure, ParseExcelResult>>;
   getUploadHistory(bankId: string): Promise<Either<Failure, UploadHistory[]>>;
   getQuestionsForQuiz(
     bankId: string,
@@ -69,11 +83,18 @@ export interface IQuizRepository {
   verifyAnswer(
     questionId: string,
     selectedOptionId: string,
-  ): Promise<Either<Failure, { isCorrect: boolean; correctOptionId?: string }>>;
+  ): Promise<Either<Failure, VerifyAnswerResult>>;
   submitQuiz(
     bankId: string,
-    answers: { questionId: string; selectedOptionId: string }[],
-  ): Promise<Either<Failure, QuizResult>>;
+    answers: QuizAnswer[],
+    roadmapId?: string | null,
+    durationSeconds?: number,
+  ): Promise<Either<Failure, QuizSubmitResult>>;
+  getAttempts(params: GetAttemptsParams): Promise<Either<Failure, AttemptList>>;
+  getAttemptDetail(id: string): Promise<Either<Failure, QuizAttemptDetail>>;
+  getBankProgress(
+    bankId: string,
+  ): Promise<Either<Failure, UserBankProgress | null>>;
   updateQuestion(
     id: string,
     params: UpdateQuestionQuizParams,
@@ -82,8 +103,7 @@ export interface IQuizRepository {
   getTags(): Promise<Either<Failure, Tag[]>>;
   createTag(name: string): Promise<Either<Failure, Tag>>;
   deleteTag(id: number): Promise<Either<Failure, void>>;
-  checkBankHash(
-    hash: string,
-  ): Promise<Either<Failure, { exists: boolean; bank?: QuestionBank }>>;
+  checkBankHash(hash: string): Promise<Either<Failure, BankHashResult>>;
   getDerivedBanks(bankId: string): Promise<Either<Failure, DerivedBank[]>>;
+  getBankRoadmaps(bankId: string): Promise<Either<Failure, BankRoadmapItem[]>>;
 }
