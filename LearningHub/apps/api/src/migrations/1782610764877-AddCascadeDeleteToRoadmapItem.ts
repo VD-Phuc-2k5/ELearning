@@ -5,21 +5,17 @@ export class AddCascadeDeleteToRoadmapItem1782610764877
 {
   name = 'AddCascadeDeleteToRoadmapItem1782610764877';
 
-  public async up(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(
-      `ALTER TABLE "roadmap_items" DROP CONSTRAINT "FK_43ac131fb57225ad391d62253e9"`,
-    );
-    await queryRunner.query(
-      `ALTER TABLE "roadmap_items" ADD CONSTRAINT "FK_43ac131fb57225ad391d62253e9" FOREIGN KEY ("question_bank_id") REFERENCES "question_banks"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
-    );
+  /**
+   * This migration was generated when roadmap_items already existed in dev DB.
+   * That table is created (with CASCADE DELETE on question_bank_id) in migration 1783000000001.
+   * This migration is therefore a no-op when running fresh.
+   */
+  public async up(_queryRunner: QueryRunner): Promise<void> {
+    // no-op: roadmap_items.question_bank_id FK is created with CASCADE DELETE
+    // directly in 1783000000001-CreateRoadmapTables
   }
 
-  public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(
-      `ALTER TABLE "roadmap_items" DROP CONSTRAINT "FK_43ac131fb57225ad391d62253e9"`,
-    );
-    await queryRunner.query(
-      `ALTER TABLE "roadmap_items" ADD CONSTRAINT "FK_43ac131fb57225ad391d62253e9" FOREIGN KEY ("question_bank_id") REFERENCES "question_banks"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
-    );
+  public async down(_queryRunner: QueryRunner): Promise<void> {
+    // no-op
   }
 }

@@ -5,21 +5,17 @@ export class AddBankFkSetNullOnProgress1782610512970
 {
   name = 'AddBankFkSetNullOnProgress1782610512970';
 
-  public async up(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(
-      `ALTER TABLE "user_roadmap_progress" DROP CONSTRAINT "FK_388e4326e4c6db6cb82044e1b85"`,
-    );
-    await queryRunner.query(
-      `ALTER TABLE "user_roadmap_progress" ADD CONSTRAINT "FK_388e4326e4c6db6cb82044e1b85" FOREIGN KEY ("current_bank_id") REFERENCES "question_banks"("id") ON DELETE SET NULL ON UPDATE NO ACTION`,
-    );
+  /**
+   * This migration was generated when user_roadmap_progress already existed in dev DB.
+   * That table is created (with the correct SET NULL constraint) in migration 1783000000003.
+   * This migration is therefore a no-op when running fresh.
+   */
+  public async up(_queryRunner: QueryRunner): Promise<void> {
+    // no-op: user_roadmap_progress.current_bank_id FK is created with SET NULL
+    // directly in 1783000000003-CreateUserProgressTables
   }
 
-  public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(
-      `ALTER TABLE "user_roadmap_progress" DROP CONSTRAINT "FK_388e4326e4c6db6cb82044e1b85"`,
-    );
-    await queryRunner.query(
-      `ALTER TABLE "user_roadmap_progress" ADD CONSTRAINT "FK_388e4326e4c6db6cb82044e1b85" FOREIGN KEY ("current_bank_id") REFERENCES "question_banks"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
-    );
+  public async down(_queryRunner: QueryRunner): Promise<void> {
+    // no-op
   }
 }
