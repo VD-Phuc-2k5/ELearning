@@ -7,7 +7,12 @@ import {
   IRoadmapItemRepository,
   ROADMAP_ITEM_REPOSITORY,
 } from '../../domain/repositories/roadmap-item.repository.interface';
+import {
+  IUserBankProgressRepository,
+  USER_BANK_PROGRESS_REPOSITORY,
+} from '../../../quiz/domain/repositories/user-bank-progress.repository.interface';
 import { UserRoadmapProgressDomain } from '../../domain/entities/user-roadmap-progress.domain';
+import { RoadmapProgressStatus } from '../../domain/entities/user-roadmap-progress.domain';
 
 @Injectable()
 export class EnrollRoadmapUseCase {
@@ -16,6 +21,8 @@ export class EnrollRoadmapUseCase {
     private readonly progressRepo: IUserRoadmapProgressRepository,
     @Inject(ROADMAP_ITEM_REPOSITORY)
     private readonly itemRepo: IRoadmapItemRepository,
+    @Inject(USER_BANK_PROGRESS_REPOSITORY)
+    private readonly bankProgressRepo: IUserBankProgressRepository,
   ) {}
 
   async execute(
@@ -28,14 +35,28 @@ export class EnrollRoadmapUseCase {
     );
     if (existing) return existing;
 
-    const totalBanks = await this.itemRepo.countItems(roadmapId);
+    const items = await this.itemRepo.findByRoadmapId(roadmapId);
+    const totalBanks = items.length;
+    const bankIds = items.map((i) => i.questionBankId);
+    const completedBanks =
+      totalBanks > 0
+        ? (await this.bankProgressRepo.findCompletedBankIds(userId, bankIds))
+            .length
+        : 0;
+    const progressPercent =
+      totalBanks > 0 ? Math.round((completedBanks / totalBanks) * 100) : 0;
+    const status: RoadmapProgressStatus =
+      completedBanks >= totalBanks && totalBanks > 0
+        ? 'completed'
+        : 'in_progress';
+
     return this.progressRepo.upsert({
       userId,
       roadmapId,
       totalBanks,
-      completedBanks: 0,
-      progressPercent: 0,
-      status: 'in_progress',
+      completedBanks,
+      progressPercent,
+      status,
       startedAt: new Date(),
     });
   }

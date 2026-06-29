@@ -8,7 +8,7 @@ import {
   assignPermissionToRole,
   removePermissionFromRole,
   deleteRole as deleteRoleFn,
-  type MatrixData,
+  type RolePermissionMatrix,
 } from '../actions/admin.actions';
 
 interface TogglePermissionParams {
@@ -25,7 +25,7 @@ interface RolesTabProps {
 export function RolesTab({ openConfirm, onEditRole }: RolesTabProps) {
   const qc = useQueryClient();
 
-  const { data: matrixData, isLoading } = useQuery<MatrixData>({
+  const { data: matrixData, isLoading } = useQuery<RolePermissionMatrix>({
     queryKey: ['admin-matrix'],
     queryFn: getMatrix,
   });

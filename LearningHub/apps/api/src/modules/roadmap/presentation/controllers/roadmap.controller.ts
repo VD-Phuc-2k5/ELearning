@@ -31,10 +31,7 @@ import {
   UpdateRoadmapDto,
   SetRoadmapItemsDto,
 } from '../dto/roadmap.request.dto';
-
-interface AuthReq {
-  user: { id: string };
-}
+import { AuthReq } from '../types';
 
 @ApiTags('Roadmap')
 @ApiBearerAuth()

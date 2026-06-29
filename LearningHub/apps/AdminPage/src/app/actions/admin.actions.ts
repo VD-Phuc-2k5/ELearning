@@ -1,6 +1,6 @@
 'use server';
 
-import { Either, Failure } from '@learning-hub/core';
+import { Either, unwrap } from '@learning-hub/core';
 import {
   AuthRemoteDataSourceImpl,
   AuthRepositoryImpl,
@@ -41,15 +41,10 @@ import {
 } from '@learning-hub/domain';
 import { cookies } from 'next/headers';
 
-export interface MatrixData {
+export interface RolePermissionMatrix {
   roles: Role[];
   permissions: Permission[];
   matrix: Record<number, number[]>;
-}
-
-function unwrap<T>(r: Either<Failure, T>): T {
-  if (r.type === 'left') throw new Error(r.value.message);
-  return r.value;
 }
 
 async function getRepo() {
@@ -57,9 +52,9 @@ async function getRepo() {
   return new AuthRepositoryImpl(new AuthRemoteDataSourceImpl(), token);
 }
 
-export async function getUsers(): Promise<User[]> {
+export async function getUsers(role?: string): Promise<User[]> {
   const repo = await getRepo();
-  return unwrap(await new GetUsersUsecase(repo).execute({}));
+  return unwrap(await new GetUsersUsecase(repo).execute({ role }));
 }
 
 export async function registerAdmin(data: RegisterParams): Promise<User> {
@@ -224,7 +219,7 @@ export async function revokeUserPermission(
   );
 }
 
-export async function getMatrix(): Promise<MatrixData> {
+export async function getMatrix(): Promise<RolePermissionMatrix> {
   const [roles, permissions] = await Promise.all([
     getRoles(),
     getPermissions(),

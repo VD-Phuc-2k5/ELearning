@@ -51,8 +51,11 @@ export class QuizAttemptRepository implements IQuizAttemptRepository {
         status: input.status,
       });
       const saved = await em.save(attempt);
-      if (input.answers.length > 0) {
-        const answerEntities = input.answers.map((a, i) =>
+      const validAnswers = input.answers.filter(
+        (a) => a.questionId && a.selectedOptionId,
+      );
+      if (validAnswers.length > 0) {
+        const answerEntities = validAnswers.map((a, i) =>
           em.create(QuizAttemptAnswerEntity, {
             attemptId: saved.id,
             questionId: a.questionId,

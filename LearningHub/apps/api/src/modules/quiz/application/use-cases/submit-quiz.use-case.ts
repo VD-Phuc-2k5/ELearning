@@ -85,7 +85,7 @@ export class SubmitQuizUseCase {
       });
     }
 
-    const totalQuestions = dto.answers.length;
+    const totalQuestions = questions.length;
     const wrongCount = totalQuestions - correctCount;
     const scorePercent =
       totalQuestions > 0

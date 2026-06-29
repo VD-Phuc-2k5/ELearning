@@ -1,9 +1,10 @@
+import type { ApiErrorShape } from '@learning-hub/core';
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 
 interface RetryConfig extends InternalAxiosRequestConfig {
   _retry?: boolean;
 }
-type ApiError = AxiosError<{ error?: string }>;
+type ApiError = AxiosError<{ error?: string }> & ApiErrorShape;
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080',

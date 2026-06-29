@@ -20,5 +20,10 @@ const right = <R>(value: R): Right<R> => ({
   value,
 });
 
+function unwrap<L extends { message: string }, R>(r: Either<L, R>): R {
+  if (r.type === 'left') throw new Error(r.value.message);
+  return r.value;
+}
+
 export type { Either };
-export { right, left };
+export { right, left, unwrap };

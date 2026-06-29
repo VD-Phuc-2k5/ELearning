@@ -39,11 +39,11 @@ export function ExamMode({
       submitQuiz(
         bankId,
         questions
+          .filter((q) => answers[q.id])
           .map((q) => ({
             questionId: q.id,
-            selectedOptionId: answers[q.id] || '',
-          }))
-          .filter((a) => a.selectedOptionId),
+            selectedOptionId: answers[q.id],
+          })),
         roadmapId,
         Math.round((Date.now() - startTimeRef.current) / 1000),
       ),
@@ -56,7 +56,7 @@ export function ExamMode({
     }
   };
 
-  // Lock: block tab-switch, browser back, and page unload — auto-submit on each
+  // Lock: block tab-switch, browser back, page unload, and internal link clicks — auto-submit on each
   useEffect(() => {
     history.pushState(null, '', location.href);
 
@@ -70,15 +70,27 @@ export function ExamMode({
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       e.preventDefault();
     };
+    const handleClick = (e: MouseEvent) => {
+      const anchor = (e.target as HTMLElement).closest('a[href]');
+      if (!anchor) return;
+      const href = anchor.getAttribute('href');
+      if (!href || href.startsWith('#') || href.startsWith('javascript:'))
+        return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      safeSubmitRef.current();
+    };
 
     window.addEventListener('popstate', handlePopState);
     document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('beforeunload', handleBeforeUnload);
+    document.addEventListener('click', handleClick, true);
 
     return () => {
       window.removeEventListener('popstate', handlePopState);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('click', handleClick, true);
     };
   }, []);
 

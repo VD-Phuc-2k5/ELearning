@@ -1,1 +1,1 @@
-export type Tab = 'questions' | 'upload' | 'history' | 'stats';
+export type BankDetailTab = 'questions' | 'upload' | 'history' | 'stats';

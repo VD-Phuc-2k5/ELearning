@@ -1,6 +1,6 @@
 'use server';
 
-import { Either, Failure } from '@learning-hub/core';
+import { unwrap } from '@learning-hub/core';
 import {
   RoadmapRemoteDataSourceImpl,
   RoadmapRepositoryImpl,
@@ -32,11 +32,6 @@ import {
   UpdateRoadmapUsecase,
 } from '@learning-hub/domain';
 import { cookies } from 'next/headers';
-
-function unwrap<T>(r: Either<Failure, T>): T {
-  if (r.type === 'left') throw new Error(r.value.message);
-  return r.value;
-}
 
 async function getRepo() {
   const token = (await cookies()).get('accessToken')?.value ?? '';

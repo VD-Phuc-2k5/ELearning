@@ -1,17 +1,17 @@
 'use server';
 
-import { Either, Failure } from '@learning-hub/core';
+import { unwrap } from '@learning-hub/core';
 import {
   QuizRemoteDataSourceImpl,
   QuizRepositoryImpl,
 } from '@learning-hub/data';
 import type {
-  AnswerOptionInput,
   BankHashResult,
   BankRoadmapItem,
   CreateBankQuizParams,
   DerivedBank,
   GetBanksQuizParams,
+  ParsedQuestion,
   Question,
   QuestionBank,
   QuizAnswer,
@@ -50,9 +50,9 @@ import {
   ParseExcelQuizUsecase,
   SubmitQuizParams,
   SubmitQuizUsecase,
-  UpdateBankQuizParams2,
+  UpdateBankCommand,
   UpdateBankQuizUsecase,
-  UpdateQuestionQuizParams2,
+  UpdateQuestionCommand,
   UpdateQuestionQuizUsecase,
   UploadExcelQuizParams,
   UploadExcelQuizUsecase,
@@ -60,24 +60,6 @@ import {
   VerifyAnswerQuizUsecase,
 } from '@learning-hub/domain';
 import { cookies } from 'next/headers';
-
-export interface ParsedQuestion {
-  content: string;
-  explanation?: string;
-  answerOptions: AnswerOptionInput[];
-  correctOptionLabels: string[];
-}
-export interface ParseExcelResponse {
-  questions: ParsedQuestion[];
-}
-export interface UploadMessageResult {
-  message: string;
-}
-
-function unwrap<T>(r: Either<Failure, T>): T {
-  if (r.type === 'left') throw new Error(r.value.message);
-  return r.value;
-}
 
 async function getRepo() {
   const token = (await cookies()).get('accessToken')?.value ?? '';
@@ -113,7 +95,7 @@ export async function updateBank(
   const repo = await getRepo();
   return unwrap(
     await new UpdateBankQuizUsecase(repo).execute(
-      new UpdateBankQuizParams2(id, data),
+      new UpdateBankCommand(id, data),
     ),
   );
 }
@@ -129,7 +111,7 @@ export async function uploadExcel(
   bankId: string,
   file: File,
   fileHash?: string,
-): Promise<UploadMessageResult> {
+): Promise<{ message: string }> {
   const repo = await getRepo();
   const buffer = Buffer.from(await file.arrayBuffer());
   return unwrap(
@@ -195,7 +177,7 @@ export async function updateQuestion(
   const repo = await getRepo();
   return unwrap(
     await new UpdateQuestionQuizUsecase(repo).execute(
-      new UpdateQuestionQuizParams2(id, data),
+      new UpdateQuestionCommand(id, data),
     ),
   );
 }
@@ -231,7 +213,7 @@ export async function deleteTag(id: number): Promise<void> {
 export async function parseExcel(
   bankId: string,
   file: File,
-): Promise<ParseExcelResponse> {
+): Promise<{ questions: ParsedQuestion[] }> {
   const repo = await getRepo();
   const buffer = Buffer.from(await file.arrayBuffer());
   const result = unwrap(

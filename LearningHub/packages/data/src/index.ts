@@ -1,5 +1,7 @@
 export * from './lib/auth/datasources/datasources';
 export * from './lib/auth/repositories/repositories';
+export * from './lib/forum/datasources/datasources';
+export * from './lib/forum/repositories/repositories';
 export * from './lib/quiz/datasources/datasources';
 export * from './lib/quiz/repositories/repositories';
 export * from './lib/roadmap/datasources/datasources';

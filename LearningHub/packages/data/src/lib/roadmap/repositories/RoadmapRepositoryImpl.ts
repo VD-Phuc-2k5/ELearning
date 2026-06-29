@@ -38,14 +38,16 @@ function toFailure(e: unknown): Failure {
 export class RoadmapRepositoryImpl implements IRoadmapRepository {
   constructor(
     private dataSource: IRoadmapRemoteDataSource,
-    private token: string,
-  ) {}
+    token: string,
+  ) {
+    this.dataSource.setToken(token);
+  }
 
   async getRoadmaps(
     params: GetRoadmapsParams,
   ): Promise<Either<Failure, RoadmapList>> {
     try {
-      return right(await this.dataSource.getRoadmaps(params, this.token));
+      return right(await this.dataSource.getRoadmaps(params));
     } catch (e) {
       return left(toFailure(e));
     }
@@ -55,7 +57,7 @@ export class RoadmapRepositoryImpl implements IRoadmapRepository {
     params: GetRoadmapsParams,
   ): Promise<Either<Failure, RoadmapList>> {
     try {
-      return right(await this.dataSource.getMyRoadmaps(params, this.token));
+      return right(await this.dataSource.getMyRoadmaps(params));
     } catch (e) {
       return left(toFailure(e));
     }
@@ -65,7 +67,7 @@ export class RoadmapRepositoryImpl implements IRoadmapRepository {
     params: CreateRoadmapParams,
   ): Promise<Either<Failure, Roadmap>> {
     try {
-      return right(await this.dataSource.createRoadmap(params, this.token));
+      return right(await this.dataSource.createRoadmap(params));
     } catch (e) {
       return left(toFailure(e));
     }
@@ -73,7 +75,7 @@ export class RoadmapRepositoryImpl implements IRoadmapRepository {
 
   async getRoadmapDetail(id: string): Promise<Either<Failure, RoadmapDetail>> {
     try {
-      return right(await this.dataSource.getRoadmapDetail(id, this.token));
+      return right(await this.dataSource.getRoadmapDetail(id));
     } catch (e) {
       return left(toFailure(e));
     }
@@ -84,7 +86,7 @@ export class RoadmapRepositoryImpl implements IRoadmapRepository {
     params: UpdateRoadmapParams,
   ): Promise<Either<Failure, Roadmap>> {
     try {
-      return right(await this.dataSource.updateRoadmap(id, params, this.token));
+      return right(await this.dataSource.updateRoadmap(id, params));
     } catch (e) {
       return left(toFailure(e));
     }
@@ -92,7 +94,7 @@ export class RoadmapRepositoryImpl implements IRoadmapRepository {
 
   async deleteRoadmap(id: string): Promise<Either<Failure, void>> {
     try {
-      await this.dataSource.deleteRoadmap(id, this.token);
+      await this.dataSource.deleteRoadmap(id);
       return right(undefined);
     } catch (e) {
       return left(toFailure(e));
@@ -104,9 +106,7 @@ export class RoadmapRepositoryImpl implements IRoadmapRepository {
     bankIds: string[],
   ): Promise<Either<Failure, RoadmapItem[]>> {
     try {
-      return right(
-        await this.dataSource.setRoadmapItems(id, bankIds, this.token),
-      );
+      return right(await this.dataSource.setRoadmapItems(id, bankIds));
     } catch (e) {
       return left(toFailure(e));
     }
@@ -116,7 +116,7 @@ export class RoadmapRepositoryImpl implements IRoadmapRepository {
     id: string,
   ): Promise<Either<Failure, UserRoadmapProgress>> {
     try {
-      return right(await this.dataSource.enrollRoadmap(id, this.token));
+      return right(await this.dataSource.enrollRoadmap(id));
     } catch (e) {
       return left(toFailure(e));
     }
@@ -126,7 +126,7 @@ export class RoadmapRepositoryImpl implements IRoadmapRepository {
     Either<Failure, UserRoadmapProgress[]>
   > {
     try {
-      return right(await this.dataSource.getMyRoadmapProgress(this.token));
+      return right(await this.dataSource.getMyRoadmapProgress());
     } catch (e) {
       return left(toFailure(e));
     }

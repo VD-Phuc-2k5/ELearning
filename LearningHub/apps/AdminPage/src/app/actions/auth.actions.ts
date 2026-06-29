@@ -3,13 +3,13 @@ import {
   AuthRemoteDataSourceImpl,
   AuthRepositoryImpl,
 } from '@learning-hub/data';
+import type { LoginParams } from '@learning-hub/domain';
 import { AdminLoginUsecase } from '@learning-hub/domain';
 import { cookies } from 'next/headers';
 
-export async function adminLoginAction(data: {
-  email: string;
-  password: string;
-}): Promise<
+export async function adminLoginAction(
+  data: LoginParams,
+): Promise<
   { success: true; accessToken: string } | { success: false; error: string }
 > {
   const ds = new AuthRemoteDataSourceImpl();

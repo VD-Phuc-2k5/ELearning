@@ -19,7 +19,7 @@ export function UsersTab({
   const qc = useQueryClient();
   const { data: users, isLoading } = useQuery<User[]>({
     queryKey: ['admin-users'],
-    queryFn: getUsers,
+    queryFn: () => getUsers('ADMIN'),
   });
 
   const removeMut = useMutation({

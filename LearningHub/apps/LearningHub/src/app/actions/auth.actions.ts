@@ -45,9 +45,11 @@ export async function loginAction(data: {
 
 export async function logoutAction(): Promise<void> {
   const cookieStore = await cookies();
-  const token = cookieStore.get('accessToken')?.value;
-  const repo = new AuthRepositoryImpl(new AuthRemoteDataSourceImpl(), token);
-  await new LogoutUsecase(repo).execute({});
+  const refreshToken = cookieStore.get('refreshToken')?.value;
+  if (refreshToken) {
+    const repo = new AuthRepositoryImpl(new AuthRemoteDataSourceImpl());
+    await new LogoutUsecase(repo).execute({ refreshToken });
+  }
   cookieStore.delete('accessToken');
   cookieStore.delete('refreshToken');
 }

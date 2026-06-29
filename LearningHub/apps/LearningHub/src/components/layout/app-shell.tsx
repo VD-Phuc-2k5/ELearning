@@ -9,6 +9,7 @@ import {
   Users,
   BookOpen,
   Map,
+  MessageSquare,
   LogOut,
   Plus,
   HelpCircle,
@@ -22,6 +23,7 @@ const navigation = [
   { href: '/community', label: 'Community', Icon: Users },
   { href: '/my-banks', label: 'Workshop', Icon: BookOpen },
   { href: '/roadmaps/manage', label: 'Roadmaps', Icon: Map },
+  { href: '/forum', label: 'Forum', Icon: MessageSquare },
 ];
 
 type AppShellProps = { children: ReactNode };

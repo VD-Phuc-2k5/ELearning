@@ -16,6 +16,10 @@ import {
   IUserRoadmapProgressRepository,
   USER_ROADMAP_PROGRESS_REPOSITORY,
 } from '../../domain/repositories/user-roadmap-progress.repository.interface';
+import {
+  IUserBankProgressRepository,
+  USER_BANK_PROGRESS_REPOSITORY,
+} from '../../../quiz/domain/repositories/user-bank-progress.repository.interface';
 import { RoadmapItemDomain } from '../../domain/entities/roadmap-item.domain';
 import { RoadmapProgressStatus } from '../../domain/entities/user-roadmap-progress.domain';
 
@@ -28,6 +32,8 @@ export class SetRoadmapItemsUseCase {
     private readonly itemRepo: IRoadmapItemRepository,
     @Inject(USER_ROADMAP_PROGRESS_REPOSITORY)
     private readonly progressRepo: IUserRoadmapProgressRepository,
+    @Inject(USER_BANK_PROGRESS_REPOSITORY)
+    private readonly bankProgressRepo: IUserBankProgressRepository,
   ) {}
 
   async execute(
@@ -43,11 +49,18 @@ export class SetRoadmapItemsUseCase {
     const items = await this.itemRepo.setItems(roadmapId, bankIds);
     const newTotal = bankIds.length;
 
-    // Recalculate all enrolled users' progress
+    // Recalculate all enrolled users' progress based on actual bank completions
     const allProgress = await this.progressRepo.findAllByRoadmap(roadmapId);
     await Promise.all(
-      allProgress.map((p) => {
-        const completedBanks = Math.min(p.completedBanks, newTotal);
+      allProgress.map(async (p) => {
+        const completedIds =
+          newTotal > 0
+            ? await this.bankProgressRepo.findCompletedBankIds(
+                p.userId,
+                bankIds,
+              )
+            : [];
+        const completedBanks = completedIds.length;
         const progressPercent =
           newTotal > 0 ? Math.round((completedBanks / newTotal) * 100) : 0;
         const status: RoadmapProgressStatus =

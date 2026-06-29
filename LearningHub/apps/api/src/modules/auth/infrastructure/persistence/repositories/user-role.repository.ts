@@ -24,6 +24,14 @@ export class UserRoleRepository implements IUserRoleRepository {
     return entities.map((e) => this.toDomain(e));
   }
 
+  async findUserIdsByRoleId(roleId: number): Promise<string[]> {
+    const rows = await this.repository.find({
+      where: { roleId },
+      select: { userId: true },
+    });
+    return rows.map((r) => r.userId);
+  }
+
   async assign(
     userId: string,
     roleId: number,

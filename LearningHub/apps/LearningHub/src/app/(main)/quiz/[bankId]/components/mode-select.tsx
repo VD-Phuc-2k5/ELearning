@@ -13,11 +13,11 @@ import {
 import { clsx } from 'clsx';
 import '@aejkatappaja/phantom-ui';
 import type { QuestionBank } from '@learning-hub/domain';
-import type { Mode } from './types';
+import type { QuizMode } from './types';
 
 interface ModeSelectProps {
   bank: QuestionBank | undefined;
-  onSelectMode: (m: Mode, timeLimitSeconds?: number) => void;
+  onSelectMode: (m: QuizMode, timeLimitSeconds?: number) => void;
   onBack: () => void;
 }
 

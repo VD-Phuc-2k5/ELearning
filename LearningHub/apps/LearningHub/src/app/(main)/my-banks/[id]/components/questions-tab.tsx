@@ -146,9 +146,7 @@ function QuestionCard({
               onChange={(e) => setContent(e.target.value)}
             />
             <div className="space-y-2">
-              <p className="text-xs font-semibold text-slate-500">
-                Đáp án (click radio để chọn đáp án đúng)
-              </p>
+              <p className="text-xs font-semibold text-slate-500">Đáp án</p>
               {options.map((opt, oi) => (
                 <div key={opt.id} className="flex items-center gap-2">
                   <input

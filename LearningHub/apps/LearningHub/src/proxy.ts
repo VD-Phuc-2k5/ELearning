@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   // Skip refresh for static assets and the refresh endpoint itself (prevent recursion)
   const { pathname } = request.nextUrl;
   if (pathname.startsWith('/api/auth/refresh')) return NextResponse.next();

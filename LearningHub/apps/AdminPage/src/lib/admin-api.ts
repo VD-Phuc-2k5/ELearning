@@ -1,3 +1,5 @@
+import type { ApiErrorShape } from '@learning-hub/core';
+
 export const VALID_ACTIONS = ['create', 'get', 'update', 'delete'] as const;
 
 export const inputCls =
@@ -7,9 +9,6 @@ export const btnPrimary =
 export const btnSecondary =
   'flex-1 py-3 rounded-xl border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50';
 
-interface ApiError {
-  response?: { data?: { message?: string } };
-}
 export function getAxiosMessage(e: unknown, fallback: string): string {
-  return (e as ApiError).response?.data?.message ?? fallback;
+  return (e as ApiErrorShape).response?.data?.message ?? fallback;
 }
