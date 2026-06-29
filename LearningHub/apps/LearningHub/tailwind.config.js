@@ -17,7 +17,11 @@ module.exports = {
     //     ...createGlobPatternsForDependencies(__dirname)
   ],
   theme: {
-    extend: {},
+    extend: {
+      boxShadow: {
+        soft: '0 16px 40px -24px rgb(15 23 42 / 0.45)',
+      },
+    },
   },
   plugins: [],
 };

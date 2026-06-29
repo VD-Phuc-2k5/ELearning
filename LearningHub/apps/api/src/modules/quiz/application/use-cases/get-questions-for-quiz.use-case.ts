@@ -18,12 +18,14 @@ export class GetQuestionsForQuizUseCase {
     private readonly questionRepository: IQuestionRepository,
   ) {}
 
-  async execute(bankId: string): Promise<QuestionDomain[]> {
+  async execute(
+    bankId: string,
+    showAnswers = false,
+  ): Promise<QuestionDomain[]> {
     const bank = await this.questionBankRepository.findById(bankId);
     if (!bank) {
       throw new NotFoundException(`Question bank with id ${bankId} not found`);
     }
-    // hideAnswers = true -> trả về câu hỏi KHÔNG có đáp án đúng & giải thích
-    return this.questionRepository.findByBankId(bankId, true);
+    return this.questionRepository.findByBankId(bankId, !showAnswers);
   }
 }

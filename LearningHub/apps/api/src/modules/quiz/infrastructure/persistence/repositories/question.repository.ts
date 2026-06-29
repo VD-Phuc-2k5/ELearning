@@ -22,10 +22,13 @@ export class QuestionRepository implements IQuestionRepository {
     private readonly dataSource: DataSource,
   ) {}
 
-  private toDomain(entity: QuestionEntity, hideAnswers: boolean): QuestionDomain {
+  private toDomain(
+    entity: QuestionEntity,
+    hideAnswers: boolean,
+  ): QuestionDomain {
     const correctIds = hideAnswers
       ? []
-      : entity.correctAnswers?.map((ca) => ca.optionId) ?? [];
+      : (entity.correctAnswers?.map((ca) => ca.optionId) ?? []);
 
     return {
       id: entity.id,
@@ -77,7 +80,10 @@ export class QuestionRepository implements IQuestionRepository {
     });
   }
 
-  async findByBankId(bankId: string, hideAnswers: boolean): Promise<QuestionDomain[]> {
+  async findByBankId(
+    bankId: string,
+    hideAnswers: boolean,
+  ): Promise<QuestionDomain[]> {
     const entities = await this.repo.find({
       where: { questionBankId: bankId },
       relations: { answerOptions: true, correctAnswers: true },
@@ -94,7 +100,10 @@ export class QuestionRepository implements IQuestionRepository {
     return this.toDomain(entity, false);
   }
 
-  async update(id: string, input: UpdateQuestionInput): Promise<QuestionDomain> {
+  async update(
+    id: string,
+    input: UpdateQuestionInput,
+  ): Promise<QuestionDomain> {
     await this.dataSource.transaction(async (manager) => {
       const question = await manager.findOne(QuestionEntity, {
         where: { id },
@@ -105,7 +114,8 @@ export class QuestionRepository implements IQuestionRepository {
       }
 
       if (input.content !== undefined) question.content = input.content;
-      if (input.explanation !== undefined) question.explanation = input.explanation;
+      if (input.explanation !== undefined)
+        question.explanation = input.explanation;
       await manager.save(question);
 
       let currentOptions = question.answerOptions;
@@ -125,11 +135,16 @@ export class QuestionRepository implements IQuestionRepository {
       }
 
       let targetCorrectLabels = input.correctOptionLabels;
-      if (targetCorrectLabels === undefined && input.answerOptions !== undefined) {
-        const oldCorrectOptionIds = question.correctAnswers?.map((ca) => ca.optionId) ?? [];
-        targetCorrectLabels = question.answerOptions
-          ?.filter((opt) => oldCorrectOptionIds.includes(opt.id))
-          .map((opt) => opt.optionLabel) ?? [];
+      if (
+        targetCorrectLabels === undefined &&
+        input.answerOptions !== undefined
+      ) {
+        const oldCorrectOptionIds =
+          question.correctAnswers?.map((ca) => ca.optionId) ?? [];
+        targetCorrectLabels =
+          question.answerOptions
+            ?.filter((opt) => oldCorrectOptionIds.includes(opt.id))
+            .map((opt) => opt.optionLabel) ?? [];
       }
 
       if (targetCorrectLabels !== undefined) {
@@ -158,6 +173,10 @@ export class QuestionRepository implements IQuestionRepository {
   }
 
   async delete(id: string): Promise<void> {
-    await this.repo.delete(id);
+    await this.dataSource.transaction(async (manager) => {
+      await manager.delete(CorrectAnswerEntity, { questionId: id });
+      await manager.delete(AnswerOptionEntity, { questionId: id });
+      await manager.delete(QuestionEntity, id);
+    });
   }
 }

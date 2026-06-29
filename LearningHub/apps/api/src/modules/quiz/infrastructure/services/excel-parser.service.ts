@@ -1,15 +1,21 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import * as ExcelJS from 'exceljs';
 import { CreateQuestionInput } from '../../domain/repositories/question.repository.interface';
+import { IExcelParserService } from '../../application/interfaces/i-excel-parser.service';
 
 @Injectable()
-export class ExcelParserService {
-  async parse(fileBuffer: Buffer): Promise<Omit<CreateQuestionInput, 'questionBankId'>[]> {
+export class ExcelParserService implements IExcelParserService {
+  async parse(
+    fileBuffer: Buffer,
+  ): Promise<Omit<CreateQuestionInput, 'questionBankId'>[]> {
     const workbook = new ExcelJS.Workbook();
     try {
-      await workbook.xlsx.load(fileBuffer as any);
-    } catch (err: any) {
-      throw new BadRequestException('Không thể đọc file Excel. File có thể bị hỏng hoặc sai định dạng.');
+      // ponytail: ExcelJS types use old Buffer without generic; cast via unknown is the cross-lib workaround
+      await workbook.xlsx.load(fileBuffer as unknown as ArrayBuffer);
+    } catch (_err: unknown) {
+      throw new BadRequestException(
+        'Không thể đọc file Excel. File có thể bị hỏng hoặc sai định dạng.',
+      );
     }
 
     const worksheet = workbook.worksheets[0];
@@ -19,22 +25,37 @@ export class ExcelParserService {
 
     const questions: Omit<CreateQuestionInput, 'questionBankId'>[] = [];
     const headerRow = worksheet.getRow(1);
-    
+
     let questionCol = -1;
     const optionCols: { label: string; index: number }[] = [];
     let correctCol = -1;
     let explanationCol = -1;
 
     headerRow.eachCell((cell, colNumber) => {
-      const val = String(cell.value || '').trim().toLowerCase();
+      const val = String(cell.value || '')
+        .trim()
+        .toLowerCase();
       if (val === 'câu hỏi' || val.includes('câu hỏi') || val === 'content') {
         questionCol = colNumber;
-      } else if (val === 'đáp án đúng' || val.includes('đáp án đúng') || val === 'correct' || val === 'dap an dung') {
+      } else if (
+        val === 'đáp án đúng' ||
+        val.includes('đáp án đúng') ||
+        val === 'correct' ||
+        val === 'dap an dung'
+      ) {
         correctCol = colNumber;
-      } else if (val === 'giải thích' || val.includes('giải thích') || val === 'explanation' || val === 'giai thich') {
+      } else if (
+        val === 'giải thích' ||
+        val.includes('giải thích') ||
+        val === 'explanation' ||
+        val === 'giai thich'
+      ) {
         explanationCol = colNumber;
       } else if (val.startsWith('đáp án ') || val.startsWith('dap an ')) {
-        const label = val.replace(/^(đáp án|dap an)\s+/i, '').toUpperCase().trim();
+        const label = val
+          .replace(/^(đáp án|dap an)\s+/i, '')
+          .toUpperCase()
+          .trim();
         optionCols.push({ label, index: colNumber });
       } else if (/^[a-f]$/i.test(val)) {
         optionCols.push({ label: val.toUpperCase(), index: colNumber });
@@ -66,7 +87,9 @@ export class ExcelParserService {
 
         if (typeof cell.value === 'object') {
           if ('richText' in cell.value && Array.isArray(cell.value.richText)) {
-            return cell.value.richText.map((rt: any) => rt.text || '').join('');
+            return cell.value.richText
+              .map((rt: ExcelJS.RichText) => rt.text ?? '')
+              .join('');
           }
           if ('result' in cell.value) {
             return String(cell.value.result ?? '').trim();
@@ -91,7 +114,9 @@ export class ExcelParserService {
         .filter((s) => s.length > 0);
 
       if (correctOptionLabels.length === 0) {
-        throw new BadRequestException(`Dòng ${rowNumber}: Chưa chọn đáp án đúng.`);
+        throw new BadRequestException(
+          `Dòng ${rowNumber}: Chưa chọn đáp án đúng.`,
+        );
       }
 
       const answerOptions: { optionLabel: string; content: string }[] = [];
@@ -106,13 +131,15 @@ export class ExcelParserService {
       }
 
       if (answerOptions.length < 2) {
-        throw new BadRequestException(`Dòng ${rowNumber}: Phải có ít nhất 2 đáp án.`);
+        throw new BadRequestException(
+          `Dòng ${rowNumber}: Phải có ít nhất 2 đáp án.`,
+        );
       }
 
       for (const label of correctOptionLabels) {
         if (!answerOptions.some((opt) => opt.optionLabel === label)) {
           throw new BadRequestException(
-            `Dòng ${rowNumber}: Đáp án đúng "${label}" không nằm trong số các đáp án có nội dung.`
+            `Dòng ${rowNumber}: Đáp án đúng "${label}" không nằm trong số các đáp án có nội dung.`,
           );
         }
       }
@@ -126,7 +153,9 @@ export class ExcelParserService {
     });
 
     if (questions.length === 0) {
-      throw new BadRequestException('Không tìm thấy dữ liệu câu hỏi hợp lệ trong file Excel.');
+      throw new BadRequestException(
+        'Không tìm thấy dữ liệu câu hỏi hợp lệ trong file Excel.',
+      );
     }
 
     return questions;

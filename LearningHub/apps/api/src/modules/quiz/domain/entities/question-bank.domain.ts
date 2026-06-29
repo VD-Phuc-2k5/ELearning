@@ -5,6 +5,7 @@ export interface QuestionBankDomain {
   uploaderId: string;
   fileHash: string | null;
   totalQuestions: number;
+  passingScore: number;
   statusId: string;
   createdAt: Date;
   updatedAt: Date;

@@ -1,19 +1,22 @@
 //@ts-check
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 const { composePlugins, withNx } = require('@nx/next');
 
 /**
  * @type {import('@nx/next/plugins/with-nx').WithNxOptions}
  **/
 const nextConfig = {
-  // Use this to set Nx-specific options
-  // See: https://nx.dev/recipes/next/next-config-setup
-  nx: {},
+  transpilePackages: ['@learning-hub/core', '@learning-hub/domain', '@learning-hub/data'],
+  turbopack: {
+    resolveAlias: {
+      '@learning-hub/core': '../../packages/core/src/index.ts',
+      '@learning-hub/domain': '../../packages/domain/src/index.ts',
+      '@learning-hub/data': '../../packages/data/src/index.ts',
+    },
+  },
 };
 
 const plugins = [
-  // Add more Next.js plugins to this list if needed.
   withNx,
 ];
 

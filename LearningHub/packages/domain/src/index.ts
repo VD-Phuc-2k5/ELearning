@@ -1,3 +1,3 @@
-// Use this file to export React client components (e.g. those with 'use client' directive) or other non-server utilities
-
-export * from './lib/domain';
+export * from './lib/auth/auth';
+export * from './lib/quiz/quiz';
+export * from './lib/roadmap/roadmap';

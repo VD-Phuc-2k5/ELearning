@@ -11,15 +11,30 @@ import {
   UseGuards,
   UseInterceptors,
   UploadedFile,
+  BadRequestException,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiConsumes, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+
+interface AuthenticatedRequest {
+  user: { id: string };
+}
+
+interface UploadedFile {
+  buffer: Buffer;
+  originalname: string;
+}
+import {
+  ApiBearerAuth,
+  ApiConsumes,
+  ApiOperation,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { CreateQuestionBankUseCase } from '../../application/use-cases/create-question-bank.use-case';
 import { GetQuestionBankListUseCase } from '../../application/use-cases/get-question-bank-list.use-case';
 import { GetQuestionsForQuizUseCase } from '../../application/use-cases/get-questions-for-quiz.use-case';
 import { VerifyQuestionAnswerUseCase } from '../../application/use-cases/verify-question-answer.use-case';
-import { SubmitQuizUseCase } from '../../application/use-cases/submit-quiz.use-case';
 import { GetQuestionBankDetailUseCase } from '../../application/use-cases/get-question-bank-detail.use-case';
 import { UpdateQuestionBankUseCase } from '../../application/use-cases/update-question-bank.use-case';
 import { DeleteQuestionBankUseCase } from '../../application/use-cases/delete-question-bank.use-case';
@@ -27,27 +42,18 @@ import { UpdateQuestionUseCase } from '../../application/use-cases/update-questi
 import { DeleteQuestionUseCase } from '../../application/use-cases/delete-question.use-case';
 import { UploadExcelUseCase } from '../../application/use-cases/upload-excel.use-case';
 import { GetUploadHistoryUseCase } from '../../application/use-cases/get-upload-history.use-case';
+import { CheckBankHashUseCase } from '../../application/use-cases/check-bank-hash.use-case';
+import { GetDerivedBanksUseCase } from '../../application/use-cases/get-derived-banks.use-case';
+import { UploadQuestionsUseCase } from '../../application/use-cases/upload-questions.use-case';
+import { ParseExcelUseCase } from '../../application/use-cases/parse-excel.use-case';
+
 import {
   CreateQuestionBankRequestDto,
   UploadQuestionsRequestDto,
   VerifyQuestionAnswerRequestDto,
-  SubmitQuizRequestDto,
   UpdateQuestionBankRequestDto,
   UpdateQuestionRequestDto,
-} from '../dto/quiz.request.dto';
-import { Inject } from '@nestjs/common';
-import {
-  IQuestionRepository,
-  QUESTION_REPOSITORY,
-} from '../../domain/repositories/question.repository.interface';
-import {
-  IQuestionBankRepository,
-  QUESTION_BANK_REPOSITORY,
-} from '../../domain/repositories/question-bank.repository.interface';
-import {
-  IUploadRepository,
-  UPLOAD_REPOSITORY,
-} from '../../domain/repositories/upload.repository.interface';
+} from '../dto/question-bank.request.dto';
 
 @ApiTags('Quiz - Ngân hàng câu hỏi')
 @ApiBearerAuth()
@@ -59,7 +65,6 @@ export class QuizBankController {
     private readonly getQuestionBankListUseCase: GetQuestionBankListUseCase,
     private readonly getQuestionsForQuizUseCase: GetQuestionsForQuizUseCase,
     private readonly verifyQuestionAnswerUseCase: VerifyQuestionAnswerUseCase,
-    private readonly submitQuizUseCase: SubmitQuizUseCase,
     private readonly getQuestionBankDetailUseCase: GetQuestionBankDetailUseCase,
     private readonly updateQuestionBankUseCase: UpdateQuestionBankUseCase,
     private readonly deleteQuestionBankUseCase: DeleteQuestionBankUseCase,
@@ -67,12 +72,10 @@ export class QuizBankController {
     private readonly deleteQuestionUseCase: DeleteQuestionUseCase,
     private readonly uploadExcelUseCase: UploadExcelUseCase,
     private readonly getUploadHistoryUseCase: GetUploadHistoryUseCase,
-    @Inject(QUESTION_REPOSITORY)
-    private readonly questionRepository: IQuestionRepository,
-    @Inject(QUESTION_BANK_REPOSITORY)
-    private readonly questionBankRepository: IQuestionBankRepository,
-    @Inject(UPLOAD_REPOSITORY)
-    private readonly uploadRepository: IUploadRepository,
+    private readonly checkBankHashUseCase: CheckBankHashUseCase,
+    private readonly getDerivedBanksUseCase: GetDerivedBanksUseCase,
+    private readonly uploadQuestionsUseCase: UploadQuestionsUseCase,
+    private readonly parseExcelUseCase: ParseExcelUseCase,
   ) {}
 
   // ─── Ngân hàng câu hỏi ───────────────────────────────────────────────────
@@ -81,32 +84,60 @@ export class QuizBankController {
   @ApiOperation({ summary: 'Tạo mới một ngân hàng câu hỏi (Admin/Uploader)' })
   async createBank(
     @Body() dto: CreateQuestionBankRequestDto,
-    @Request() req: any,
+    @Request() req: AuthenticatedRequest,
   ) {
     return this.createQuestionBankUseCase.execute(dto, req.user.id);
   }
 
   @Get('banks')
-  @ApiOperation({ summary: 'Lấy danh sách ngân hàng câu hỏi (có phân trang & lọc)' })
+  @ApiOperation({
+    summary: 'Lấy danh sách ngân hàng câu hỏi (có phân trang & lọc)',
+  })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'search', required: false, type: String })
   @ApiQuery({ name: 'tagId', required: false, type: Number })
   @ApiQuery({ name: 'statusId', required: false, type: String })
   async getBankList(
+    @Request() req: AuthenticatedRequest,
     @Query('page') page?: number,
     @Query('limit') limit?: number,
     @Query('search') search?: string,
     @Query('tagId') tagId?: number,
     @Query('statusId') statusId?: string,
   ) {
-    return this.getQuestionBankListUseCase.execute({ page, limit, search, tagId, statusId });
+    return this.getQuestionBankListUseCase.execute({
+      page,
+      limit,
+      search,
+      tagId,
+      statusId,
+      uploaderId: req.user.id,
+    });
   }
 
   @Get('banks/:id')
   @ApiOperation({ summary: 'Xem chi tiết một ngân hàng câu hỏi' })
   async getBankDetail(@Param('id') id: string) {
     return this.getQuestionBankDetailUseCase.execute(id);
+  }
+
+  @Get('banks/check-hash/:hash')
+  @ApiOperation({ summary: 'Kiểm tra ngân hàng câu hỏi qua mã Hash' })
+  async getBankByHash(
+    @Param('hash') hash: string,
+    @Request() req: AuthenticatedRequest,
+  ) {
+    return this.checkBankHashUseCase.execute(hash, req.user.id);
+  }
+
+  @Get('banks/:id/derived-banks')
+  @ApiOperation({ summary: 'Thống kê ai đã dùng cùng file với bank này' })
+  async getDerivedBanks(
+    @Param('id') id: string,
+    @Request() req: AuthenticatedRequest,
+  ) {
+    return this.getDerivedBanksUseCase.execute(id, req.user.id);
   }
 
   @Patch('banks/:id')
@@ -129,28 +160,13 @@ export class QuizBankController {
   async uploadQuestions(
     @Param('id') bankId: string,
     @Body() dto: UploadQuestionsRequestDto,
-    @Request() req: any,
+    @Request() req: AuthenticatedRequest,
   ) {
-    await this.questionRepository.createMany(
-      dto.questions.map((q) => ({
-        questionBankId: bankId,
-        content: q.content,
-        explanation: q.explanation,
-        answerOptions: q.answerOptions,
-        correctOptionLabels: q.correctOptionLabels,
-      })),
+    return this.uploadQuestionsUseCase.execute(
+      bankId,
+      dto.questions,
+      req.user.id,
     );
-    const questions = await this.questionRepository.findByBankId(bankId, false);
-    await this.questionBankRepository.updateTotalQuestions(bankId, questions.length);
-
-    await this.uploadRepository.create({
-      questionBankId: bankId,
-      uploadedBy: req.user.id,
-      fileName: null,
-      totalQuestionsImported: dto.questions.length,
-    });
-
-    return { message: `Đã thêm ${dto.questions.length} câu hỏi thành công.` };
   }
 
   @Post('banks/:id/upload-excel')
@@ -159,18 +175,37 @@ export class QuizBankController {
   @ApiOperation({ summary: 'Import câu hỏi từ file Excel (.xlsx)' })
   async uploadExcel(
     @Param('id') bankId: string,
-    @UploadedFile() file: any,
-    @Request() req: any,
+    @UploadedFile() file: UploadedFile,
+    @Request() req: AuthenticatedRequest,
+    @Body('fileHash') fileHash?: string,
   ) {
     if (!file) {
-      throw new Error('Vui lòng chọn file Excel để upload.');
+      throw new BadRequestException('Vui lòng chọn file Excel để upload.');
     }
     return this.uploadExcelUseCase.execute(
       bankId,
       file.buffer,
       file.originalname,
       req.user.id,
+      fileHash,
     );
+  }
+
+  @Post('banks/:id/parse-excel')
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({
+    summary:
+      'Parse file Excel, trả về danh sách câu hỏi để preview (không lưu DB)',
+  })
+  async parseExcel(
+    @Param('id') _bankId: string,
+    @UploadedFile() file: UploadedFile,
+  ) {
+    if (!file)
+      throw new BadRequestException('Vui lòng chọn file Excel để parse.');
+    const questions = await this.parseExcelUseCase.execute(file.buffer);
+    return { questions };
   }
 
   @Get('banks/:id/upload-history')
@@ -183,10 +218,17 @@ export class QuizBankController {
 
   @Get('banks/:id/questions')
   @ApiOperation({
-    summary: 'Lấy danh sách câu hỏi để làm bài (đáp án đúng bị ẩn)',
+    summary: 'Lấy danh sách câu hỏi (showAnswers=true để lấy đáp án đúng)',
   })
-  async getQuestionsForQuiz(@Param('id') bankId: string) {
-    return this.getQuestionsForQuizUseCase.execute(bankId);
+  @ApiQuery({ name: 'showAnswers', required: false, type: Boolean })
+  async getQuestionsForQuiz(
+    @Param('id') bankId: string,
+    @Query('showAnswers') showAnswers?: string,
+  ) {
+    return this.getQuestionsForQuizUseCase.execute(
+      bankId,
+      showAnswers === 'true',
+    );
   }
 
   @Post('questions/:id/verify')
@@ -196,15 +238,6 @@ export class QuizBankController {
     @Body() dto: VerifyQuestionAnswerRequestDto,
   ) {
     return this.verifyQuestionAnswerUseCase.execute(questionId, dto);
-  }
-
-  @Post('banks/:id/submit')
-  @ApiOperation({ summary: 'Nộp toàn bộ bài thi và nhận kết quả chi tiết' })
-  async submitQuiz(
-    @Param('id') bankId: string,
-    @Body() dto: SubmitQuizRequestDto,
-  ) {
-    return this.submitQuizUseCase.execute(bankId, dto);
   }
 
   @Patch('questions/:id')

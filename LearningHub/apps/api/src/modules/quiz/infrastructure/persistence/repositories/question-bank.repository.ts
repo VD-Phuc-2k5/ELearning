@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { QuestionBankEntity } from '../entities/question-bank.entity';
+import { BankTagEntity } from '../entities/bank-tag.entity';
 import {
   IQuestionBankRepository,
   CreateQuestionBankInput,
@@ -25,6 +26,7 @@ export class QuestionBankRepository implements IQuestionBankRepository {
       uploaderId: entity.uploaderId,
       fileHash: entity.fileHash,
       totalQuestions: entity.totalQuestions,
+      passingScore: Number(entity.passingScore),
       statusId: entity.statusId,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
@@ -38,7 +40,7 @@ export class QuestionBankRepository implements IQuestionBankRepository {
       description: input.description,
       uploaderId: input.uploaderId,
       statusId: 'draft',
-      tags: input.tagIds?.map((id) => ({ id })) as any,
+      tags: input.tagIds?.map((id) => ({ id })),
     });
     const saved = await this.repo.save(entity);
     return this.toDomain(saved);
@@ -47,12 +49,15 @@ export class QuestionBankRepository implements IQuestionBankRepository {
   async findAll(
     input: GetQuestionBankListInput,
   ): Promise<{ data: QuestionBankDomain[]; total: number }> {
-    const { page = 1, limit = 10, search, tagId, statusId } = input;
+    const { page = 1, limit = 10, search, tagId, statusId, uploaderId } = input;
     const qb = this.repo
       .createQueryBuilder('bank')
       .leftJoinAndSelect('bank.tags', 'tag')
       .leftJoinAndSelect('bank.status', 'status');
 
+    if (uploaderId) {
+      qb.andWhere('bank.uploaderId = :uploaderId', { uploaderId });
+    }
     if (search) {
       qb.andWhere('bank.title ILIKE :search', { search: `%${search}%` });
     }
@@ -84,7 +89,10 @@ export class QuestionBankRepository implements IQuestionBankRepository {
     await this.repo.update(id, { totalQuestions: total });
   }
 
-  async update(id: string, input: UpdateQuestionBankInput): Promise<QuestionBankDomain> {
+  async update(
+    id: string,
+    input: UpdateQuestionBankInput,
+  ): Promise<QuestionBankDomain> {
     const entity = await this.repo.findOne({
       where: { id },
       relations: { tags: true },
@@ -96,8 +104,11 @@ export class QuestionBankRepository implements IQuestionBankRepository {
     if (input.title !== undefined) entity.title = input.title;
     if (input.description !== undefined) entity.description = input.description;
     if (input.statusId !== undefined) entity.statusId = input.statusId;
+    if (input.fileHash !== undefined) entity.fileHash = input.fileHash;
     if (input.tagIds !== undefined) {
-      entity.tags = input.tagIds.map((tagId) => ({ id: tagId })) as any;
+      entity.tags = input.tagIds.map((tagId) => ({
+        id: tagId,
+      })) as BankTagEntity[];
     }
 
     const saved = await this.repo.save(entity);
@@ -106,5 +117,43 @@ export class QuestionBankRepository implements IQuestionBankRepository {
 
   async delete(id: string): Promise<void> {
     await this.repo.delete(id);
+  }
+
+  async findByHash(
+    hash: string,
+    uploaderId?: string,
+  ): Promise<QuestionBankDomain | null> {
+    const entity = await this.repo.findOne({
+      where: { fileHash: hash, ...(uploaderId ? { uploaderId } : {}) },
+      relations: { tags: true, status: true },
+    });
+    if (!entity) return null;
+    return this.toDomain(entity);
+  }
+
+  async findDerivedBanks(
+    fileHash: string,
+    excludeUploaderId: string,
+  ): Promise<
+    Array<{
+      id: string;
+      title: string;
+      createdAt: Date;
+      uploaderUsername: string;
+    }>
+  > {
+    const rows = await this.repo
+      .createQueryBuilder('bank')
+      .leftJoin('bank.uploader', 'uploader')
+      .select(['bank.id', 'bank.title', 'bank.createdAt', 'uploader.username'])
+      .where('bank.fileHash = :fileHash', { fileHash })
+      .andWhere('bank.uploaderId != :excludeUploaderId', { excludeUploaderId })
+      .getRawMany();
+    return rows.map((r) => ({
+      id: r.bank_id,
+      title: r.bank_title,
+      createdAt: r.bank_created_at,
+      uploaderUsername: r.uploader_username,
+    }));
   }
 }

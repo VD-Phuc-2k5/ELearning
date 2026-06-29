@@ -1,0 +1,106 @@
+---
+
+description: Áp dụng nguyên tắc SOLID cho React
+globs:
+
+* "src/**/*.{js,jsx,ts,tsx}"
+
+---
+
+# SOLID Principles for React
+
+## Single Responsibility Principle (SRP)
+
+* Mỗi component chỉ nên có một trách nhiệm chính.
+* Page chỉ chịu trách nhiệm bố cục và điều phối dữ liệu.
+* Business logic phải được tách sang custom hooks.
+* API logic phải được tách sang services.
+* Utility logic phải được tách sang utils.
+
+Sai:
+
+```text
+UserPage
+
+- Render UI
+- Gọi API
+- Validate dữ liệu
+- Xử lý business logic
+- Quản lý modal
+```
+
+Đúng:
+
+```text
+UserPage
+    ↓
+useUser
+    ↓
+userService
+```
+
+---
+
+## Open/Closed Principle (OCP)
+
+* Component nên mở rộng thông qua props.
+* Ưu tiên composition hơn sửa trực tiếp component hiện có.
+* Tránh hard-code nhiều trường hợp trong cùng component.
+* Ưu tiên children, render props hoặc reusable component.
+
+---
+
+## Liskov Substitution Principle (LSP)
+
+* Component con phải hoạt động đúng contract của component cha.
+* Không thay đổi hành vi mong đợi của props.
+* Component mở rộng phải tương thích với component gốc.
+
+---
+
+## Interface Segregation Principle (ISP)
+
+* Không tạo props quá lớn.
+* Chỉ truyền những props thực sự cần thiết.
+* Tách component khi số lượng props trở nên quá nhiều.
+* Tránh truyền object chứa nhiều dữ liệu không sử dụng.
+
+---
+
+## Dependency Inversion Principle (DIP)
+
+* Component không được phụ thuộc trực tiếp vào API.
+* Component nên phụ thuộc vào hooks hoặc service layer.
+* Tách UI khỏi business logic.
+* Tách UI khỏi data fetching.
+
+Sai:
+
+```jsx
+function UserPage() {
+  useEffect(() => {
+    fetch("/api/users");
+  }, []);
+}
+```
+
+Đúng:
+
+```text
+UserPage
+    ↓
+useUser
+    ↓
+userService
+```
+
+---
+
+## Quy tắc bổ sung
+
+* Ưu tiên composition hơn inheritance.
+* Không tạo component quá lớn.
+* Không tạo file hàng nghìn dòng.
+* Tránh duplicate logic giữa các component.
+* Ưu tiên reusable component.
+* Tuân thủ DRY (Don't Repeat Yourself).

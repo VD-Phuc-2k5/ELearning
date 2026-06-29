@@ -55,6 +55,13 @@ export class AuthFailures extends Failure {
     return new AuthFailures('User does not have admin role', 'NOT_ADMIN');
   }
 
+  static adminNotAllowed(): AuthFailures {
+    return new AuthFailures(
+      'Admin accounts must use the admin portal',
+      'ADMIN_NOT_ALLOWED',
+    );
+  }
+
   static selfPermissionGrant(): AuthFailures {
     return new AuthFailures(
       'Cannot grant permission to yourself',
@@ -73,6 +80,17 @@ export class AuthFailures extends Failure {
     return new AuthFailures(
       'Resource not found in registry',
       'RESOURCE_NOT_FOUND',
+    );
+  }
+
+  static emailAlreadyInUse(): AuthFailures {
+    return new AuthFailures('Email already in use', 'EMAIL_ALREADY_IN_USE');
+  }
+
+  static cannotDeleteSelf(): AuthFailures {
+    return new AuthFailures(
+      'Cannot delete your own account',
+      'CANNOT_DELETE_SELF',
     );
   }
 }

@@ -1,5 +1,8 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { ExcelParserService } from '../../infrastructure/services/excel-parser.service';
+import {
+  IExcelParserService,
+  EXCEL_PARSER_SERVICE,
+} from '../interfaces/i-excel-parser.service';
 import {
   IQuestionRepository,
   QUESTION_REPOSITORY,
@@ -13,10 +16,13 @@ import {
   UPLOAD_REPOSITORY,
 } from '../../domain/repositories/upload.repository.interface';
 
+type UploadExcelResult = { message: string; totalQuestionsImported: number };
+
 @Injectable()
 export class UploadExcelUseCase {
   constructor(
-    private readonly excelParserService: ExcelParserService,
+    @Inject(EXCEL_PARSER_SERVICE)
+    private readonly excelParserService: IExcelParserService,
     @Inject(QUESTION_REPOSITORY)
     private readonly questionRepository: IQuestionRepository,
     @Inject(QUESTION_BANK_REPOSITORY)
@@ -30,10 +36,17 @@ export class UploadExcelUseCase {
     fileBuffer: Buffer,
     fileName: string,
     uploaderId: string,
-  ): Promise<{ message: string; totalQuestionsImported: number }> {
+    fileHash?: string,
+  ): Promise<UploadExcelResult> {
     const bank = await this.questionBankRepository.findById(bankId);
     if (!bank) {
-      throw new NotFoundException(`Không tìm thấy ngân hàng câu hỏi với ID: ${bankId}`);
+      throw new NotFoundException(
+        `Không tìm thấy ngân hàng câu hỏi với ID: ${bankId}`,
+      );
+    }
+
+    if (fileHash) {
+      await this.questionBankRepository.update(bankId, { fileHash });
     }
 
     const parsedQuestions = await this.excelParserService.parse(fileBuffer);
@@ -48,8 +61,14 @@ export class UploadExcelUseCase {
 
     await this.questionRepository.createMany(createInputs);
 
-    const allQuestions = await this.questionRepository.findByBankId(bankId, false);
-    await this.questionBankRepository.updateTotalQuestions(bankId, allQuestions.length);
+    const allQuestions = await this.questionRepository.findByBankId(
+      bankId,
+      false,
+    );
+    await this.questionBankRepository.updateTotalQuestions(
+      bankId,
+      allQuestions.length,
+    );
 
     await this.uploadRepository.create({
       questionBankId: bankId,

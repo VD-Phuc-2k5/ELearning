@@ -1,0 +1,81 @@
+---
+
+description: React + Vite Coding Standards
+globs:
+
+* "src/**/*.jsx"
+* "src/**/*.tsx"
+* "src/components/**/*"
+* "src/pages/**/*"
+
+---
+
+# Component Structure
+
+* Chỉ sử dụng Functional Components và React Hooks
+* Mỗi component nằm trong một file riêng
+* Tên component dùng PascalCase
+* Props phải destructuring trong tham số hàm
+* React Component export default ở cuối file
+* Hook, utility và service ưu tiên named export
+
+# State Management
+
+* Ưu tiên useState cho state đơn giản
+* Dùng useReducer khi logic cập nhật state phức tạp hoặc có nhiều action liên quan
+* Không mutate state trực tiếp
+* Luôn sử dụng setter function hoặc dispatch
+
+# Side Effects
+
+* useEffect phải tuân thủ eslint-plugin-react-hooks
+* Chỉ dùng [] khi effect thực sự chỉ cần chạy một lần khi mount
+* Cleanup effect khi cần thiết
+* Custom hooks phải bắt đầu bằng tiền tố "use"
+
+# API Calls
+
+* Tất cả API call đặt trong src/services/
+* Dùng async/await
+* Không dùng .then() chain
+* Base URL lấy từ import.meta.env.VITE_API_BASE_URL
+* Luôn xử lý loading, success và error state
+* Luôn có try/catch
+* Hỗ trợ hủy request khi cần
+
+# TypeScript
+
+* Tránh dùng any
+* Ưu tiên interface cho props
+* Dùng type cho union/intersection
+* Bật strict mode
+* Khai báo kiểu trả về cho custom hooks
+
+# Styling
+
+* Sử dụng Tailwind CSS
+* Không dùng !important
+* Không viết inline style trừ khi giá trị động
+
+# Performance
+
+* Dùng useMemo cho phép tính tốn kém
+* Dùng useCallback khi cần giữ reference ổn định
+* Dùng React.memo cho component render nhiều lần
+* Tránh tạo object/function inline không cần thiết trong JSX
+
+# Imports
+
+* Thứ tự import:
+
+  1. External libraries
+  2. Internal modules
+  3. Styles
+
+* Cùng module dùng relative import
+
+* Cross-module dùng alias @/
+
+* Tránh import tương đối quá 2 cấp (../../../)
+
+* Không import React trong nếu không cần

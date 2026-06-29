@@ -13,6 +13,7 @@ export interface GetQuestionBankListInput {
   search?: string;
   tagId?: number;
   statusId?: string;
+  uploaderId?: string;
 }
 
 export interface UpdateQuestionBankInput {
@@ -20,15 +21,36 @@ export interface UpdateQuestionBankInput {
   description?: string;
   statusId?: string;
   tagIds?: number[];
+  fileHash?: string;
 }
 
 export interface IQuestionBankRepository {
   create(input: CreateQuestionBankInput): Promise<QuestionBankDomain>;
-  findAll(input: GetQuestionBankListInput): Promise<{ data: QuestionBankDomain[]; total: number }>;
+  findAll(
+    input: GetQuestionBankListInput,
+  ): Promise<{ data: QuestionBankDomain[]; total: number }>;
   findById(id: string): Promise<QuestionBankDomain | null>;
   updateTotalQuestions(id: string, total: number): Promise<void>;
-  update(id: string, input: UpdateQuestionBankInput): Promise<QuestionBankDomain>;
+  update(
+    id: string,
+    input: UpdateQuestionBankInput,
+  ): Promise<QuestionBankDomain>;
   delete(id: string): Promise<void>;
+  findByHash(
+    hash: string,
+    uploaderId?: string,
+  ): Promise<QuestionBankDomain | null>;
+  findDerivedBanks(
+    fileHash: string,
+    excludeUploaderId: string,
+  ): Promise<
+    Array<{
+      id: string;
+      title: string;
+      createdAt: Date;
+      uploaderUsername: string;
+    }>
+  >;
 }
 
 export const QUESTION_BANK_REPOSITORY = Symbol('IQuestionBankRepository');

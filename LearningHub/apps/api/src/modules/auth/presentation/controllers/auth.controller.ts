@@ -53,14 +53,21 @@ export class AuthController {
   @Public()
   @Post('login')
   async login(@Body() dto: LoginDto) {
-    const result = await this.loginUseCase.execute(dto);
+    const result = await this.loginUseCase.execute({
+      ...dto,
+      rejectAdminRole: true,
+    });
     if (result.type === 'left') {
-      if (
-        result.value instanceof AuthFailures &&
-        (result.value.code === 'USER_NOT_FOUND' ||
-          result.value.code === 'INVALID_PASSWORD')
-      ) {
-        throw new UnauthorizedException(result.value.message);
+      if (result.value instanceof AuthFailures) {
+        if (
+          result.value.code === 'USER_NOT_FOUND' ||
+          result.value.code === 'INVALID_PASSWORD'
+        ) {
+          throw new UnauthorizedException(result.value.message);
+        }
+        if (result.value.code === 'ADMIN_NOT_ALLOWED') {
+          throw new ForbiddenException(result.value.message);
+        }
       }
       throw new BadRequestException(result.value.message);
     }

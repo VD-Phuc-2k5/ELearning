@@ -1,0 +1,179 @@
+---
+description: LearningHub Client Clean Architecture — Nx pnpm Monorepo Structure Standards
+globs:
+  - "packages/**/*.ts"
+  - "apps/LearningHub/src/**/*.ts"
+  - "apps/LearningHub/src/**/*.tsx"
+  - "apps/AdminPage/src/**/*.ts"
+  - "apps/AdminPage/src/**/*.tsx"
+---
+
+# Client Clean Architecture Rules
+
+## 1. Layer Dependency Direction
+
+```
+apps/LearningHub   apps/AdminPage
+        ↓                ↓
+@learning-hub/domain  ←──  @learning-hub/data
+              ↓
+      @learning-hub/core
+```
+
+- `@learning-hub/core` has zero internal dependencies — it owns `Either`, `Failure`, `Usecase`, `NoParams`.
+- `@learning-hub/domain` may only import from `@learning-hub/core`.
+- `@learning-hub/data` may import from `@learning-hub/core` and `@learning-hub/domain`.
+- Next.js apps may import from all three packages.
+- Never import upward (e.g. `@learning-hub/domain` must never import from `@learning-hub/data`).
+
+## 2. Feature Folder Layout
+
+Every feature (`course`, `user`, `lesson`, …) must follow the same folder structure in both `domain` and `data`.
+
+### `packages/domain/src/lib/<feature>/`
+
+```
+<feature>/
+├── entities/
+│   ├── <Entity>.ts            # one interface per file
+│   └── entities.ts            # barrel: export * from "./<Entity>"
+├── repositories/
+│   ├── I<Feature>Repository.ts  # interface only, no implementation
+│   └── repositories.ts          # barrel
+├── usecases/
+│   ├── <action><Feature>Usecase.ts  # one UseCase class + its Params class
+│   └── usecases.ts                  # barrel
+└── <feature>.ts               # feature barrel: re-exports all three subdirs
+```
+
+### `packages/data/src/lib/<feature>/`
+
+```
+<feature>/
+├── datasources/
+│   ├── I<Feature>RemoteDataSource.ts     # interface
+│   ├── <Feature>RemoteDataSourceImpl.ts  # implementation class
+│   └── datasources.ts                    # barrel
+├── model/
+│   ├── <Feature>Model.ts  # class with static fromJson()
+│   └── model.ts           # barrel
+└── repositories/
+    ├── <Feature>RepositoryImpl.ts  # implements domain interface
+    └── repositories.ts             # barrel
+```
+
+## 3. Naming Conventions
+
+| Artifact | Pattern | Example |
+|----------|---------|---------|
+| Domain entity | `interface <Entity>` | `CourseDisplay` |
+| Domain repository interface | `interface I<Feature>Repository` | `ICourseRepository` |
+| UseCase class | `class <Action><Feature>Usecase` | `GetCoursesUsecase` |
+| UseCase params class | `class <Action><Feature>Params` | `GetCoursesParams` |
+| Data model | `class <Entity>Model` | `CourseDisplayModel` |
+| DataSource interface | `interface I<Feature>RemoteDataSource` | `ICourseRemoteDataSource` |
+| DataSource implementation | `class <Feature>RemoteDataSourceImpl` | `CourseRemoteDataSourceImpl` |
+| Repository implementation | `class <Feature>RepositoryImpl` | `CourseRepositoryImpl` |
+| Subfolder barrel | `<subfolder>.ts` | `entities.ts`, `usecases.ts` |
+| Feature barrel | `<feature>.ts` | `course.ts` |
+
+## 4. Error Handling Contract
+
+Each layer has a fixed role — never mix them.
+
+| Layer | Contract |
+|-------|----------|
+| **DataSource** | Throws `AppException` subclasses only. Never returns `Either`. Throw `NetworkException` on `TypeError`, throw on bad API response. |
+| **Repository** | Returns `Either<Failure, T>`. Wraps DataSource in try/catch: success → `right(data)`, catch → `left(mapExceptionToFailure(e))`. |
+| **UseCase** | Returns `Either<Failure, T>`. Delegates directly to repository. No try/catch needed. |
+| **Next.js API Route** | Composition root. Instantiates DataSource → Repository → UseCase. Unwraps Either: `result.type === 'right'` → `{ status: 200, data }`, else `{ error: result.value.message }`. |
+| **React Hook** | Calls the internal API route (`/api/<feature>`). Reads `data.status === 200` for success, sets `error` string on failure. Never instantiates use-cases directly. |
+
+## 5. Data Model Rules
+
+`<Feature>Model` classes in `@learning-hub/data` must:
+
+- Declare all properties as `readonly`.
+- Provide a `static fromJson(json: Record<string, unknown>): <Entity>` factory that casts each field explicitly (`Number(...)`, `String(...)`).
+- Structurally satisfy the corresponding domain entity interface (no `implements` keyword required).
+
+```ts
+// correct
+class CourseDisplayModel {
+  readonly id: number;
+  readonly title: string;
+  readonly description: string;
+
+  constructor(id: number, title: string, description: string) {
+    this.id = id;
+    this.title = title;
+    this.description = description;
+  }
+
+  static fromJson(json: Record<string, unknown>): CourseDisplay {
+    return new CourseDisplayModel(
+      Number(json.id),
+      String(json.title),
+      String(json.description),
+    );
+  }
+}
+```
+
+## 6. UseCase Rules
+
+- One class per file, paired with its `Params` class in the same file.
+- For parameter-less use cases, use `NoParams` from `@learning-hub/core` (`type NoParams = Record<string, never>`).
+- All use cases are `async` and return `Promise<Either<Failure, T>>`.
+- Constructor takes a repository **interface**, never a concrete implementation.
+
+```ts
+// correct
+class GetCoursesUsecase implements Usecase<CourseDisplay[], GetCoursesParams> {
+  constructor(private courseRepository: ICourseRepository) {}
+
+  async execute(params: GetCoursesParams): Promise<Either<Failure, CourseDisplay[]>> {
+    return await this.courseRepository.getCourses({ offset: params.offset, limit: params.limit });
+  }
+}
+```
+
+## 7. Barrel Export Rules
+
+Barrels cascade upward — every level re-exports the level below:
+
+```
+<Entity>.ts  →  entities.ts  →  <feature>.ts  →  src/index.ts
+```
+
+`src/index.ts` at the package root is the **only** public surface. Always import from the package alias, never from a deep path:
+
+```ts
+// correct
+import { CourseDisplay } from '@learning-hub/domain';
+import { Either, Failure, left, right } from '@learning-hub/core';
+
+// wrong
+import { CourseDisplay } from '@learning-hub/domain/src/lib/course/entities/courseDisplay';
+```
+
+## 8. Composition Root
+
+`apps/<App>/src/app/api/<feature>/route.ts` is the only place where concrete classes are instantiated and wired together. No IoC container — wire dependencies inline:
+
+```ts
+// correct
+export async function GET(request: Request) {
+  const dataSource = new CourseRemoteDataSourceImpl();
+  const repository = new CourseRepositoryImpl(dataSource);
+  const usecase = new GetCoursesUsecase(repository);
+
+  const result = await usecase.execute({ offset, limit });
+
+  if (result.type === 'right') {
+    return Response.json({ status: 200, data: result.value });
+  } else {
+    return Response.json({ error: result.value.message });
+  }
+}
+```

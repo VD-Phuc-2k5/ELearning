@@ -1,0 +1,25 @@
+---
+description: TypeScript Strict Typing Standards
+globs:
+  - "src/**/*.{ts,tsx}"
+alwaysApply: true
+---
+
+# TypeScript Strict Typing Rules
+
+## Core Principle
+
+Code MUST be fully type-safe. The use of `any` is prohibited.
+
+## Forbidden
+
+### Do NOT use `any`
+
+❌ Bad
+
+```ts
+function process(data: any): any {
+  return data;
+}
+
+const result: any = await api.get();
