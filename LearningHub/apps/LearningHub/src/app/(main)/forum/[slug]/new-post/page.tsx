@@ -1,11 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { use, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { use, useEffect } from 'react';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button, Input, TiptapEditor } from '../../../../../components/ui';
-import { createPost, getForumDetail } from '../../../../actions/forum.actions';
+import type { TiptapEditorHandle } from '../../../../../components/ui/tiptap-editor';
+import {
+  createPost,
+  getForumDetail,
+  listTags,
+  uploadForumImage,
+} from '../../../../actions/forum.actions';
 
 interface NewPostPageProps {
   params: Promise<{ slug: string }>;
@@ -14,26 +19,64 @@ interface NewPostPageProps {
 export default function NewPostPage({ params }: NewPostPageProps) {
   const { slug } = use(params);
   const router = useRouter();
+  const qc = useQueryClient();
+  const editorRef = useRef<TiptapEditorHandle>(null);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState<Record<string, unknown> | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [selectedTagIds, setSelectedTagIds] = useState<Set<number>>(new Set());
 
   const { data } = useQuery({
     queryKey: ['forum', slug],
     queryFn: () => getForumDetail(slug),
   });
+  const { data: tags = [] } = useQuery({
+    queryKey: ['forum-tags'],
+    queryFn: () => listTags(),
+    enabled: !!data?.forum.id,
+  });
   const forumId = data?.forum.id ?? '';
 
+  const toggleTag = (tagId: number) => {
+    setSelectedTagIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(tagId)) next.delete(tagId);
+      else next.add(tagId);
+      return next;
+    });
+  };
+
   const createMutation = useMutation({
-    mutationFn: () =>
-      createPost(forumId, {
+    mutationFn: async () => {
+      const pendingImages = editorRef.current?.getPendingImages() ?? [];
+
+      if (pendingImages.length > 0) {
+        for (const { blobUrl, file } of pendingImages) {
+          const formData = new FormData();
+          formData.append('file', file);
+          const result = await uploadForumImage(formData);
+          if (!result?.url) {
+            throw new Error(
+              'Failed to upload one or more images. Please try again.',
+            );
+          }
+          editorRef.current?.replaceImageSrc(blobUrl, result.url);
+        }
+      }
+
+      const finalContent = editorRef.current?.getContent();
+      return createPost(forumId, {
         title,
-        content: content ?? undefined,
+        content: finalContent,
         postType: 'text',
-      }),
-    onSuccess: (post) => {
-      if (post?.id) router.push(`/forum/${slug}/${post.id}`);
-      else setError('Failed to create post');
+        tagIds: [...selectedTagIds],
+      });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['forum-posts'] });
+      qc.invalidateQueries({ queryKey: ['forum', slug] });
+      qc.invalidateQueries({ queryKey: ['forums'] });
+      router.push(`/forum/${slug}`);
     },
     onError: (e: Error) => setError(e.message),
   });
@@ -79,11 +122,43 @@ export default function NewPostPage({ params }: NewPostPageProps) {
             Content
           </span>
           <TiptapEditor
+            ref={editorRef}
             content={content ?? undefined}
             onChange={(json) => setContent(json)}
             placeholder="Write your post..."
           />
         </div>
+
+        {tags.length > 0 && (
+          <div className="space-y-1.5">
+            <span className="block text-sm font-medium text-slate-700">
+              Tags
+            </span>
+            <div className="flex flex-wrap gap-2">
+              {tags.map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => toggleTag(t.id)}
+                  className={`rounded-full px-3 py-1 text-xs font-medium border transition ${
+                    selectedTagIds.has(t.id)
+                      ? 'text-white border-transparent'
+                      : 'text-slate-600 border-slate-200 hover:border-slate-300'
+                  }`}
+                  style={
+                    selectedTagIds.has(t.id)
+                      ? { backgroundColor: t.color ?? '#3b82f6' }
+                      : {
+                          backgroundColor: t.color ? `${t.color}15` : '#f8fafc',
+                        }
+                  }
+                >
+                  {t.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="flex justify-end gap-3 pt-4">
           <Button

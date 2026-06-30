@@ -14,8 +14,16 @@ import {
   FORUM_MEMBER_REPOSITORY,
   IForumMemberRepository,
 } from '../../domain/repositories/forum-member.repository.interface';
+import {
+  ICloudinaryService,
+  CLOUDINARY_SERVICE,
+} from '../interfaces/i-cloudinary.service';
 import type { ForumPostDomain } from '../../domain/entities/forum-post.domain';
-import { validateTiptapDoc } from '../helpers/extract-mentions';
+import {
+  validateTiptapDoc,
+  extractCloudinaryUrls,
+  extractPublicIdFromUrl,
+} from '../helpers/extract-mentions';
 
 @Injectable()
 export class UpdatePostUseCase {
@@ -24,6 +32,8 @@ export class UpdatePostUseCase {
     private readonly postRepo: IForumPostRepository,
     @Inject(FORUM_MEMBER_REPOSITORY)
     private readonly memberRepo: IForumMemberRepository,
+    @Inject(CLOUDINARY_SERVICE)
+    private readonly cloudinary: ICloudinaryService,
   ) {}
 
   async execute(
@@ -54,6 +64,19 @@ export class UpdatePostUseCase {
         );
       }
     }
+
+    if (input.content && post.content) {
+      const oldUrls = extractCloudinaryUrls(post.content);
+      const newUrls = extractCloudinaryUrls(input.content);
+      const removedUrls = oldUrls.filter((u) => !newUrls.includes(u));
+      for (const url of removedUrls) {
+        const publicId = extractPublicIdFromUrl(url);
+        if (publicId) {
+          this.cloudinary.deleteFile(publicId).catch(() => {});
+        }
+      }
+    }
+
     return this.postRepo.update(postId, input);
   }
 }

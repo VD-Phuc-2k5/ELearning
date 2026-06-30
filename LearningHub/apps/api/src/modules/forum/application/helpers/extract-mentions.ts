@@ -55,3 +55,21 @@ export function validateTiptapDoc(
   }
   return { ok: true };
 }
+
+const CLOUDINARY_URL_RE =
+  /https:\/\/res\.cloudinary\.com\/[^/]+\/image\/upload\/(?:v\d+\/)?([^/]+\/[^/]+)\.\w+/g;
+
+export function extractCloudinaryUrls(doc: unknown): string[] {
+  const json = JSON.stringify(doc);
+  const urls = new Set<string>();
+  let m: RegExpExecArray | null;
+  while ((m = CLOUDINARY_URL_RE.exec(json)) !== null) {
+    urls.add(m[0]);
+  }
+  return [...urls];
+}
+
+export function extractPublicIdFromUrl(url: string): string | null {
+  const match = url.match(/\/image\/upload\/(?:v\d+\/)?(.+?)\.\w+$/);
+  return match ? match[1] : null;
+}

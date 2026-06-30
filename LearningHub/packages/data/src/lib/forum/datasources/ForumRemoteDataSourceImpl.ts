@@ -1,18 +1,28 @@
 import axios from 'axios';
+import FormDataNode from 'form-data';
 import {
   CommentItem,
   CreateCommentParams,
   CreateForumParams,
   CreatePostParams,
+  CreateTagParams,
   ForumDetailResponse,
   ForumListItem,
+  ForumTag,
   ListCommentsParams,
   ListForumPostsParams,
   ListForumsParams,
   PaginatedResponse,
+  PostDetail,
   PostListItem,
+  SetForumRulesParams,
   TogglePostBookmarkParams,
   TogglePostReactionParams,
+  UpdateCommentParams,
+  UpdateForumParams,
+  UpdatePostParams,
+  UpdateTagParams,
+  UploadImageResult,
 } from '@learning-hub/domain';
 import { handleAxiosError } from '@learning-hub/core';
 import { IForumRemoteDataSource } from './IForumRemoteDataSource';
@@ -21,7 +31,11 @@ export class ForumRemoteDataSourceImpl implements IForumRemoteDataSource {
   private token?: string;
 
   private api = axios.create({
-    baseURL: process.env.NEST_API_URL || 'http://localhost:8080',
+    baseURL:
+      process.env.NEST_API_URL ||
+      process.env.NEXT_PUBLIC_API_URL ||
+      'http://127.0.0.1:8080/api',
+    timeout: 15000,
   });
 
   constructor() {
@@ -46,7 +60,7 @@ export class ForumRemoteDataSourceImpl implements IForumRemoteDataSource {
       if (params.limit) query.set('limit', String(params.limit));
       if (params.search) query.set('search', params.search);
       if (params.categoryId) query.set('categoryId', String(params.categoryId));
-      const res = await this.api.get(`/api/forums?${query.toString()}`);
+      const res = await this.api.get(`/forums?${query.toString()}`);
       return res.data;
     } catch (e) {
       return handleAxiosError(e);
@@ -55,17 +69,48 @@ export class ForumRemoteDataSourceImpl implements IForumRemoteDataSource {
 
   async getForumDetail(slug: string): Promise<ForumDetailResponse> {
     try {
-      const res = await this.api.get(`/api/forums/${slug}`);
+      const res = await this.api.get(`/forums/${slug}`);
       return res.data;
-    } catch (e) {
+    } catch (e: any) {
+      console.error(
+        '[getForumDetail] ERROR:',
+        e?.code,
+        e?.message,
+        e?.config?.url,
+      );
       return handleAxiosError(e);
     }
   }
 
   async createForum(data: CreateForumParams): Promise<ForumListItem> {
     try {
-      const res = await this.api.post('/api/forums', data);
+      const res = await this.api.post('/forums', data);
       return res.data;
+    } catch (e) {
+      return handleAxiosError(e);
+    }
+  }
+
+  async updateForum(params: UpdateForumParams): Promise<ForumListItem> {
+    try {
+      const res = await this.api.patch(`/forums/${params.id}`, {
+        name: params.name,
+        description: params.description,
+        visibility: params.visibility,
+        bannerUrl: params.bannerUrl,
+        iconUrl: params.iconUrl,
+      });
+      return res.data;
+    } catch (e) {
+      return handleAxiosError(e);
+    }
+  }
+
+  async setForumRules(params: SetForumRulesParams): Promise<void> {
+    try {
+      await this.api.put(`/forums/${params.id}/rules`, {
+        rules: params.rules,
+      });
     } catch (e) {
       return handleAxiosError(e);
     }
@@ -73,7 +118,7 @@ export class ForumRemoteDataSourceImpl implements IForumRemoteDataSource {
 
   async joinForum(forumId: string, message: string | undefined): Promise<void> {
     try {
-      await this.api.post(`/api/forums/${forumId}/join`, { message });
+      await this.api.post(`/forums/${forumId}/join`, { message });
     } catch (e) {
       return handleAxiosError(e);
     }
@@ -81,7 +126,7 @@ export class ForumRemoteDataSourceImpl implements IForumRemoteDataSource {
 
   async leaveForum(forumId: string): Promise<void> {
     try {
-      await this.api.delete(`/api/forums/${forumId}/leave`);
+      await this.api.delete(`/forums/${forumId}/leave`);
     } catch (e) {
       return handleAxiosError(e);
     }
@@ -95,8 +140,9 @@ export class ForumRemoteDataSourceImpl implements IForumRemoteDataSource {
       if (params.page) query.set('page', String(params.page));
       if (params.limit) query.set('limit', String(params.limit));
       if (params.tagId) query.set('tagId', String(params.tagId));
+      if (params.search) query.set('search', params.search);
       const res = await this.api.get(
-        `/api/forums/${params.forumId}/posts?${query.toString()}`,
+        `/forums/${params.forumId}/posts?${query.toString()}`,
       );
       return res.data;
     } catch (e) {
@@ -106,10 +152,11 @@ export class ForumRemoteDataSourceImpl implements IForumRemoteDataSource {
 
   async createPost(data: CreatePostParams): Promise<PostListItem> {
     try {
-      const res = await this.api.post(
-        `/api/forums/${data.forumId}/posts`,
-        data,
+      console.log(
+        '[createPost DS] sending content:',
+        JSON.stringify(data.content).substring(0, 500),
       );
+      const res = await this.api.post(`/forums/${data.forumId}/posts`, data);
       return res.data;
     } catch (e) {
       return handleAxiosError(e);
@@ -124,7 +171,7 @@ export class ForumRemoteDataSourceImpl implements IForumRemoteDataSource {
       if (params.page) query.set('page', String(params.page));
       if (params.limit) query.set('limit', String(params.limit));
       const res = await this.api.get(
-        `/api/forums/${params.forumId}/posts/${params.postId}/comments?${query.toString()}`,
+        `/forums/${params.forumId}/posts/${params.postId}/comments?${query.toString()}`,
       );
       return res.data;
     } catch (e) {
@@ -135,7 +182,7 @@ export class ForumRemoteDataSourceImpl implements IForumRemoteDataSource {
   async createComment(data: CreateCommentParams): Promise<CommentItem> {
     try {
       const res = await this.api.post(
-        `/api/forums/${data.forumId}/posts/${data.postId}/comments`,
+        `/forums/${data.forumId}/posts/${data.postId}/comments`,
         data,
       );
       return res.data;
@@ -148,7 +195,7 @@ export class ForumRemoteDataSourceImpl implements IForumRemoteDataSource {
     try {
       await this.api({
         method: params.add ? 'POST' : 'DELETE',
-        url: `/api/forums/${params.forumId}/posts/${params.postId}/reactions`,
+        url: `/forums/${params.forumId}/posts/${params.postId}/reactions`,
         data: { emoji: params.emoji },
       });
     } catch (e) {
@@ -160,8 +207,155 @@ export class ForumRemoteDataSourceImpl implements IForumRemoteDataSource {
     try {
       await this.api({
         method: params.add ? 'POST' : 'DELETE',
-        url: `/api/posts/${params.postId}/bookmarks`,
+        url: `/posts/${params.postId}/bookmarks`,
       });
+    } catch (e) {
+      return handleAxiosError(e);
+    }
+  }
+
+  async getPostDetail(forumId: string, postId: string): Promise<PostDetail> {
+    try {
+      const res = await this.api.get(`/forums/${forumId}/posts/${postId}`);
+      const { post, poll: pollData } = res.data;
+      return {
+        id: post.id,
+        title: post.title,
+        content: post.content,
+        authorId: post.authorId,
+        postType: post.postType,
+        status: post.status,
+        isPinned: post.isPinned,
+        isLocked: post.isLocked,
+        commentCount: post.commentCount,
+        reactionCount: post.reactionCount,
+        viewCount: post.viewCount,
+        createdAt: post.createdAt,
+        forumId: post.forumId,
+        tags: post.tags ?? [],
+        poll: pollData
+          ? {
+              id: pollData.poll.id,
+              question: pollData.poll.question,
+              isMultipleChoice: pollData.poll.isMultipleChoice,
+              endsAt: pollData.poll.endsAt,
+              options: (pollData.options ?? []).map((o: any) => ({
+                id: o.id,
+                content: o.content,
+                voteCount: o.voteCount,
+                votedByMe: o.votedByMe,
+              })),
+            }
+          : null,
+        author: post.authorId
+          ? { id: post.authorId, fullName: post.authorName ?? 'Unknown' }
+          : null,
+      };
+    } catch (e) {
+      return handleAxiosError(e);
+    }
+  }
+
+  async updatePost(params: UpdatePostParams): Promise<PostListItem> {
+    try {
+      const res = await this.api.patch(
+        `/forums/${params.forumId}/posts/${params.postId}`,
+        { title: params.title, content: params.content, tagIds: params.tagIds },
+      );
+      return res.data;
+    } catch (e) {
+      return handleAxiosError(e);
+    }
+  }
+
+  async deletePost(forumId: string, postId: string): Promise<void> {
+    try {
+      await this.api.delete(`/forums/${forumId}/posts/${postId}`);
+    } catch (e) {
+      return handleAxiosError(e);
+    }
+  }
+
+  async listTags(): Promise<ForumTag[]> {
+    try {
+      const res = await this.api.get('/forum-tags');
+      return res.data;
+    } catch (e) {
+      return handleAxiosError(e);
+    }
+  }
+
+  async createTag(data: CreateTagParams): Promise<ForumTag> {
+    try {
+      const res = await this.api.post('/forum-tags', data);
+      return res.data;
+    } catch (e) {
+      return handleAxiosError(e);
+    }
+  }
+
+  async updateTag(params: UpdateTagParams): Promise<ForumTag> {
+    try {
+      const res = await this.api.patch(`/forum-tags/${params.id}`, {
+        name: params.name,
+        color: params.color,
+      });
+      return res.data;
+    } catch (e) {
+      return handleAxiosError(e);
+    }
+  }
+
+  async deleteTag(id: number): Promise<void> {
+    try {
+      await this.api.delete(`/forum-tags/${id}`);
+    } catch (e) {
+      return handleAxiosError(e);
+    }
+  }
+
+  async updateComment(params: UpdateCommentParams): Promise<CommentItem> {
+    try {
+      const res = await this.api.patch(
+        `/forums/${params.forumId}/posts/${params.postId}/comments/${params.commentId}`,
+        { content: params.content },
+      );
+      return res.data;
+    } catch (e) {
+      return handleAxiosError(e);
+    }
+  }
+
+  async deleteComment(
+    forumId: string,
+    postId: string,
+    commentId: string,
+  ): Promise<void> {
+    try {
+      await this.api.delete(
+        `/forums/${forumId}/posts/${postId}/comments/${commentId}`,
+      );
+    } catch (e) {
+      return handleAxiosError(e);
+    }
+  }
+
+  async uploadImage(formData: FormData): Promise<UploadImageResult> {
+    try {
+      const file = formData.get('file') as File | null;
+      if (!file) throw new Error('No file in FormData');
+
+      const buffer = Buffer.from(await file.arrayBuffer());
+      const nodeFormData = new FormDataNode();
+      nodeFormData.append('file', buffer, {
+        filename: file.name,
+        contentType: file.type,
+      });
+
+      const res = await this.api.post('/forums/images', nodeFormData, {
+        headers: nodeFormData.getHeaders(),
+      });
+      return res.data;
     } catch (e) {
       return handleAxiosError(e);
     }

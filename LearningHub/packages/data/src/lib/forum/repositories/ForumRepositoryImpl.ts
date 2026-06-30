@@ -9,6 +9,7 @@ import {
   NotFoundFailure,
   NetworkFailure,
   AuthenticationException,
+  BadRequestException,
   PermissionException,
   NotFoundException,
   NetworkException,
@@ -18,27 +19,37 @@ import {
   CreateCommentParams,
   CreateForumParams,
   CreatePostParams,
+  CreateTagParams,
   ForumDetailResponse,
   ForumListItem,
+  ForumTag,
   IForumRepository,
   JoinForumParams,
   ListCommentsParams,
   ListForumPostsParams,
   ListForumsParams,
   PaginatedResponse,
+  PostDetail,
   PostListItem,
+  SetForumRulesParams,
   TogglePostBookmarkParams,
   TogglePostReactionParams,
+  UpdateCommentParams,
+  UpdateForumParams,
+  UpdatePostParams,
+  UpdateTagParams,
+  UploadImageResult,
 } from '@learning-hub/domain';
 import { IForumRemoteDataSource } from '../datasources/IForumRemoteDataSource';
 
 function toFailure(e: unknown): Failure {
   if (e instanceof AuthenticationException)
     return new AuthenticationFailure(e.message);
-  if (e instanceof PermissionException) return new PermissionFailure();
-  if (e instanceof NotFoundException) return new NotFoundFailure();
+  if (e instanceof PermissionException) return new PermissionFailure(e.message);
+  if (e instanceof NotFoundException) return new NotFoundFailure(e.message);
+  if (e instanceof BadRequestException) return new UnknownFailure(e.message);
   if (e instanceof NetworkException) return new NetworkFailure();
-  return new UnknownFailure();
+  return new UnknownFailure(e instanceof Error ? e.message : undefined);
 }
 
 export class ForumRepositoryImpl implements IForumRepository {
@@ -74,6 +85,27 @@ export class ForumRepositoryImpl implements IForumRepository {
   ): Promise<Either<Failure, ForumListItem>> {
     try {
       return right(await this.dataSource.createForum(data));
+    } catch (e) {
+      return left(toFailure(e));
+    }
+  }
+
+  async updateForum(
+    params: UpdateForumParams,
+  ): Promise<Either<Failure, ForumListItem>> {
+    try {
+      return right(await this.dataSource.updateForum(params));
+    } catch (e) {
+      return left(toFailure(e));
+    }
+  }
+
+  async setForumRules(
+    params: SetForumRulesParams,
+  ): Promise<Either<Failure, void>> {
+    try {
+      await this.dataSource.setForumRules(params);
+      return right(undefined);
     } catch (e) {
       return left(toFailure(e));
     }
@@ -154,6 +186,105 @@ export class ForumRepositoryImpl implements IForumRepository {
     try {
       await this.dataSource.togglePostBookmark(params);
       return right(undefined);
+    } catch (e) {
+      return left(toFailure(e));
+    }
+  }
+
+  async getPostDetail(
+    forumId: string,
+    postId: string,
+  ): Promise<Either<Failure, PostDetail>> {
+    try {
+      return right(await this.dataSource.getPostDetail(forumId, postId));
+    } catch (e) {
+      return left(toFailure(e));
+    }
+  }
+
+  async updatePost(
+    params: UpdatePostParams,
+  ): Promise<Either<Failure, PostListItem>> {
+    try {
+      return right(await this.dataSource.updatePost(params));
+    } catch (e) {
+      return left(toFailure(e));
+    }
+  }
+
+  async deletePost(
+    forumId: string,
+    postId: string,
+  ): Promise<Either<Failure, void>> {
+    try {
+      await this.dataSource.deletePost(forumId, postId);
+      return right(undefined);
+    } catch (e) {
+      return left(toFailure(e));
+    }
+  }
+
+  async listTags(): Promise<Either<Failure, ForumTag[]>> {
+    try {
+      return right(await this.dataSource.listTags());
+    } catch (e) {
+      return left(toFailure(e));
+    }
+  }
+
+  async createTag(data: CreateTagParams): Promise<Either<Failure, ForumTag>> {
+    try {
+      return right(await this.dataSource.createTag(data));
+    } catch (e) {
+      return left(toFailure(e));
+    }
+  }
+
+  async updateTag(params: UpdateTagParams): Promise<Either<Failure, ForumTag>> {
+    try {
+      return right(await this.dataSource.updateTag(params));
+    } catch (e) {
+      return left(toFailure(e));
+    }
+  }
+
+  async deleteTag(id: number): Promise<Either<Failure, void>> {
+    try {
+      await this.dataSource.deleteTag(id);
+      return right(undefined);
+    } catch (e) {
+      return left(toFailure(e));
+    }
+  }
+
+  async updateComment(
+    params: UpdateCommentParams,
+  ): Promise<Either<Failure, CommentItem>> {
+    try {
+      return right(await this.dataSource.updateComment(params));
+    } catch (e) {
+      return left(toFailure(e));
+    }
+  }
+
+  async deleteComment(
+    forumId: string,
+    postId: string,
+    commentId: string,
+  ): Promise<Either<Failure, void>> {
+    try {
+      await this.dataSource.deleteComment(forumId, postId, commentId);
+      return right(undefined);
+    } catch (e) {
+      return left(toFailure(e));
+    }
+  }
+
+  async uploadImage(
+    formData: FormData,
+  ): Promise<Either<Failure, UploadImageResult>> {
+    try {
+      return right(await this.dataSource.uploadImage(formData));
     } catch (e) {
       return left(toFailure(e));
     }

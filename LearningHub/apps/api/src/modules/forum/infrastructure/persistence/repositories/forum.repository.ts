@@ -55,13 +55,25 @@ export class ForumRepository implements IForumRepository {
   }
 
   async findAll(input: GetForumListInput): Promise<ForumListPage> {
-    const { page = 1, limit = 10, search, categoryId, visibility } = input;
+    const {
+      page = 1,
+      limit = 10,
+      search,
+      categoryId,
+      visibility,
+      userId,
+    } = input;
     const qb = this.repo.createQueryBuilder('f');
 
     if (visibility === 'visible') {
       qb.andWhere('f.visibility = :v1', { v1: 'public' });
     } else if (visibility) {
       qb.andWhere('f.visibility = :v', { v: visibility });
+    } else if (userId) {
+      qb.andWhere('(f.visibility = :v1 OR f.ownerId = :uid)', {
+        v1: 'public',
+        uid: userId,
+      });
     } else {
       qb.andWhere('f.visibility = :v1', { v1: 'public' });
     }
@@ -118,6 +130,16 @@ export class ForumRepository implements IForumRepository {
 
   async incrementPostCount(id: string, delta: number): Promise<void> {
     await this.repo.increment({ id }, 'postCount', delta);
+  }
+
+  async recalculatePostCount(id: string): Promise<number> {
+    const result = await this.repo.manager.query(
+      `SELECT COUNT(*)::int AS count FROM forum_posts WHERE forum_id = $1 AND status = 'published' AND deleted_at IS NULL`,
+      [id],
+    );
+    const count = result[0]?.count ?? 0;
+    await this.repo.update(id, { postCount: count });
+    return count;
   }
 }
 

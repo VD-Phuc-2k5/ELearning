@@ -20,6 +20,10 @@ import {
   FORUM_MODERATION_LOG_REPOSITORY,
   IForumModerationLogRepository,
 } from '../../domain/repositories/forum-report.repository.interface';
+import {
+  FORUM_REPOSITORY,
+  IForumRepository,
+} from '../../domain/repositories/forum.repository.interface';
 import type { ForumModerationLogDomain } from '../../domain/entities/forum-report.domain';
 
 @Injectable()
@@ -31,6 +35,8 @@ export class HidePostUseCase {
     private readonly memberRepo: IForumMemberRepository,
     @Inject(FORUM_MODERATION_LOG_REPOSITORY)
     private readonly modLogRepo: IForumModerationLogRepository,
+    @Inject(FORUM_REPOSITORY)
+    private readonly forumRepo: IForumRepository,
   ) {}
 
   async execute(
@@ -51,6 +57,9 @@ export class HidePostUseCase {
       throw new ForbiddenException('Only moderators can hide posts');
     }
     await this.postRepo.updateStatus(postId, 'hidden');
+    if (post.status === 'published') {
+      await this.forumRepo.incrementPostCount(forumId, -1);
+    }
     return this.modLogRepo.create({
       moderatorId,
       action: 'hide_post',
@@ -72,6 +81,8 @@ export class RestorePostUseCase {
     private readonly memberRepo: IForumMemberRepository,
     @Inject(FORUM_MODERATION_LOG_REPOSITORY)
     private readonly modLogRepo: IForumModerationLogRepository,
+    @Inject(FORUM_REPOSITORY)
+    private readonly forumRepo: IForumRepository,
   ) {}
 
   async execute(
@@ -90,6 +101,9 @@ export class RestorePostUseCase {
       throw new ForbiddenException('Only moderators can restore posts');
     }
     await this.postRepo.updateStatus(postId, 'published');
+    if (post.status === 'hidden') {
+      await this.forumRepo.incrementPostCount(forumId, 1);
+    }
     return this.modLogRepo.create({
       moderatorId,
       action: 'restore_post',

@@ -29,7 +29,7 @@ export class ForumRuleRepository implements IForumRuleRepository {
   ): Promise<ForumRuleDomain[]> {
     return this.dataSource.transaction(async (manager) => {
       await manager.delete(ForumRuleEntity, { forumId });
-      if (rules.length === 0) return [];
+      if (!rules || rules.length === 0) return [];
       const entities = rules.map((r, i) =>
         manager.create(ForumRuleEntity, {
           forumId,

@@ -1,4 +1,10 @@
-import { Controller, Post, UseGuards, UseInterceptors } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  UploadedFile,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
 import {
@@ -13,13 +19,13 @@ import { UploadForumImageUseCase } from '../../application/use-cases/upload-foru
 @ApiTags('Forum Uploads')
 @ApiBearerAuth()
 @UseGuards(AuthGuard('jwt'))
-@Controller('uploads')
+@Controller('forums')
 export class ForumUploadController {
   constructor(
     private readonly uploadForumImageUseCase: UploadForumImageUseCase,
   ) {}
 
-  @Post('forum-image')
+  @Post('images')
   @ApiOperation({
     summary: 'Upload ảnh diễn đàn lên Cloudinary (Tiptap embed)',
   })
@@ -33,7 +39,7 @@ export class ForumUploadController {
   @UseInterceptors(
     FileInterceptor('file', { limits: { fileSize: 10 * 1024 * 1024 } }),
   )
-  uploadImage(file: Express.Multer.File) {
+  uploadImage(@UploadedFile() file: Express.Multer.File) {
     return this.uploadForumImageUseCase.execute(file);
   }
 }

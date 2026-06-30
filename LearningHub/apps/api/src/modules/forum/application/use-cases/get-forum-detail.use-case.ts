@@ -45,6 +45,9 @@ export class GetForumDetailUseCase {
       throw new NotFoundException('Forum not found');
     }
 
+    const actualPostCount = await this.forumRepo.recalculatePostCount(forum.id);
+    forum.postCount = actualPostCount;
+
     const rules = await this.ruleRepo.findByForum(forum.id);
 
     return {

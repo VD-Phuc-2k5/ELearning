@@ -42,6 +42,7 @@ import { ForumReportRepository } from './infrastructure/persistence/repositories
 import { ForumModerationLogRepository } from './infrastructure/persistence/repositories/forum-moderation-log.repository';
 import { ForumNotificationRepository } from './infrastructure/persistence/repositories/forum-notification.repository';
 import { ForumMentionRepository } from './infrastructure/persistence/repositories/forum-mention.repository';
+import { ForumTagRepository } from './infrastructure/persistence/repositories/forum-tag.repository';
 import { CloudinaryService } from './infrastructure/services/cloudinary.service';
 import { ForumGateway } from './infrastructure/gateways/forum.gateway';
 import { CLOUDINARY_SERVICE } from './application/interfaces/i-cloudinary.service';
@@ -76,6 +77,7 @@ import {
   FORUM_NOTIFICATION_REPOSITORY,
   FORUM_MENTION_REPOSITORY,
 } from './domain/repositories/forum-notification.repository.interface';
+import { FORUM_TAG_REPOSITORY } from './domain/repositories/forum-tag.repository.interface';
 
 import { CreateForumUseCase } from './application/use-cases/create-forum.use-case';
 import { GetForumListUseCase } from './application/use-cases/get-forum-list.use-case';
@@ -116,6 +118,10 @@ import { UploadAttachmentUseCase } from './application/use-cases/upload-attachme
 import { UploadForumImageUseCase } from './application/use-cases/upload-forum-image.use-case';
 import { ToggleReactionUseCase } from './application/use-cases/toggle-reaction.use-case';
 import { SearchForumUseCase } from './application/use-cases/search-forum.use-case';
+import { ListTagsUseCase } from './application/use-cases/list-tags.use-case';
+import { CreateTagUseCase } from './application/use-cases/create-tag.use-case';
+import { UpdateTagUseCase } from './application/use-cases/update-tag.use-case';
+import { DeleteTagUseCase } from './application/use-cases/delete-tag.use-case';
 import { ToggleBookmarkUseCase } from './application/use-cases/toggle-bookmark.use-case';
 import {
   CountUnreadNotificationsUseCase,
@@ -149,6 +155,7 @@ import { ForumInteractionController } from './presentation/controllers/forum-int
 import { ForumModerationController } from './presentation/controllers/forum-moderation.controller';
 import { ForumSearchController } from './presentation/controllers/forum-search.controller';
 import { ForumNotificationController } from './presentation/controllers/forum-notification.controller';
+import { ForumTagController } from './presentation/controllers/forum-tag.controller';
 
 const entities = [
   ForumEntity,
@@ -203,6 +210,7 @@ const repositoryProviders = [
     useClass: ForumNotificationRepository,
   },
   { provide: FORUM_MENTION_REPOSITORY, useClass: ForumMentionRepository },
+  { provide: FORUM_TAG_REPOSITORY, useClass: ForumTagRepository },
   { provide: CLOUDINARY_SERVICE, useClass: CloudinaryService },
   { provide: FORUM_GATEWAY, useClass: ForumGateway },
 ];
@@ -258,6 +266,10 @@ const useCases = [
   DismissReportUseCase,
   GetModerationLogsUseCase,
   SearchForumUseCase,
+  ListTagsUseCase,
+  CreateTagUseCase,
+  UpdateTagUseCase,
+  DeleteTagUseCase,
   GetMyNotificationsUseCase,
   MarkNotificationReadUseCase,
   MarkAllNotificationsReadUseCase,
@@ -294,6 +306,7 @@ const useCases = [
     ForumModerationController,
     ForumSearchController,
     ForumNotificationController,
+    ForumTagController,
   ],
   providers: [...useCases, ...repositoryProviders],
   exports: [],

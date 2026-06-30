@@ -20,6 +20,7 @@ import {
   FORUM_POLL_REPOSITORY,
   IForumPollRepository,
 } from '../../domain/repositories/forum-poll.repository.interface';
+import { FORUM_GATEWAY, IForumGateway } from '../interfaces/i-forum-gateway';
 import type {
   ForumPostDomain,
   PostType,
@@ -38,6 +39,7 @@ export interface CreatePostParams {
   };
   roadmapId?: string;
   questionBankId?: string;
+  tagIds?: number[];
 }
 
 @Injectable()
@@ -51,6 +53,8 @@ export class CreatePostUseCase {
     private readonly postRepo: IForumPostRepository,
     @Inject(FORUM_POLL_REPOSITORY)
     private readonly pollRepo: IForumPollRepository,
+    @Inject(FORUM_GATEWAY)
+    private readonly gateway: IForumGateway,
   ) {}
 
   async execute(
@@ -83,6 +87,7 @@ export class CreatePostUseCase {
       content: params.content,
       postType: postType,
       status: 'published',
+      tagIds: params.tagIds,
       roadmapId: params.roadmapId,
       questionBankId: params.questionBankId,
     });
@@ -98,6 +103,7 @@ export class CreatePostUseCase {
     }
 
     await this.forumRepo.incrementPostCount(forumId, 1);
+    this.gateway.emitPostNew(forumId, { postId: post.id });
     return post;
   }
 }

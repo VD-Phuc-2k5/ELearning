@@ -13,6 +13,11 @@ import {
   IForumRepository,
   type UpdateForumInput,
 } from '../../domain/repositories/forum.repository.interface';
+import {
+  ICloudinaryService,
+  CLOUDINARY_SERVICE,
+} from '../interfaces/i-cloudinary.service';
+import { extractPublicIdFromUrl } from '../helpers/extract-mentions';
 import type { ForumDomain } from '../../domain/entities/forum.domain';
 
 @Injectable()
@@ -22,6 +27,8 @@ export class UpdateForumUseCase {
     private readonly forumRepo: IForumRepository,
     @Inject(FORUM_MEMBER_REPOSITORY)
     private readonly memberRepo: IForumMemberRepository,
+    @Inject(CLOUDINARY_SERVICE)
+    private readonly cloudinary: ICloudinaryService,
   ) {}
 
   async execute(
@@ -36,6 +43,24 @@ export class UpdateForumUseCase {
     if (!member || member.role !== 'owner') {
       throw new ForbiddenException('Only the owner can update this forum');
     }
+
+    if (
+      input.bannerUrl !== undefined &&
+      forum.bannerUrl &&
+      input.bannerUrl !== forum.bannerUrl
+    ) {
+      const publicId = extractPublicIdFromUrl(forum.bannerUrl);
+      if (publicId) this.cloudinary.deleteFile(publicId).catch(() => {});
+    }
+    if (
+      input.iconUrl !== undefined &&
+      forum.iconUrl &&
+      input.iconUrl !== forum.iconUrl
+    ) {
+      const publicId = extractPublicIdFromUrl(forum.iconUrl);
+      if (publicId) this.cloudinary.deleteFile(publicId).catch(() => {});
+    }
+
     return this.forumRepo.update(id, input);
   }
 }

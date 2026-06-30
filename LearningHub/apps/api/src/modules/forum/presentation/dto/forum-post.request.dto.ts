@@ -3,6 +3,7 @@ import {
   IsArray,
   IsBoolean,
   IsDateString,
+  IsInt,
   IsObject,
   IsOptional,
   IsString,
@@ -40,6 +41,11 @@ export class CreatePostDto {
   @ApiPropertyOptional() @IsOptional() poll?: PollDto;
   @ApiPropertyOptional() @IsOptional() @IsUUID() roadmapId?: string;
   @ApiPropertyOptional() @IsOptional() @IsUUID() questionBankId?: string;
+  @ApiPropertyOptional({ type: [Number] })
+  @IsOptional()
+  @IsArray()
+  @IsInt({ each: true })
+  tagIds?: number[];
 }
 
 export class UpdatePostDto {
@@ -48,6 +54,11 @@ export class UpdatePostDto {
     string,
     unknown
   >;
+  @ApiPropertyOptional({ type: [Number] })
+  @IsOptional()
+  @IsArray()
+  @IsInt({ each: true })
+  tagIds?: number[];
 }
 
 export class CreateCommentDto {

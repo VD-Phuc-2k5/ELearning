@@ -16,6 +16,7 @@ export interface GetForumListInput {
   search?: string;
   categoryId?: number;
   visibility?: ForumVisibility | 'visible';
+  userId?: string;
 }
 
 export interface UpdateForumInput {
@@ -42,6 +43,7 @@ export interface IForumRepository {
   delete(id: string): Promise<void>;
   incrementMemberCount(id: string, delta: number): Promise<void>;
   incrementPostCount(id: string, delta: number): Promise<void>;
+  recalculatePostCount(id: string): Promise<number>;
 }
 
 export const FORUM_REPOSITORY = Symbol('IForumRepository');

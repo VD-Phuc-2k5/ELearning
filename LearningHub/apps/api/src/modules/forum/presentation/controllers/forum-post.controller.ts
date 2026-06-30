@@ -32,6 +32,7 @@ import { UploadAttachmentUseCase } from '../../application/use-cases/upload-atta
 import type { PostType } from '../../domain/entities/forum-post.domain';
 import { CreatePostDto, UpdatePostDto } from '../dto/forum-post.request.dto';
 import { AuthReq } from '../types';
+import { Public } from '../../../auth/infrastructure/decorators/public.decorator';
 
 @ApiTags('Forum Posts')
 @ApiBearerAuth()
@@ -56,6 +57,10 @@ export class ForumPostController {
     @Body() dto: CreatePostDto,
     @Request() req: AuthReq,
   ) {
+    console.log(
+      '[API createPost] received content:',
+      JSON.stringify(dto.content).substring(0, 500),
+    );
     return this.createPostUseCase.execute(
       forumId,
       {
@@ -70,6 +75,7 @@ export class ForumPostController {
               isMultipleChoice: dto.poll.isMultipleChoice,
             }
           : undefined,
+        tagIds: dto.tagIds,
         roadmapId: dto.roadmapId,
         questionBankId: dto.questionBankId,
       },
@@ -77,20 +83,30 @@ export class ForumPostController {
     );
   }
 
+  @Public()
   @Get('forums/:forumId/posts')
   @ApiOperation({ summary: 'Danh sách bài viết trong diễn đàn' })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'tagId', required: false, type: Number })
+  @ApiQuery({ name: 'search', required: false, type: String })
   list(
     @Param('forumId') forumId: string,
     @Query('page') page?: number,
     @Query('limit') limit?: number,
     @Query('tagId') tagId?: number,
+    @Query('search') search?: string,
   ) {
-    return this.getPostsUseCase.execute({ forumId, page, limit, tagId });
+    return this.getPostsUseCase.execute({
+      forumId,
+      page,
+      limit,
+      tagId,
+      search,
+    });
   }
 
+  @Public()
   @Get('forums/:forumId/posts/:postId')
   @ApiOperation({ summary: 'Chi tiết bài viết' })
   detail(@Param('forumId') forumId: string, @Param('postId') postId: string) {
@@ -105,7 +121,16 @@ export class ForumPostController {
     @Body() dto: UpdatePostDto,
     @Request() req: AuthReq,
   ) {
-    return this.updatePostUseCase.execute(forumId, postId, dto, req.user.id);
+    return this.updatePostUseCase.execute(
+      forumId,
+      postId,
+      {
+        title: dto.title,
+        content: dto.content,
+        tagIds: dto.tagIds,
+      },
+      req.user.id,
+    );
   }
 
   @Delete('forums/:forumId/posts/:postId')

@@ -10,6 +10,7 @@ import {
   ChevronUp,
   Save,
   X,
+  Lightbulb,
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { Button, useConfirmModal } from '../../../../../components/ui';
@@ -98,6 +99,7 @@ function QuestionCard({
       .filter((o) => question.correctAnswerOptionIds?.includes(o.id))
       .map((o) => o.optionLabel),
   );
+  const [explanation, setExplanation] = useState(question.explanation ?? '');
 
   const deleteMutation = useMutation({
     mutationFn: () => deleteQuestion(question.id),
@@ -108,6 +110,7 @@ function QuestionCard({
     mutationFn: () =>
       updateQuestion(question.id, {
         content,
+        explanation,
         answerOptions: options.map((o) => ({
           optionLabel: o.optionLabel,
           content: o.content,
@@ -118,11 +121,15 @@ function QuestionCard({
       setEditing(false);
       onUpdated();
     },
+    onError: (err) => {
+      console.error('Update question failed:', err);
+    },
   });
 
   const cancelEdit = () => {
     setEditing(false);
     setContent(question.content);
+    setExplanation(question.explanation ?? '');
     setOptions(question.answerOptions.map((o) => ({ ...o })));
     setCorrectLabels(
       question.answerOptions
@@ -145,6 +152,18 @@ function QuestionCard({
               value={content}
               onChange={(e) => setContent(e.target.value)}
             />
+            <div>
+              <p className="text-xs font-semibold text-slate-500 mb-1">
+                Giải thích
+              </p>
+              <textarea
+                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-amber-500 focus:ring-4 focus:ring-amber-100 outline-none resize-none"
+                rows={2}
+                placeholder="Giải thích đáp án (hỗ trợ Markdown)"
+                value={explanation}
+                onChange={(e) => setExplanation(e.target.value)}
+              />
+            </div>
             <div className="space-y-2">
               <p className="text-xs font-semibold text-slate-500">Đáp án</p>
               {options.map((opt, oi) => (
@@ -226,54 +245,64 @@ function QuestionCard({
           )}
         </div>
       </div>
-      {!editing && expanded && question.answerOptions.length > 0 && (
-        <div className="px-4 pb-4 border-t border-slate-100 pt-3">
-          <div className="grid gap-1.5">
-            {[...question.answerOptions]
-              .sort((a, b) => a.optionLabel.localeCompare(b.optionLabel))
-              .map((opt) => {
-                const isCorrect = question.correctAnswerOptionIds?.includes(
-                  opt.id,
-                );
-                return (
-                  <div
-                    key={opt.id}
-                    className={clsx(
-                      'flex items-center gap-2 text-sm rounded-lg px-2 py-1.5',
-                      isCorrect
-                        ? 'bg-emerald-50 border border-emerald-200'
-                        : 'border border-transparent',
-                    )}
-                  >
-                    <span
+      {!editing && expanded && (
+        <div className="px-4 pb-4 border-t border-slate-100 pt-3 space-y-3">
+          {question.answerOptions.length > 0 && (
+            <div className="grid gap-1.5">
+              {[...question.answerOptions]
+                .sort((a, b) => a.optionLabel.localeCompare(b.optionLabel))
+                .map((opt) => {
+                  const isCorrect = question.correctAnswerOptionIds?.includes(
+                    opt.id,
+                  );
+                  return (
+                    <div
+                      key={opt.id}
                       className={clsx(
-                        'h-6 w-6 rounded-full text-xs font-bold flex items-center justify-center shrink-0',
+                        'flex items-center gap-2 text-sm rounded-lg px-2 py-1.5',
                         isCorrect
-                          ? 'bg-emerald-500 text-white'
-                          : 'bg-slate-200 text-slate-600',
+                          ? 'bg-emerald-50 border border-emerald-200'
+                          : 'border border-transparent',
                       )}
                     >
-                      {opt.optionLabel}
-                    </span>
-                    <span
-                      className={clsx(
-                        'flex-1',
-                        isCorrect
-                          ? 'text-emerald-800 font-medium'
-                          : 'text-slate-700',
-                      )}
-                    >
-                      {opt.content}
-                    </span>
-                    {isCorrect && (
-                      <span className="text-xs font-semibold text-emerald-600 bg-emerald-100 rounded-full px-2 py-0.5 shrink-0">
-                        Đúng
+                      <span
+                        className={clsx(
+                          'h-6 w-6 rounded-full text-xs font-bold flex items-center justify-center shrink-0',
+                          isCorrect
+                            ? 'bg-emerald-500 text-white'
+                            : 'bg-slate-200 text-slate-600',
+                        )}
+                      >
+                        {opt.optionLabel}
                       </span>
-                    )}
-                  </div>
-                );
-              })}
-          </div>
+                      <span
+                        className={clsx(
+                          'flex-1',
+                          isCorrect
+                            ? 'text-emerald-800 font-medium'
+                            : 'text-slate-700',
+                        )}
+                      >
+                        {opt.content}
+                      </span>
+                      {isCorrect && (
+                        <span className="text-xs font-semibold text-emerald-600 bg-emerald-100 rounded-full px-2 py-0.5 shrink-0">
+                          Đúng
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
+            </div>
+          )}
+          {question.explanation && (
+            <div className="flex gap-2 rounded-xl bg-amber-50 border border-amber-200 p-3">
+              <Lightbulb className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" />
+              <span className="text-sm text-amber-900 whitespace-pre-wrap">
+                {question.explanation}
+              </span>
+            </div>
+          )}
         </div>
       )}
       {confirmModal}

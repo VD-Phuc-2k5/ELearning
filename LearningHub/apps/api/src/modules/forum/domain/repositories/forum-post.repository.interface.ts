@@ -18,6 +18,7 @@ export interface GetPostsInput {
   page?: number;
   limit?: number;
   tagId?: number;
+  search?: string;
   status?: PostStatus;
   includeHidden?: boolean;
   pinnedFirst?: boolean;

@@ -1,5 +1,15 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsIn, IsInt, IsOptional, IsString } from 'class-validator';
+import {
+  ArrayMinSize,
+  IsArray,
+  IsBoolean,
+  IsIn,
+  IsInt,
+  IsOptional,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
+import { Type } from 'class-transformer';
 
 const VISIBILITY_VALUES = ['public', 'private', 'hidden'] as const;
 
@@ -28,9 +38,18 @@ export class UpdateForumDto {
   @ApiPropertyOptional() @IsOptional() @IsBoolean() isLocked?: boolean;
 }
 
+export class ForumRuleDto {
+  @ApiProperty() @IsString() title!: string;
+  @ApiProperty() @IsString() body!: string;
+}
+
 export class SetForumRulesDto {
-  @ApiProperty({ type: 'array' })
-  rules!: Array<{ title: string; body: string }>;
+  @ApiProperty({ type: [ForumRuleDto] })
+  @IsArray()
+  @ArrayMinSize(0)
+  @ValidateNested({ each: true })
+  @Type(() => ForumRuleDto)
+  rules!: ForumRuleDto[];
 }
 
 export class UpdateMemberRoleDto {

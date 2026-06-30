@@ -11,7 +11,7 @@ import {
   Request,
   UseGuards,
 } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+import { JwtAuthGuard } from '../../../auth/infrastructure/guards/jwt-auth.guard';
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -34,7 +34,7 @@ import { AuthReq } from '../types';
 
 @ApiTags('Forum')
 @ApiBearerAuth()
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(JwtAuthGuard)
 @Controller('forums')
 export class ForumController {
   constructor(
@@ -74,12 +74,14 @@ export class ForumController {
     @Query('limit') limit?: number,
     @Query('search') search?: string,
     @Query('categoryId') categoryId?: number,
+    @Request() req?: AuthReq,
   ) {
     return this.getForumListUseCase.execute({
       page,
       limit,
       search,
       categoryId,
+      userId: req?.user?.id,
     });
   }
 

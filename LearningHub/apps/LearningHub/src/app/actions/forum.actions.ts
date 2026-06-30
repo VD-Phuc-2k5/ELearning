@@ -16,25 +16,18 @@ import {
   CreateCommentUsecase,
   TogglePostReactionUsecase,
   TogglePostBookmarkUsecase,
-  type ForumListItem,
-  type ForumDetail,
-  type ForumRule,
-  type ForumDetailResponse,
-  type PostListItem,
-  type CommentItem,
-  type PaginatedResponse,
 } from '@learning-hub/domain';
-import { cookies } from 'next/headers';
-
-export type {
+import type {
   ForumListItem,
-  ForumDetail,
-  ForumRule,
   ForumDetailResponse,
+  PostDetail,
   PostListItem,
   CommentItem,
   PaginatedResponse,
-};
+  UploadImageResult,
+  ForumTag,
+} from '@learning-hub/domain';
+import { cookies } from 'next/headers';
 
 async function getToken(): Promise<string | undefined> {
   return (await cookies()).get('accessToken')?.value;
@@ -60,7 +53,7 @@ export async function getForumDetail(
   const repo = new ForumRepositoryImpl(new ForumRemoteDataSourceImpl(), token);
   const result = await new GetForumDetailUsecase(repo).execute(slug);
   if (result.type === 'right') return result.value;
-  return undefined;
+  throw new Error(result.value.message);
 }
 
 export async function createForum(input: {
@@ -73,6 +66,34 @@ export async function createForum(input: {
   const result = await new CreateForumUsecase(repo).execute(input);
   if (result.type === 'right') return result.value;
   return undefined;
+}
+
+export async function updateForum(
+  id: string,
+  input: {
+    name?: string;
+    description?: string;
+    visibility?: 'public' | 'private' | 'hidden';
+    bannerUrl?: string;
+    iconUrl?: string;
+  },
+): Promise<ForumListItem | undefined> {
+  const token = await getToken();
+  const repo = new ForumRepositoryImpl(new ForumRemoteDataSourceImpl(), token);
+  const result = await repo.updateForum({ id, ...input });
+  if (result.type === 'right') return result.value;
+  throw new Error(result.value.message);
+}
+
+export async function setForumRules(
+  id: string,
+  rules: Array<{ title: string; body: string }>,
+): Promise<void> {
+  const token = await getToken();
+  const repo = new ForumRepositoryImpl(new ForumRemoteDataSourceImpl(), token);
+  const result = await repo.setForumRules({ id, rules });
+  if (result.type === 'right') return;
+  throw new Error(result.value.message);
 }
 
 export async function joinForum(
@@ -96,8 +117,8 @@ export async function leaveForum(forumId: string): Promise<void> {
 
 export async function listForumPosts(
   forumId: string,
-  params?: { page?: number; limit?: number; tagId?: number },
-): Promise<PaginatedResponse<PostListItem> | undefined> {
+  params?: { page?: number; limit?: number; tagId?: number; search?: string },
+): Promise<PaginatedResponse<PostListItem>> {
   const token = await getToken();
   const repo = new ForumRepositoryImpl(new ForumRemoteDataSourceImpl(), token);
   const result = await new ListForumPostsUsecase(repo).execute({
@@ -105,7 +126,7 @@ export async function listForumPosts(
     ...params,
   });
   if (result.type === 'right') return result.value;
-  return undefined;
+  throw new Error(result.value.message);
 }
 
 export async function createPost(
@@ -114,12 +135,24 @@ export async function createPost(
     title: string;
     content?: Record<string, unknown>;
     postType?: string;
+    tagIds?: number[];
     roadmapId?: string;
     questionBankId?: string;
   },
 ): Promise<PostListItem | undefined> {
   const token = await getToken();
   const repo = new ForumRepositoryImpl(new ForumRemoteDataSourceImpl(), token);
+  console.log(
+    '[createPost SERVER ACTION] content:',
+    JSON.stringify(input.content).substring(0, 500),
+  );
+  console.log(
+    '[createPost SERVER ACTION] image attrs:',
+    JSON.stringify(
+      (input.content as any)?.content?.find?.((c: any) => c.type === 'image')
+        ?.attrs,
+    ),
+  );
   const result = await new CreatePostUsecase(repo).execute({
     forumId,
     ...input,
@@ -132,7 +165,7 @@ export async function listComments(
   forumId: string,
   postId: string,
   params?: { page?: number; limit?: number },
-): Promise<PaginatedResponse<CommentItem> | undefined> {
+): Promise<PaginatedResponse<CommentItem>> {
   const token = await getToken();
   const repo = new ForumRepositoryImpl(new ForumRemoteDataSourceImpl(), token);
   const result = await new ListCommentsUsecase(repo).execute({
@@ -141,7 +174,7 @@ export async function listComments(
     ...params,
   });
   if (result.type === 'right') return result.value;
-  return undefined;
+  throw new Error(result.value.message);
 }
 
 export async function createComment(
@@ -149,7 +182,7 @@ export async function createComment(
   postId: string,
   content: string,
   parentId?: string,
-): Promise<CommentItem | undefined> {
+): Promise<CommentItem> {
   const token = await getToken();
   const repo = new ForumRepositoryImpl(new ForumRemoteDataSourceImpl(), token);
   const result = await new CreateCommentUsecase(repo).execute({
@@ -159,7 +192,7 @@ export async function createComment(
     parentId,
   });
   if (result.type === 'right') return result.value;
-  return undefined;
+  throw new Error(result.value.message);
 }
 
 export async function togglePostReaction(
@@ -192,4 +225,140 @@ export async function togglePostBookmark(
   });
   if (result.type === 'right') return;
   throw new Error(result.value.message);
+}
+
+export async function getPostDetail(
+  forumId: string,
+  postId: string,
+): Promise<PostDetail> {
+  const token = await getToken();
+  const repo = new ForumRepositoryImpl(new ForumRemoteDataSourceImpl(), token);
+  const result = await repo.getPostDetail(forumId, postId);
+  if (result.type === 'right') return result.value;
+  throw new Error(result.value.message);
+}
+
+export async function updatePost(
+  forumId: string,
+  postId: string,
+  data: {
+    title?: string;
+    content?: Record<string, unknown>;
+    tagIds?: number[];
+  },
+): Promise<PostListItem | undefined> {
+  const token = await getToken();
+  const repo = new ForumRepositoryImpl(new ForumRemoteDataSourceImpl(), token);
+  const result = await repo.updatePost({
+    forumId,
+    postId,
+    ...data,
+  });
+  if (result.type === 'right') return result.value;
+  throw new Error(result.value.message);
+}
+
+export async function deletePost(
+  forumId: string,
+  postId: string,
+): Promise<void> {
+  const token = await getToken();
+  const repo = new ForumRepositoryImpl(new ForumRemoteDataSourceImpl(), token);
+  const result = await repo.deletePost(forumId, postId);
+  if (result.type === 'right') return;
+  throw new Error(result.value.message);
+}
+
+export async function updateComment(
+  forumId: string,
+  postId: string,
+  commentId: string,
+  content: string,
+): Promise<CommentItem | undefined> {
+  const token = await getToken();
+  const repo = new ForumRepositoryImpl(new ForumRemoteDataSourceImpl(), token);
+  const result = await repo.updateComment({
+    forumId,
+    postId,
+    commentId,
+    content,
+  });
+  if (result.type === 'right') return result.value;
+  throw new Error(result.value.message);
+}
+
+export async function deleteComment(
+  forumId: string,
+  postId: string,
+  commentId: string,
+): Promise<void> {
+  const token = await getToken();
+  const repo = new ForumRepositoryImpl(new ForumRemoteDataSourceImpl(), token);
+  const result = await repo.deleteComment(forumId, postId, commentId);
+  if (result.type === 'right') return;
+  throw new Error(result.value.message);
+}
+
+export async function uploadForumImage(
+  formData: FormData,
+): Promise<UploadImageResult> {
+  const token = await getToken();
+  const repo = new ForumRepositoryImpl(new ForumRemoteDataSourceImpl(), token);
+  const result = await repo.uploadImage(formData);
+  if (result.type === 'right') return result.value;
+  throw new Error(result.value.message);
+}
+
+export async function listTags(): Promise<ForumTag[]> {
+  const token = await getToken();
+  const repo = new ForumRepositoryImpl(new ForumRemoteDataSourceImpl(), token);
+  const result = await repo.listTags();
+  if (result.type === 'right') return result.value;
+  throw new Error(result.value.message);
+}
+
+export async function createTag(input: {
+  name: string;
+  color?: string;
+}): Promise<ForumTag> {
+  const token = await getToken();
+  const repo = new ForumRepositoryImpl(new ForumRemoteDataSourceImpl(), token);
+  const result = await repo.createTag(input);
+  if (result.type === 'right') return result.value;
+  throw new Error(result.value.message);
+}
+
+export async function updateTag(
+  id: number,
+  input: { name?: string; color?: string },
+): Promise<ForumTag | undefined> {
+  const token = await getToken();
+  const repo = new ForumRepositoryImpl(new ForumRemoteDataSourceImpl(), token);
+  const result = await repo.updateTag({ id, ...input });
+  if (result.type === 'right') return result.value;
+  return undefined;
+}
+
+export async function deleteTag(id: number): Promise<void> {
+  const token = await getToken();
+  const repo = new ForumRepositoryImpl(new ForumRemoteDataSourceImpl(), token);
+  const result = await repo.deleteTag(id);
+  if (result.type === 'right') return;
+  throw new Error(result.value.message);
+}
+
+export async function updatePostTags(
+  forumId: string,
+  postId: string,
+  tagIds: number[],
+): Promise<PostListItem | undefined> {
+  const token = await getToken();
+  const repo = new ForumRepositoryImpl(new ForumRemoteDataSourceImpl(), token);
+  const result = await repo.updatePost({
+    forumId,
+    postId,
+    tagIds,
+  });
+  if (result.type === 'right') return result.value;
+  return undefined;
 }

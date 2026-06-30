@@ -7,7 +7,7 @@ interface RetryConfig extends InternalAxiosRequestConfig {
 type ApiError = AxiosError<{ error?: string }> & ApiErrorShape;
 
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080',
+  baseURL: process.env.NEXT_PUBLIC_NEST_API_URL || 'http://localhost:8080',
   headers: { 'Content-Type': 'application/json' },
 });
 
