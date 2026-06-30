@@ -1,6 +1,6 @@
 //@ts-check
 
- 
+const path = require('path');
 const { composePlugins, withNx } = require('@nx/next');
 
 /**
@@ -8,9 +8,21 @@ const { composePlugins, withNx } = require('@nx/next');
  **/
 const nextConfig = {
   nx: {},
-  transpilePackages: ['@learning-hub/core', '@learning-hub/domain', '@learning-hub/data'],
+  transpilePackages: [
+    '@learning-hub/core',
+    '@learning-hub/domain',
+    '@learning-hub/data',
+  ],
+  turbopack: {
+    root: path.resolve(__dirname, '../..'),
+  },
   async rewrites() {
-    return [{ source: '/api/:path*', destination: 'http://localhost:8080/api/:path*' }];
+    return [
+      {
+        source: '/api/:path*',
+        destination: 'http://localhost:8080/api/:path*',
+      },
+    ];
   },
 };
 

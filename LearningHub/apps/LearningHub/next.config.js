@@ -1,13 +1,19 @@
 //@ts-check
 
+const path = require('path');
 const { composePlugins, withNx } = require('@nx/next');
 
 /**
  * @type {import('@nx/next/plugins/with-nx').WithNxOptions}
  **/
 const nextConfig = {
-  transpilePackages: ['@learning-hub/core', '@learning-hub/domain', '@learning-hub/data'],
+  transpilePackages: [
+    '@learning-hub/core',
+    '@learning-hub/domain',
+    '@learning-hub/data',
+  ],
   turbopack: {
+    root: path.resolve(__dirname, '../..'),
     resolveAlias: {
       '@learning-hub/core': '../../packages/core/src/index.ts',
       '@learning-hub/domain': '../../packages/domain/src/index.ts',
@@ -16,8 +22,6 @@ const nextConfig = {
   },
 };
 
-const plugins = [
-  withNx,
-];
+const plugins = [withNx];
 
 module.exports = composePlugins(...plugins)(nextConfig);
