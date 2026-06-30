@@ -1,10 +1,12 @@
 import {
   Column,
+  CreateDateColumn,
   Entity,
   JoinColumn,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { QuestionBankEntity } from './question-bank.entity';
 import { AnswerOptionEntity } from './answer-option.entity';
@@ -43,4 +45,10 @@ export class QuestionEntity {
 
   @OneToMany(() => QuestionDifficultEntity, (d) => d.question)
   difficulties!: QuestionDifficultEntity[];
+
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt!: Date;
+
+  @UpdateDateColumn({ name: 'updated_at' })
+  updatedAt!: Date;
 }

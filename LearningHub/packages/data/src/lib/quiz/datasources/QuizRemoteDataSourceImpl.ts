@@ -1,7 +1,6 @@
 import axios from 'axios';
 import { handleAxiosError } from '@learning-hub/core';
 import {
-  BankRoadmapItem,
   CreateBankQuizParams,
   GetAttemptsParams,
   GetBanksQuizParams,

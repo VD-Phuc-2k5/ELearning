@@ -9,6 +9,7 @@ import {
   left,
   right,
   AuthenticationException,
+  BadRequestException,
   PermissionException,
   NotFoundException,
   NetworkException,
@@ -42,10 +43,11 @@ import { IQuizRemoteDataSource } from '../datasources/IQuizRemoteDataSource';
 function toFailure(e: unknown): Failure {
   if (e instanceof AuthenticationException)
     return new AuthenticationFailure(e.message);
-  if (e instanceof PermissionException) return new PermissionFailure();
-  if (e instanceof NotFoundException) return new NotFoundFailure();
+  if (e instanceof PermissionException) return new PermissionFailure(e.message);
+  if (e instanceof NotFoundException) return new NotFoundFailure(e.message);
+  if (e instanceof BadRequestException) return new UnknownFailure(e.message);
   if (e instanceof NetworkException) return new NetworkFailure();
-  return new UnknownFailure();
+  return new UnknownFailure(e instanceof Error ? e.message : undefined);
 }
 
 export class QuizRepositoryImpl implements IQuizRepository {
