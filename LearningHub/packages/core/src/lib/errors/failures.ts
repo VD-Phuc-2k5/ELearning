@@ -15,23 +15,23 @@ class NetworkFailure extends Failure {
   }
 }
 
-class AuthenticationFailure extends Failure { }
+class AuthenticationFailure extends Failure {}
 
 class PermissionFailure extends Failure {
-  constructor() {
-    super('You do not have permission for the request.');
+  constructor(message?: string) {
+    super(message ?? 'You do not have permission for the request.');
   }
 }
 
 class NotFoundFailure extends Failure {
-  constructor() {
-    super('The requested data was not found.');
+  constructor(message?: string) {
+    super(message ?? 'The requested data was not found.');
   }
 }
 
 class UnknownFailure extends Failure {
-  constructor() {
-    super('An unknown error has occurred. Please try again later.');
+  constructor(message?: string) {
+    super(message ?? 'An unknown error has occurred. Please try again later.');
   }
 }
 

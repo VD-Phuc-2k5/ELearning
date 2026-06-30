@@ -18,9 +18,11 @@ class PermissionException extends AppException {}
 
 class NotFoundException extends AppException {}
 
+class BadRequestException extends AppException {}
+
 class UnknownException extends AppException {
-  constructor() {
-    super('An unknown error occurred.');
+  constructor(message?: string) {
+    super(message || 'An unknown error occurred.');
   }
 }
 
@@ -41,15 +43,17 @@ function handleAxiosError(e: unknown): never {
     if (!e.response) throw new NetworkException();
     const status = e.response.status;
     const message: string = e.response.data?.message || e.message || '';
+    if (status === 400) throw new BadRequestException(message);
     if (status === 401) throw new AuthenticationException(message);
     if (status === 403) throw new PermissionException(message);
     if (status === 404) throw new NotFoundException(message);
-    throw new UnknownException();
+    throw new UnknownException(message);
   }
   throw new NetworkException();
 }
 
 export {
+  BadRequestException,
   NetworkException,
   AuthenticationException,
   PermissionException,
