@@ -168,6 +168,7 @@ export default function ForumDetailPage({ params }: ForumDetailPageProps) {
     setEditingRules(true);
   };
 
+  const postArticleRefs = useRef<Map<string, HTMLElement>>(new Map());
   const startEditPost = (p: (typeof posts)[number]) => {
     setEditingPostId(p.id);
     setEditTitle(p.title);
@@ -175,6 +176,12 @@ export default function ForumDetailPage({ params }: ForumDetailPageProps) {
     setEditTagIds(new Set((p.tags ?? []).map((t) => t.id)));
     setError(null);
   };
+
+  useEffect(() => {
+    if (!editingPostId) return;
+    const el = postArticleRefs.current.get(editingPostId);
+    el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [editingPostId]);
   const cancelEditPost = () => {
     setEditingPostId(null);
     setError(null);
@@ -346,6 +353,10 @@ export default function ForumDetailPage({ params }: ForumDetailPageProps) {
               {posts.map((p) => (
                 <article
                   key={p.id}
+                  ref={(el) => {
+                    if (el) postArticleRefs.current.set(p.id, el);
+                    else postArticleRefs.current.delete(p.id);
+                  }}
                   className="rounded-2xl border border-slate-100 bg-white shadow-sm"
                 >
                   {editingPostId === p.id ? (

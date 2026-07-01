@@ -31,6 +31,7 @@ export interface CreatePostParams {
   title: string;
   content?: Record<string, unknown>;
   postType?: PostType;
+  tagIds?: number[];
   poll?: {
     question: string;
     options: Array<{ text: string }>;
@@ -86,6 +87,7 @@ export class CreatePostUseCase {
       content: params.content,
       postType: postType,
       status: 'published',
+      tagIds: params.tagIds,
       roadmapId: params.roadmapId,
       questionBankId: params.questionBankId,
     });

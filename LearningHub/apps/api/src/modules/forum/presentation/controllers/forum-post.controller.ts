@@ -61,6 +61,7 @@ export class ForumPostController {
         title: dto.title,
         content: dto.content,
         postType: dto.postType as PostType | undefined,
+        tagIds: dto.tagIds,
         poll: dto.poll
           ? {
               question: dto.poll.question,
@@ -82,17 +83,20 @@ export class ForumPostController {
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'search', required: false, type: String })
+  @ApiQuery({ name: 'tagId', required: false, type: Number })
   list(
     @Param('forumId') forumId: string,
     @Query('page') page?: number,
     @Query('limit') limit?: number,
     @Query('search') search?: string,
+    @Query('tagId') tagId?: number,
   ) {
     return this.getPostsUseCase.execute({
       forumId,
       page,
       limit,
       search,
+      tagId: tagId !== undefined ? Number(tagId) : undefined,
     });
   }
 
@@ -114,10 +118,7 @@ export class ForumPostController {
     return this.updatePostUseCase.execute(
       forumId,
       postId,
-      {
-        title: dto.title,
-        content: dto.content,
-      },
+      { title: dto.title, content: dto.content, tagIds: dto.tagIds },
       req.user.id,
     );
   }

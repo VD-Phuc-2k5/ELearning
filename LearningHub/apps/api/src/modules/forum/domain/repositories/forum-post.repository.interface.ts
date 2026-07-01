@@ -8,6 +8,7 @@ export interface CreatePostInput {
   content?: Record<string, unknown>;
   postType?: PostType;
   status?: PostStatus;
+  tagIds?: number[];
   roadmapId?: string;
   questionBankId?: string;
 }
@@ -17,6 +18,7 @@ export interface GetPostsInput {
   page?: number;
   limit?: number;
   search?: string;
+  tagId?: number;
   status?: PostStatus;
   includeHidden?: boolean;
   pinnedFirst?: boolean;
@@ -25,6 +27,7 @@ export interface GetPostsInput {
 export interface UpdatePostInput {
   title?: string;
   content?: Record<string, unknown>;
+  tagIds?: number[];
 }
 
 export interface PostListPage {

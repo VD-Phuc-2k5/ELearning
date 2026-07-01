@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, In, Repository } from 'typeorm';
 import { ForumPostEntity } from '../entities/forum-post.entity';
+import { ForumTagEntity } from '../entities/forum-tag.entity';
 import { UserEntity } from '../../../../auth/infrastructure/persistence/entities/user.entity';
 import {
   CreatePostInput,
@@ -42,6 +43,12 @@ export class ForumPostRepository implements IForumPostRepository {
       viewCount: e.viewCount,
       roadmapId: e.roadmapId,
       questionBankId: e.questionBank,
+      tags: (e.tags ?? []).map((t) => ({
+        id: t.id,
+        name: t.name,
+        slug: t.slug,
+        color: t.color,
+      })),
       createdAt: e.createdAt,
       updatedAt: e.updatedAt,
       deletedAt: e.deletedAt,
@@ -50,6 +57,12 @@ export class ForumPostRepository implements IForumPostRepository {
 
   async create(input: CreatePostInput): Promise<ForumPostDomain> {
     return this.dataSource.transaction(async (manager) => {
+      const tags =
+        input.tagIds && input.tagIds.length > 0
+          ? await manager.find(ForumTagEntity, {
+              where: { id: In(input.tagIds) },
+            })
+          : [];
       const entity = manager.create(ForumPostEntity, {
         forumId: input.forumId,
         authorId: input.authorId,
@@ -59,6 +72,7 @@ export class ForumPostRepository implements IForumPostRepository {
         status: input.status ?? 'published',
         roadmapId: input.roadmapId ?? null,
         questionBankId: input.questionBankId ?? null,
+        tags,
       });
       const saved = await manager.save(ForumPostEntity, entity);
 
@@ -107,6 +121,7 @@ export class ForumPostRepository implements IForumPostRepository {
       page = 1,
       limit = 10,
       search,
+      tagId,
       status = 'published',
       includeHidden = false,
       pinnedFirst = true,
@@ -114,6 +129,7 @@ export class ForumPostRepository implements IForumPostRepository {
 
     const qb = this.repo
       .createQueryBuilder('p')
+      .leftJoinAndSelect('p.tags', 'tags')
       .where('p.forumId = :forumId', { forumId });
 
     if (!includeHidden) {
@@ -124,6 +140,13 @@ export class ForumPostRepository implements IForumPostRepository {
 
     if (search) {
       qb.andWhere('p.title ILIKE :search', { search: `%${search}%` });
+    }
+
+    if (tagId !== undefined) {
+      qb.andWhere(
+        `EXISTS (SELECT 1 FROM forum_post_tags fpt WHERE fpt.post_id = p.id AND fpt.tag_id = :tagId)`,
+        { tagId },
+      );
     }
 
     if (pinnedFirst) {
@@ -162,18 +185,24 @@ export class ForumPostRepository implements IForumPostRepository {
 
   async update(id: string, input: UpdatePostInput): Promise<ForumPostDomain> {
     return this.dataSource.transaction(async (manager) => {
-      if (input.title !== undefined || input.content !== undefined) {
-        const updateData: Record<string, unknown> = {};
-        if (input.title !== undefined) updateData.title = input.title;
-        if (input.content !== undefined) updateData.content = input.content;
-        await manager.update(ForumPostEntity, { id }, updateData as never);
-      }
-      const updated = await manager.findOneOrFail(ForumPostEntity, {
+      const entity = await manager.findOneOrFail(ForumPostEntity, {
         where: { id },
+        relations: { tags: true },
       });
-      const domain = this.toDomain(updated);
+      if (input.title !== undefined) entity.title = input.title;
+      if (input.content !== undefined) entity.content = input.content;
+      if (input.tagIds !== undefined) {
+        entity.tags =
+          input.tagIds.length > 0
+            ? await manager.find(ForumTagEntity, {
+                where: { id: In(input.tagIds) },
+              })
+            : [];
+      }
+      const saved = await manager.save(ForumPostEntity, entity);
+      const domain = this.toDomain(saved);
       const user = await manager.findOne(UserEntity, {
-        where: { id: updated.authorId },
+        where: { id: saved.authorId },
         select: { id: true, username: true },
       });
       domain.authorName = user?.username ?? 'Unknown';

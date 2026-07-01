@@ -4,11 +4,14 @@ import {
   DeleteDateColumn,
   Entity,
   JoinColumn,
+  JoinTable,
+  ManyToMany,
   ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { ForumEntity } from './forum.entity';
+import { ForumTagEntity } from './forum-tag.entity';
 import { UserEntity } from '../../../../auth/infrastructure/persistence/entities/user.entity';
 import { QuestionBankEntity } from '../../../../quiz/infrastructure/persistence/entities/question-bank.entity';
 
@@ -73,4 +76,12 @@ export class ForumPostEntity {
 
   @DeleteDateColumn({ name: 'deleted_at' })
   deletedAt!: Date | null;
+
+  @ManyToMany(() => ForumTagEntity, { eager: false, cascade: false })
+  @JoinTable({
+    name: 'forum_post_tags',
+    joinColumn: { name: 'post_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'tag_id', referencedColumnName: 'id' },
+  })
+  tags!: ForumTagEntity[];
 }

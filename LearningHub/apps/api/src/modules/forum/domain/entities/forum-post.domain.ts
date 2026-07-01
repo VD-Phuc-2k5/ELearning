@@ -25,6 +25,7 @@ export interface ForumPostDomain {
   viewCount: number;
   roadmapId: string | null;
   questionBankId: QuestionBankEntity;
+  tags: Array<{ id: number; name: string; slug: string; color: string | null }>;
   createdAt: Date;
   updatedAt: Date;
   deletedAt: Date | null;
