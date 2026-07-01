@@ -97,7 +97,7 @@ export default function BankDetailPage() {
       setTitle(bank.title);
       setDescription(bank.description ?? '');
     }
-  }, [bank?.id]);
+  }, [bank]);
 
   const updateInfoMutation = useMutation({
     mutationFn: (data: { title?: string; description?: string }) =>

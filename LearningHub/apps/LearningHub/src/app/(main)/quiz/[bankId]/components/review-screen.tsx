@@ -50,7 +50,7 @@ export function ReviewScreen({ attemptId, onBack }: ReviewScreenProps) {
         </span>
       </div>
 
-      {reviews.map((r, idx) => (
+      {reviews.map((r: any, idx: number) => (
         <div
           key={idx}
           className={clsx(
@@ -75,7 +75,7 @@ export function ReviewScreen({ attemptId, onBack }: ReviewScreenProps) {
           </div>
 
           <div className="grid gap-2">
-            {r.answerOptions.map((opt) => {
+            {r.answerOptions.map((opt: any) => {
               const isCorrect = r.correctOptionIds.includes(opt.id);
               const isSelected = opt.id === r.selectedOptionId;
               return (

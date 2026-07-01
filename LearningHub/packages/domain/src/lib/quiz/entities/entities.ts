@@ -15,6 +15,8 @@ export interface QuestionBank {
   readonly tags?: Tag[];
   readonly createdAt: string;
   readonly updatedAt: string;
+  readonly uploaderName?: string;
+  readonly lastUploadedAt?: string | null;
 }
 
 export interface AnswerOption {

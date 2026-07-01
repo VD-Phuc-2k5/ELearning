@@ -36,7 +36,7 @@ export function QuizProgressCard({
   if (!data) return null;
 
   const total = data.items.length;
-  const stepIdx = data.items.findIndex((i) => i.questionBankId === bankId);
+  const stepIdx = data.items.findIndex((i: any) => i.questionBankId === bankId);
   const step = stepIdx >= 0 ? stepIdx + 1 : 0;
   const pct = Math.round(data.userProgress?.progressPercent ?? 0);
 

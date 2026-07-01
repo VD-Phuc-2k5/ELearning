@@ -11,7 +11,6 @@ import {
 import { QuestionBankEntity } from './question-bank.entity';
 import { AnswerOptionEntity } from './answer-option.entity';
 import { CorrectAnswerEntity } from './correct-answer.entity';
-import { QuestionDifficultEntity } from './question-difficult.entity';
 
 @Entity('questions')
 export class QuestionEntity {
@@ -42,9 +41,6 @@ export class QuestionEntity {
     cascade: true,
   })
   correctAnswers!: CorrectAnswerEntity[];
-
-  @OneToMany(() => QuestionDifficultEntity, (d) => d.question)
-  difficulties!: QuestionDifficultEntity[];
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;

@@ -5,14 +5,22 @@ import { useMutation } from '@tanstack/react-query';
 import { Upload, FileText, AlertCircle, CheckCircle2, X } from 'lucide-react';
 import { clsx } from 'clsx';
 import { Button } from '../../../../../components/ui';
+import type { ParsedQuestion } from '@learning-hub/domain';
 import {
   checkBankHash,
   parseExcel,
   uploadExcel,
-  type ParsedQuestion,
 } from '../../../../actions/quiz.actions';
 import { PreviewTable } from './PreviewTable';
-import { buildExcelFileFromPreview } from 'apps/LearningHub/src/lib/buildExcelFileFromPreview';
+import { buildExcelFileFromPreview } from '../../../../../lib/buildExcelFileFromPreview';
+
+async function computeFileHash(f: File) {
+  const buf = await f.arrayBuffer();
+  const hashBuf = await crypto.subtle.digest('SHA-256', buf);
+  return Array.from(new Uint8Array(hashBuf))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+}
 
 interface UploadTabProps {
   bankId: string;
@@ -26,27 +34,22 @@ export function UploadTab({ bankId, onSuccess }: UploadTabProps) {
   const [preview, setPreview] = useState<ParsedQuestion[] | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const calculateHash = async (f: File) => {
-    const buf = await f.arrayBuffer();
-    const hashBuf = await crypto.subtle.digest('SHA-256', buf);
-    return Array.from(new Uint8Array(hashBuf))
-      .map((b) => b.toString(16).padStart(2, '0'))
-      .join('');
-  };
-
   const checkHashMutation = useMutation({
     mutationFn: (hash: string) => checkBankHash(hash),
     onSuccess: (data) => setIsDuplicate(data.exists),
   });
 
   const parseMutation = useMutation({
-    mutationFn: () => parseExcel(bankId, file!),
+    mutationFn: () => {
+      if (!file) throw new Error('No file selected');
+      return parseExcel(bankId, file);
+    },
     onSuccess: (data) => setPreview(data.questions),
   });
 
   const uploadMutation = useMutation({
     mutationFn: () => {
-      let excelFile: File | null = preview
+      const excelFile: File | null = preview
         ? buildExcelFileFromPreview(preview)
         : file;
       if (!excelFile) {
@@ -64,11 +67,11 @@ export function UploadTab({ bankId, onSuccess }: UploadTabProps) {
   });
 
   const onFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0];
-    if (!f) return;
-    setFile(f);
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setFile(file);
     setPreview(null);
-    const hash = await calculateHash(f);
+    const hash = await computeFileHash(file);
     setFileHash(hash);
     checkHashMutation.mutate(hash);
   };

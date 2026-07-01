@@ -10,4 +10,6 @@ export interface QuestionBankDomain {
   createdAt: Date;
   updatedAt: Date;
   tags?: { id: number; name: string }[];
+  uploaderName?: string;
+  lastUploadedAt?: Date | null;
 }

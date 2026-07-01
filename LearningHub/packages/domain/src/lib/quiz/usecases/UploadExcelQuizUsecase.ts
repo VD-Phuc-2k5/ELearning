@@ -1,5 +1,5 @@
 import { Either, Failure, Usecase } from '@learning-hub/core';
-import type { AnswerOptionInput } from '@learning-hub/domain';
+import type { AnswerOptionInput } from '../entities/entities';
 import { UploadExcelResult } from '../entities/entities';
 import { IQuizRepository } from '../repositories/IQuizRepository';
 

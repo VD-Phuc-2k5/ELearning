@@ -7,11 +7,11 @@ import {
 } from '@learning-hub/data';
 import type {
   BankHashResult,
+  BankList,
   BankRoadmapItem,
   CreateBankQuizParams,
   DerivedBank,
   GetBanksQuizParams,
-  ParsedQuestion,
   Question,
   QuestionBank,
   QuizAnswer,
@@ -22,6 +22,7 @@ import type {
   UploadHistory,
   VerifyAnswerResult,
 } from '@learning-hub/domain';
+import type { ParsedQuestion } from '@learning-hub/domain';
 import {
   CheckBankHashQuizParams,
   CheckBankHashQuizUsecase,
@@ -66,10 +67,10 @@ async function getRepo() {
   return new QuizRepositoryImpl(new QuizRemoteDataSourceImpl(), token);
 }
 
-export async function getBanks(params?: GetBanksQuizParams) {
+export async function getBanks(params?: GetBanksQuizParams): Promise<BankList> {
   const repo = await getRepo();
   const result = await new GetBanksQuizUsecase(repo).execute(params ?? {});
-  return result.type === 'right' ? result.value : [];
+  return result.type === 'right' ? result.value : { data: [], total: 0 };
 }
 
 export async function getBankDetail(id: string): Promise<QuestionBank> {
@@ -192,8 +193,12 @@ export async function deleteQuestion(id: string): Promise<void> {
 }
 
 export async function getTags(): Promise<Tag[]> {
-  const repo = await getRepo();
-  return unwrap(await new GetTagsQuizUsecase(repo).execute({}));
+  try {
+    const repo = await getRepo();
+    return unwrap(await new GetTagsQuizUsecase(repo).execute({}));
+  } catch {
+    return [];
+  }
 }
 
 export async function createTag(name: string): Promise<Tag> {

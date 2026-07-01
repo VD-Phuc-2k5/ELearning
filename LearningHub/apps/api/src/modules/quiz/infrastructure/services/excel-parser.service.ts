@@ -12,7 +12,7 @@ export class ExcelParserService implements IExcelParserService {
     try {
       // ponytail: ExcelJS types use old Buffer without generic; cast via unknown is the cross-lib workaround
       await workbook.xlsx.load(fileBuffer as unknown as ArrayBuffer);
-    } catch (_err: unknown) {
+    } catch {
       throw new BadRequestException(
         'Không thể đọc file Excel. File có thể bị hỏng hoặc sai định dạng.',
       );

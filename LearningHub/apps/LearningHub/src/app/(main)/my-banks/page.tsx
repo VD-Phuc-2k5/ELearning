@@ -4,16 +4,19 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getBanks } from '../../actions/quiz.actions';
 import type { QuestionBank } from '@learning-hub/domain';
+import { useCurrentUser } from '../../../components/hooks/use-current-user';
 import { Button } from '../../../components/ui';
 import { Plus, BookOpen, Share2, Upload, FileQuestion } from 'lucide-react';
 import Link from 'next/link';
 
 export default function MyBanksPage() {
+  const { user } = useCurrentUser();
   const [page, setPage] = useState(1);
   const limit = 12;
   const { data, isLoading } = useQuery({
     queryKey: ['my-banks', page],
-    queryFn: () => getBanks({ page, limit }),
+    queryFn: () => getBanks({ page, limit, uploaderId: user?.id }),
+    enabled: !!user,
   });
   const total = data?.total ?? 0;
   const totalPages = Math.ceil(total / limit);
