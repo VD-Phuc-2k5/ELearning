@@ -65,7 +65,7 @@ export function UsersTab({
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-100">
-          {(users ?? []).map((u) => (
+          {(users ?? []).map((u: User) => (
             <tr
               key={u.id}
               className="hover:bg-slate-50 transition cursor-pointer"

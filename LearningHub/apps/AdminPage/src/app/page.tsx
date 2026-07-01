@@ -14,6 +14,7 @@ import '@aejkatappaja/phantom-ui';
 import type { Role, User } from '@learning-hub/domain';
 import { useConfirmModal } from '../components/admin/modal';
 import { LoginScreen } from '../components/admin/login-screen';
+import { adminLogoutAction } from './actions/auth.actions';
 import { TabButton } from '../components/admin/tab-button';
 import { CreateAdminModal } from '../components/admin/create-admin-modal';
 import { AddPermissionModal } from '../components/admin/add-permission-modal';
@@ -101,8 +102,10 @@ export default function AdminDashboard() {
         </nav>
         <div className="p-4 border-t border-white/10">
           <button
-            onClick={() => {
+            onClick={async () => {
               localStorage.removeItem('adminToken');
+              localStorage.removeItem('adminRefreshToken');
+              await adminLogoutAction();
               setToken(null);
             }}
             className="w-full text-left px-4 py-3 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 text-sm transition"
