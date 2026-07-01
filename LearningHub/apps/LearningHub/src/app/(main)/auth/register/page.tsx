@@ -5,15 +5,13 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { loginSchema, type LoginInput } from '../../lib/schemas';
-import { loginAction } from '../actions/auth.actions';
-import { setAccessToken } from '../../lib/api';
-import { Button, Input } from '../../components/ui';
+import { registerSchema, type RegisterInput } from '../../../../lib/schemas';
+import { registerAction } from '../../../actions/auth.actions';
+import { Button, Input } from '../../../../components/ui';
 import { useState } from 'react';
 import { AlertCircle } from 'lucide-react';
-import { jwtDecode } from 'jwt-decode';
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
 
@@ -21,42 +19,27 @@ export default function LoginPage() {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<LoginInput>({
-    resolver: zodResolver(loginSchema),
+  } = useForm<RegisterInput>({
+    resolver: zodResolver(registerSchema),
   });
 
-  const loginMutation = useMutation({
-    mutationFn: loginAction,
+  const registerMutation = useMutation({
+    mutationFn: registerAction,
     onSuccess: (result) => {
       if (!result.success) {
         setError(result.error);
         return;
       }
-      setAccessToken(result.accessToken);
-      localStorage.setItem('refreshToken', result.refreshToken);
-      try {
-        const payload = jwtDecode<{ sub: string; email: string }>(
-          result.accessToken,
-        );
-        localStorage.setItem(
-          'user',
-          JSON.stringify({
-            id: payload.sub,
-            email: payload.email,
-            username: payload.email.split('@')[0],
-          }),
-        );
-      } catch {}
-      router.push('/');
+      router.push('/auth?registered=true');
     },
     onError: () => {
-      setError('Sign in failed. Please try again.');
+      setError('Registration failed. Please try again.');
     },
   });
 
-  const onSubmit = (data: LoginInput) => {
+  const onSubmit = (data: RegisterInput) => {
     setError(null);
-    loginMutation.mutate(data);
+    registerMutation.mutate(data);
   };
 
   return (
@@ -67,15 +50,15 @@ export default function LoginPage() {
             L
           </div>
           <h2 className="text-3xl font-bold tracking-tight text-slate-900">
-            Welcome back
+            Create your account
           </h2>
           <p className="mt-2 text-sm text-slate-500">
-            Don&apos;t have an account?{' '}
+            Already have an account?{' '}
             <Link
-              href="/auth/register"
+              href="/auth"
               className="font-semibold text-indigo-600 hover:text-indigo-500"
             >
-              Sign up for free
+              Sign in
             </Link>
           </p>
         </div>
@@ -89,10 +72,16 @@ export default function LoginPage() {
 
         <form className="space-y-5" onSubmit={handleSubmit(onSubmit)}>
           <Input
+            label="Display name"
+            type="text"
+            placeholder="John Doe"
+            error={errors.username?.message}
+            {...register('username')}
+          />
+          <Input
             label="Email address"
             type="email"
             placeholder="you@example.com"
-            autoComplete="email"
             error={errors.email?.message}
             {...register('email')}
           />
@@ -100,34 +89,30 @@ export default function LoginPage() {
             label="Password"
             type="password"
             placeholder="••••••••"
-            autoComplete="current-password"
+            helperText="Min. 8 characters with uppercase, lowercase, and special character"
             error={errors.password?.message}
             {...register('password')}
           />
 
-          <div className="flex items-center justify-between text-sm">
-            <label className="flex items-center gap-2 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-600"
-              />
-              <span className="text-slate-600">Remember me</span>
-            </label>
-            <a
-              href="#"
-              className="font-medium text-indigo-600 hover:text-indigo-500"
-            >
-              Forgot password?
-            </a>
-          </div>
-
           <Button
             type="submit"
             className="w-full"
-            isLoading={loginMutation.isPending}
+            isLoading={registerMutation.isPending}
           >
-            Sign in
+            Create account
           </Button>
+
+          <p className="text-center text-xs text-slate-400">
+            By signing up, you agree to our{' '}
+            <a href="#" className="underline hover:text-slate-600">
+              Terms of Service
+            </a>{' '}
+            and{' '}
+            <a href="#" className="underline hover:text-slate-600">
+              Privacy Policy
+            </a>
+            .
+          </p>
         </form>
       </div>
     </div>

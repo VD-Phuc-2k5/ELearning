@@ -7,12 +7,10 @@ export class SeedRoadmapPermissions1783000000005 implements MigrationInterface {
     await queryRunner.query(`
       INSERT INTO "permissions" ("code", "name", "description", "resource", "action")
       VALUES
-        ('roadmap:get',           'Xem roadmap',      'Xem danh sách và chi tiết roadmap', 'roadmap',           'get'),
-        ('roadmap:create',        'Tạo roadmap',      'Tạo roadmap mới',                   'roadmap',           'create'),
-        ('roadmap:update',        'Cập nhật roadmap', 'Chỉnh sửa roadmap',                 'roadmap',           'update'),
-        ('roadmap:delete',        'Xóa roadmap',      'Xóa roadmap',                       'roadmap',           'delete'),
-        ('quiz_attempt:get',      'Xem lịch sử thi',  'Xem lịch sử làm quiz',              'quiz_attempt',      'get'),
-        ('learning_progress:get', 'Xem tiến độ học',  'Xem tiến độ học tập',               'learning_progress', 'get')
+        ('roadmaps:get',    'Xem roadmap',      'Xem danh sách và chi tiết roadmap', 'roadmaps', 'get'),
+        ('roadmaps:create', 'Tạo roadmap',      'Tạo roadmap mới',                   'roadmaps', 'create'),
+        ('roadmaps:update', 'Cập nhật roadmap', 'Chỉnh sửa roadmap',                 'roadmaps', 'update'),
+        ('roadmaps:delete', 'Xóa roadmap',      'Xóa roadmap',                       'roadmaps', 'delete')
       ON CONFLICT ("code") DO NOTHING
     `);
 
@@ -21,7 +19,7 @@ export class SeedRoadmapPermissions1783000000005 implements MigrationInterface {
       SELECT r.id, p.id
       FROM "roles" r CROSS JOIN "permissions" p
       WHERE r.code = 'STUDENT'
-        AND p.code IN ('roadmap:get', 'quiz_attempt:get', 'learning_progress:get')
+        AND p.code IN ('roadmaps:get')
         AND NOT EXISTS (
           SELECT 1 FROM "role_permissions" rp WHERE rp.role_id = r.id AND rp.permission_id = p.id
         )
@@ -32,7 +30,7 @@ export class SeedRoadmapPermissions1783000000005 implements MigrationInterface {
       SELECT r.id, p.id
       FROM "roles" r CROSS JOIN "permissions" p
       WHERE r.code IN ('OWNER', 'ADMIN')
-        AND p.code IN ('roadmap:get', 'roadmap:create', 'roadmap:update', 'roadmap:delete', 'quiz_attempt:get', 'learning_progress:get')
+        AND p.code IN ('roadmaps:get', 'roadmaps:create', 'roadmaps:update', 'roadmaps:delete')
         AND NOT EXISTS (
           SELECT 1 FROM "role_permissions" rp WHERE rp.role_id = r.id AND rp.permission_id = p.id
         )
@@ -43,7 +41,7 @@ export class SeedRoadmapPermissions1783000000005 implements MigrationInterface {
       SELECT r.id, p.id
       FROM "roles" r CROSS JOIN "permissions" p
       WHERE r.code = 'INSTRUCTOR'
-        AND p.code IN ('roadmap:get', 'quiz_attempt:get', 'learning_progress:get')
+        AND p.code IN ('roadmaps:get')
         AND NOT EXISTS (
           SELECT 1 FROM "role_permissions" rp WHERE rp.role_id = r.id AND rp.permission_id = p.id
         )
@@ -53,7 +51,7 @@ export class SeedRoadmapPermissions1783000000005 implements MigrationInterface {
   public async down(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
       DELETE FROM "permissions"
-      WHERE code IN ('roadmap:get','roadmap:create','roadmap:update','roadmap:delete','quiz_attempt:get','learning_progress:get')
+      WHERE code IN ('roadmaps:get','roadmaps:create','roadmaps:update','roadmaps:delete')
     `);
   }
 }

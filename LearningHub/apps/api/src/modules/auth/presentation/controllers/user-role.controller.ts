@@ -67,8 +67,11 @@ export class UserRoleController {
       roleId: dto.roleId,
       assignedBy: currentUser.id,
     });
-    if (result.type === 'left') mapFailure(result.value as AuthFailures);
-    return toUserRoleResponse(result.value!.userRole);
+    if (result.type === 'left') {
+      mapFailure(result.value as AuthFailures);
+      return;
+    }
+    return toUserRoleResponse(result.value.userRole);
   }
 
   @Delete(':roleId')

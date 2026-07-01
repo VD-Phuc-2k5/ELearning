@@ -4,7 +4,7 @@ import {
   AuthRemoteDataSourceImpl,
   AuthRepositoryImpl,
 } from '@learning-hub/data';
-import type { RegisterParams } from '@learning-hub/domain';
+import type { RegisterParams, User } from '@learning-hub/domain';
 import {
   LoginUsecase,
   LogoutUsecase,
@@ -41,6 +41,24 @@ export async function loginAction(data: {
     };
   }
   return { success: false, error: result.value.message };
+}
+
+export async function getCurrentUser(): Promise<User | null> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get('accessToken')?.value;
+  if (!token) return null;
+  try {
+    const payload = JSON.parse(
+      Buffer.from(token.split('.')[1], 'base64').toString(),
+    );
+    return {
+      id: payload.sub ?? '',
+      email: payload.email ?? '',
+      username: payload.username ?? '',
+    };
+  } catch {
+    return null;
+  }
 }
 
 export async function logoutAction(): Promise<void> {

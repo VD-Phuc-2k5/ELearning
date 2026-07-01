@@ -47,7 +47,8 @@ export class UserRoleRepository implements IUserRoleRepository {
       where: { id: saved.id },
       relations: { user: true, role: true, assignedBy: true },
     });
-    return this.toDomain(loaded!);
+    if (!loaded) throw new Error('UserRole not found after save');
+    return this.toDomain(loaded);
   }
 
   async remove(userId: string, roleId: number): Promise<void> {
