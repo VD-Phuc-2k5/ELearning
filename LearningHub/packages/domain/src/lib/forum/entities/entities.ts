@@ -62,12 +62,25 @@ export interface CommentItem {
   readonly id: string;
   readonly postId: string;
   readonly authorId: string;
+  readonly authorName: string;
+  readonly authorAvatarUrl: string | null;
   readonly parentId: string | null;
   readonly depth: number;
   readonly content: string;
   readonly replyCount: number;
   readonly reactionCount: number;
   readonly createdAt: string;
+}
+
+export interface ReactionGroup {
+  emoji: string;
+  count: number;
+  reacted: boolean;
+}
+
+export interface GetReactionsResult {
+  groups: ReactionGroup[];
+  total: number;
 }
 
 export interface PaginatedResponse<T> {
@@ -123,6 +136,7 @@ export interface CreateCommentParams {
   postId: string;
   content: string;
   parentId?: string;
+  mentionIds?: string[];
 }
 
 export interface TogglePostReactionParams {
@@ -130,6 +144,21 @@ export interface TogglePostReactionParams {
   postId: string;
   emoji: string;
   add: boolean;
+}
+
+export interface ToggleCommentReactionParams {
+  forumId: string;
+  postId: string;
+  commentId: string;
+  emoji: string;
+  add: boolean;
+}
+
+export interface GetTargetReactionsParams {
+  targetType: 'post' | 'comment';
+  targetId: string;
+  forumId: string;
+  postId?: string;
 }
 
 export interface TogglePostBookmarkParams {
@@ -202,6 +231,18 @@ export interface UpdateCommentParams {
 
 export interface UploadImageResult {
   url: string;
+}
+
+export interface MemberSuggestion {
+  userId: string;
+  username: string;
+  avatarUrl: string | null;
+}
+
+export interface SearchMembersParams {
+  forumId: string;
+  query: string;
+  limit?: number;
 }
 
 export interface UpdateForumParams {

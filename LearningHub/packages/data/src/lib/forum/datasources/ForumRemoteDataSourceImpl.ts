@@ -9,13 +9,17 @@ import {
   ForumDetailResponse,
   ForumListItem,
   ForumTag,
+  GetReactionsResult,
   ListCommentsParams,
   ListForumPostsParams,
   ListForumsParams,
+  MemberSuggestion,
   PaginatedResponse,
   PostDetail,
   PostListItem,
+  SearchMembersParams,
   SetForumRulesParams,
+  ToggleCommentReactionParams,
   TogglePostBookmarkParams,
   TogglePostReactionParams,
   UpdateCommentParams,
@@ -208,6 +212,49 @@ export class ForumRemoteDataSourceImpl implements IForumRemoteDataSource {
     }
   }
 
+  async toggleCommentReaction(
+    params: ToggleCommentReactionParams,
+  ): Promise<void> {
+    try {
+      await this.api({
+        method: params.add ? 'POST' : 'DELETE',
+        url: `/forums/${params.forumId}/posts/${params.postId}/comments/${params.commentId}/reactions`,
+        data: { emoji: params.emoji },
+      });
+    } catch (e) {
+      return handleAxiosError(e);
+    }
+  }
+
+  async getPostReactions(
+    forumId: string,
+    postId: string,
+  ): Promise<GetReactionsResult> {
+    try {
+      const res = await this.api.get(
+        `/forums/${forumId}/posts/${postId}/reactions`,
+      );
+      return res.data;
+    } catch (e) {
+      return handleAxiosError(e);
+    }
+  }
+
+  async getCommentReactions(
+    forumId: string,
+    postId: string,
+    commentId: string,
+  ): Promise<GetReactionsResult> {
+    try {
+      const res = await this.api.get(
+        `/forums/${forumId}/posts/${postId}/comments/${commentId}/reactions`,
+      );
+      return res.data;
+    } catch (e) {
+      return handleAxiosError(e);
+    }
+  }
+
   async togglePostBookmark(params: TogglePostBookmarkParams): Promise<void> {
     try {
       await this.api({
@@ -366,5 +413,15 @@ export class ForumRemoteDataSourceImpl implements IForumRemoteDataSource {
     } catch (e) {
       return handleAxiosError(e);
     }
+  }
+
+  async searchMembers(
+    params: SearchMembersParams,
+  ): Promise<MemberSuggestion[]> {
+    const res = await this.api.get<MemberSuggestion[]>(
+      `/forums/${params.forumId}/members/search`,
+      { params: { q: params.query, limit: params.limit } },
+    );
+    return res.data;
   }
 }

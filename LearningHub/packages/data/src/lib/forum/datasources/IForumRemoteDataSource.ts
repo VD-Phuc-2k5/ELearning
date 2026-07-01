@@ -8,13 +8,17 @@ import {
   ForumTag,
   CreateTagParams,
   UpdateTagParams,
+  GetReactionsResult,
   ListCommentsParams,
   ListForumPostsParams,
   ListForumsParams,
+  MemberSuggestion,
   PaginatedResponse,
   PostDetail,
   PostListItem,
+  SearchMembersParams,
   SetForumRulesParams,
+  ToggleCommentReactionParams,
   TogglePostBookmarkParams,
   TogglePostReactionParams,
   UpdateCommentParams,
@@ -56,6 +60,17 @@ export interface IForumRemoteDataSource {
     commentId: string,
   ): Promise<void>;
   togglePostReaction(params: TogglePostReactionParams): Promise<void>;
+  toggleCommentReaction(params: ToggleCommentReactionParams): Promise<void>;
+  getPostReactions(
+    forumId: string,
+    postId: string,
+  ): Promise<GetReactionsResult>;
+  getCommentReactions(
+    forumId: string,
+    postId: string,
+    commentId: string,
+  ): Promise<GetReactionsResult>;
   togglePostBookmark(params: TogglePostBookmarkParams): Promise<void>;
   uploadImage(formData: FormData): Promise<UploadImageResult>;
+  searchMembers(params: SearchMembersParams): Promise<MemberSuggestion[]>;
 }

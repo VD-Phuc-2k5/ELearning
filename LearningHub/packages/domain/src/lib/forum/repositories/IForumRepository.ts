@@ -8,14 +8,19 @@ import {
   ForumDetailResponse,
   ForumListItem,
   ForumTag,
+  GetReactionsResult,
+  GetTargetReactionsParams,
   JoinForumParams,
   ListCommentsParams,
   ListForumPostsParams,
   ListForumsParams,
+  MemberSuggestion,
   PaginatedResponse,
   PostDetail,
   PostListItem,
+  SearchMembersParams,
   SetForumRulesParams,
+  ToggleCommentReactionParams,
   TogglePostBookmarkParams,
   TogglePostReactionParams,
   UpdateCommentParams,
@@ -68,8 +73,17 @@ export interface IForumRepository {
   togglePostReaction(
     params: TogglePostReactionParams,
   ): Promise<Either<Failure, void>>;
+  toggleCommentReaction(
+    params: ToggleCommentReactionParams,
+  ): Promise<Either<Failure, void>>;
+  getTargetReactions(
+    params: GetTargetReactionsParams,
+  ): Promise<Either<Failure, GetReactionsResult>>;
   togglePostBookmark(
     params: TogglePostBookmarkParams,
   ): Promise<Either<Failure, void>>;
   uploadImage(formData: FormData): Promise<Either<Failure, UploadImageResult>>;
+  searchMembers(
+    params: SearchMembersParams,
+  ): Promise<Either<Failure, MemberSuggestion[]>>;
 }

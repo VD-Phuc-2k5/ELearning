@@ -9,3 +9,4 @@ export * from './ListCommentsUsecase';
 export * from './CreateCommentUsecase';
 export * from './TogglePostReactionUsecase';
 export * from './TogglePostBookmarkUsecase';
+export * from './SearchMembersUsecase';

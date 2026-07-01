@@ -23,15 +23,20 @@ import {
   ForumDetailResponse,
   ForumListItem,
   ForumTag,
+  GetReactionsResult,
+  GetTargetReactionsParams,
   IForumRepository,
   JoinForumParams,
   ListCommentsParams,
   ListForumPostsParams,
   ListForumsParams,
+  MemberSuggestion,
   PaginatedResponse,
   PostDetail,
   PostListItem,
+  SearchMembersParams,
   SetForumRulesParams,
+  ToggleCommentReactionParams,
   TogglePostBookmarkParams,
   TogglePostReactionParams,
   UpdateCommentParams,
@@ -180,6 +185,38 @@ export class ForumRepositoryImpl implements IForumRepository {
     }
   }
 
+  async toggleCommentReaction(
+    params: ToggleCommentReactionParams,
+  ): Promise<Either<Failure, void>> {
+    try {
+      await this.dataSource.toggleCommentReaction(params);
+      return right(undefined);
+    } catch (e) {
+      return left(toFailure(e));
+    }
+  }
+
+  async getTargetReactions(
+    params: GetTargetReactionsParams,
+  ): Promise<Either<Failure, GetReactionsResult>> {
+    try {
+      const result =
+        params.targetType === 'post'
+          ? await this.dataSource.getPostReactions(
+              params.forumId,
+              params.targetId,
+            )
+          : await this.dataSource.getCommentReactions(
+              params.forumId,
+              params.postId!,
+              params.targetId,
+            );
+      return right(result);
+    } catch (e) {
+      return left(toFailure(e));
+    }
+  }
+
   async togglePostBookmark(
     params: TogglePostBookmarkParams,
   ): Promise<Either<Failure, void>> {
@@ -285,6 +322,16 @@ export class ForumRepositoryImpl implements IForumRepository {
   ): Promise<Either<Failure, UploadImageResult>> {
     try {
       return right(await this.dataSource.uploadImage(formData));
+    } catch (e) {
+      return left(toFailure(e));
+    }
+  }
+
+  async searchMembers(
+    params: SearchMembersParams,
+  ): Promise<Either<Failure, MemberSuggestion[]>> {
+    try {
+      return right(await this.dataSource.searchMembers(params));
     } catch (e) {
       return left(toFailure(e));
     }
