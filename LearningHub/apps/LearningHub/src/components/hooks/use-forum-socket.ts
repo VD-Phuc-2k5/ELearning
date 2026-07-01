@@ -33,13 +33,18 @@ export function useForumSocket({
       typeof window !== 'undefined'
         ? localStorage.getItem('accessToken')
         : null;
-    const socket = io('/forum', {
+    const socketUrl = (
+      process.env.NEXT_PUBLIC_NEST_API_URL ?? 'http://localhost:8080'
+    ).replace(/\/api\/?$/, '');
+    const socket = io(`${socketUrl}/forum`, {
       auth: { token: token ?? '' },
       transports: ['websocket'],
-      autoConnect: true,
+      autoConnect: false,
     });
+    const connectTimer = window.setTimeout(() => socket.connect(), 0);
     socketRef.current = socket;
     return () => {
+      window.clearTimeout(connectTimer);
       socket.disconnect();
       socketRef.current = null;
     };
