@@ -73,6 +73,9 @@
     }
   ],
   "targetDefaults": {
+    "lint": {
+      "dependsOn": ["typecheck"]
+    },
     "test": {
       "dependsOn": ["^build"]
     }
