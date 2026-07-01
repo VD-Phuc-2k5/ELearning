@@ -9,7 +9,12 @@ import { getBankDetail } from '../../actions/quiz.actions';
 import { EmptyState } from '../../../components/ui';
 import '@aejkatappaja/phantom-ui';
 
-const STATUS_BADGE: Record<string, { label: string; cls: string }> = {
+interface StatusBadge {
+  label: string;
+  cls: string;
+}
+
+const STATUS_BADGE: Record<string, StatusBadge> = {
   pass: { label: 'Pass', cls: 'bg-emerald-100 text-emerald-700' },
   fail: { label: 'Fail', cls: 'bg-red-100 text-red-700' },
   in_progress: { label: 'In Progress', cls: 'bg-amber-100 text-amber-700' },
@@ -30,17 +35,21 @@ export function RecentAttempts() {
   });
 
   const attempts = data?.data ?? [];
-  const uniqueBankIds = [...new Set(attempts.map((a) => a.questionBankId))];
+  const uniqueBankIds = [
+    ...new Set(attempts.map((a: any) => a.questionBankId as string)),
+  ];
 
   const { data: bankTitles = {} } = useQuery({
     queryKey: ['recent-bank-titles', uniqueBankIds],
     queryFn: async (): Promise<Record<string, string>> => {
       const banks = await Promise.all(
-        uniqueBankIds.map((id) => getBankDetail(id).catch(() => null)),
+        uniqueBankIds.map((id: any) =>
+          getBankDetail(id as string).catch(() => null),
+        ),
       );
       const map: Record<string, string> = {};
       banks.forEach((b, i) => {
-        if (b) map[uniqueBankIds[i]] = b.title;
+        if (b) map[uniqueBankIds[i] as string] = b.title;
       });
       return map;
     },
@@ -84,7 +93,7 @@ export function RecentAttempts() {
         />
       ) : (
         <div className="space-y-3">
-          {attempts.map((a) => {
+          {attempts.map((a: any) => {
             const badge = STATUS_BADGE[a.status] ?? STATUS_BADGE.fail;
             const pct =
               a.scorePercent !== null ? Math.round(a.scorePercent) : null;

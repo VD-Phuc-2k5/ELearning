@@ -22,7 +22,7 @@ export function CompletedRoadmaps() {
     queryFn: () => getMyRoadmapProgress(),
   });
 
-  const completed = (data ?? []).filter((p) => p.status === 'completed');
+  const completed = (data ?? []).filter((p: any) => p.status === 'completed');
 
   return (
     <div className="space-y-5">
@@ -49,7 +49,7 @@ export function CompletedRoadmaps() {
         />
       ) : (
         <div className="space-y-3">
-          {completed.map((p) => (
+          {completed.map((p: any) => (
             <div
               key={p.id}
               className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm"

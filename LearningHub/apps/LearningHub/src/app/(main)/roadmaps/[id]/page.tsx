@@ -63,7 +63,7 @@ export default function RoadmapDetailPage() {
   const totalQuestions = useMemo(
     () =>
       (data?.items ?? []).reduce(
-        (sum, i) => sum + (i.bankTotalQuestions ?? 0),
+        (sum: number, i: any) => sum + (i.bankTotalQuestions ?? 0),
         0,
       ),
     [data?.items],
@@ -188,7 +188,7 @@ export default function RoadmapDetailPage() {
         <h2 className="text-lg font-bold text-slate-900">
           Curriculum ({total} banks)
         </h2>
-        {items.map((item, idx) => {
+        {items.map((item: any, idx: number) => {
           const status = getBankStatus(item.questionBankId);
           const cfg = STATUS_CONFIG[status];
           return (

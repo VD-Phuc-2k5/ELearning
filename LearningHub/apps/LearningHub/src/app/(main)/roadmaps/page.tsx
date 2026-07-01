@@ -10,7 +10,7 @@ import '@aejkatappaja/phantom-ui';
 interface Roadmap {
   id: string;
   title: string;
-  description: string;
+  description: string | null;
   status: string;
 }
 

@@ -10,12 +10,12 @@ export class AddCascadeDeleteToRoadmapItem1782610764877
    * That table is created (with CASCADE DELETE on question_bank_id) in migration 1783000000001.
    * This migration is therefore a no-op when running fresh.
    */
-  public async up(_queryRunner: QueryRunner): Promise<void> {
+  public async up(_: QueryRunner): Promise<void> {
     // no-op: roadmap_items.question_bank_id FK is created with CASCADE DELETE
     // directly in 1783000000001-CreateRoadmapTables
   }
 
-  public async down(_queryRunner: QueryRunner): Promise<void> {
+  public async down(_: QueryRunner): Promise<void> {
     // no-op
   }
 }

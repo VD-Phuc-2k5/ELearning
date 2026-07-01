@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { getBanks } from '../actions/quiz.actions';
 import type { QuestionBank } from '@learning-hub/domain';
 import { getMyRoadmapProgress } from '../actions/roadmap.actions';
+import { useCurrentUser } from '../../components/hooks/use-current-user';
 import { StatCard } from './components/stat-card';
 import { CompletedRoadmaps } from './components/completed-roadmaps';
 import { RecentAttempts } from './components/recent-attempts';
@@ -18,17 +19,26 @@ import {
 import Link from 'next/link';
 import { Button } from '../../components/ui';
 
+function safeDate(date: string | null | undefined): string {
+  if (!date) return '';
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return '';
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
 export default function DashboardPage() {
+  const { user } = useCurrentUser();
   const { data: myBanks } = useQuery({
-    queryKey: ['my-banks-stats'],
-    queryFn: () => getBanks({ limit: 3 }),
+    queryKey: ['my-banks-stats', user?.id],
+    queryFn: () => getBanks({ limit: 3, uploaderId: user?.id ?? '' }),
+    enabled: !!user,
   });
   const { data: myProgress } = useQuery({
     queryKey: ['my-roadmap-progress'],
     queryFn: () => getMyRoadmapProgress(),
   });
   const inProgressRoadmap = (myProgress ?? []).find(
-    (p) => p.status === 'in_progress',
+    (p: any) => p.status === 'in_progress',
   );
 
   return (
@@ -140,10 +150,7 @@ export default function DashboardPage() {
                     </h4>
                     <p className="text-xs text-slate-400 mt-0.5">
                       {bank.totalQuestions} questions · Updated{' '}
-                      {new Date(bank.updatedAt).toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                      })}
+                      {safeDate(bank.updatedAt)}
                     </p>
                   </div>
                   <Link href={`/my-banks/${bank.id}`}>

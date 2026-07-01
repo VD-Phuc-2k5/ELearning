@@ -56,7 +56,7 @@ export default function ManageRoadmapsPage() {
         </div>
       ) : (
         <div className="space-y-3">
-          {data.data.map((r) => (
+          {data.data.map((r: any) => (
             <div
               key={r.id}
               className="flex items-center gap-4 p-4 rounded-2xl border border-slate-100 bg-white shadow-sm"
