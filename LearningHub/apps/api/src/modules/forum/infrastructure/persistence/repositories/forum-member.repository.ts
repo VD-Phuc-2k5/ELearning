@@ -6,9 +6,11 @@ import {
   CreateMemberInput,
   IForumMemberRepository,
   MemberListPage,
+  MemberSearchResult,
 } from '../../../domain/repositories/forum-member.repository.interface';
 import type { ForumMemberRole } from '../../../domain/entities/forum.domain';
 import type { ForumMemberDomain } from '../../../domain/entities/forum-member.domain';
+import { UserEntity } from '../../../../auth/infrastructure/persistence/entities/user.entity';
 
 @Injectable()
 export class ForumMemberRepository implements IForumMemberRepository {
@@ -67,6 +69,27 @@ export class ForumMemberRepository implements IForumMemberRepository {
       .getManyAndCount();
 
     return { data: entities.map(this.toDomain.bind(this)), total };
+  }
+
+  async searchByName(
+    forumId: string,
+    keyword: string,
+    limit = 5,
+  ): Promise<MemberSearchResult[]> {
+    const rows = await this.repo
+      .createQueryBuilder('m')
+      .leftJoin(UserEntity, 'u', 'u.id = m.userId')
+      .select(['m.userId', 'u.username', 'u.avatarUrl'])
+      .where('m.forumId = :forumId', { forumId })
+      .andWhere('u.username ILIKE :kw', { kw: `%${keyword}%` })
+      .orderBy('u.username', 'ASC')
+      .limit(limit)
+      .getRawMany();
+    return rows.map((row: any) => ({
+      userId: row.m_user_id ?? row.userId,
+      username: row.u_username ?? row.username,
+      avatarUrl: (row.u_avatarUrl ?? row.avatarUrl) as string | null,
+    }));
   }
 
   async updateRole(

@@ -20,6 +20,8 @@ import {
   FORUM_MEMBER_REPOSITORY,
   IForumMemberRepository,
 } from '../../domain/repositories/forum-member.repository.interface';
+import { FORUM_GATEWAY, IForumGateway } from '../interfaces/i-forum-gateway';
+import { NotificationService } from '../services/notification.service';
 import { isAllowedEmoji } from '../../domain/constants/allowed-emojis';
 import type { ReactionTargetType } from '../../domain/entities/forum-reaction.domain';
 
@@ -39,6 +41,9 @@ export class ToggleReactionUseCase {
     private readonly commentRepo: IForumCommentRepository,
     @Inject(FORUM_MEMBER_REPOSITORY)
     private readonly memberRepo: IForumMemberRepository,
+    @Inject(FORUM_GATEWAY)
+    private readonly gateway: IForumGateway,
+    private readonly notificationService: NotificationService,
   ) {}
 
   async execute(
@@ -55,12 +60,18 @@ export class ToggleReactionUseCase {
     const member = await this.memberRepo.findByForumAndUser(forumId, userId);
     if (!member) throw new BadRequestException('Only forum members can react');
 
+    let postId: string;
+    let contentAuthorId: string;
     if (targetType === 'post') {
       const post = await this.postRepo.findByIdAndForum(targetId, forumId);
       if (!post) throw new NotFoundException('Post not found');
+      postId = targetId;
+      contentAuthorId = post.authorId;
     } else {
       const comment = await this.commentRepo.findById(targetId);
       if (!comment) throw new NotFoundException('Comment not found');
+      postId = comment.postId;
+      contentAuthorId = comment.authorId;
     }
 
     const existing = await this.reactionRepo.findByTargetAndUser(
@@ -77,6 +88,10 @@ export class ToggleReactionUseCase {
       } else {
         await this.commentRepo.incrementReactionCount(targetId, -1);
       }
+      this.gateway.emitReactionUpdate(forumId, postId, {
+        targetType,
+        targetId,
+      });
       return { active: false, emoji: null };
     }
 
@@ -96,6 +111,18 @@ export class ToggleReactionUseCase {
       await this.postRepo.incrementReactionCount(targetId, 1);
     } else {
       await this.commentRepo.incrementReactionCount(targetId, 1);
+    }
+    this.gateway.emitReactionUpdate(forumId, postId, { targetType, targetId });
+    if (contentAuthorId !== userId) {
+      this.notificationService
+        .sendNotification({
+          recipientId: contentAuthorId,
+          actorId: userId,
+          type: 'reaction',
+          targetType,
+          targetId,
+        })
+        .catch(() => undefined);
     }
     return { active: true, emoji };
   }

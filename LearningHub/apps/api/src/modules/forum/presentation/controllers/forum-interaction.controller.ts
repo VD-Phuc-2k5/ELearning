@@ -16,6 +16,7 @@ import {
   ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
+import { GetReactionsUseCase } from '../../application/use-cases/get-reactions.use-case';
 import { ToggleReactionUseCase } from '../../application/use-cases/toggle-reaction.use-case';
 import { ToggleBookmarkUseCase } from '../../application/use-cases/toggle-bookmark.use-case';
 import { GetBookmarksUseCase } from '../../application/use-cases/get-bookmarks.use-case';
@@ -32,6 +33,7 @@ export class ForumInteractionController {
     private readonly toggleReactionUseCase: ToggleReactionUseCase,
     private readonly toggleBookmarkUseCase: ToggleBookmarkUseCase,
     private readonly getBookmarksUseCase: GetBookmarksUseCase,
+    private readonly getReactionsUseCase: GetReactionsUseCase,
   ) {}
 
   @Post('forums/:forumId/posts/:postId/reactions')
@@ -57,16 +59,32 @@ export class ForumInteractionController {
   removePostReaction(
     @Param('forumId') forumId: string,
     @Param('postId') postId: string,
+    @Body() dto: ToggleReactionDto,
     @Request() req: AuthReq,
   ) {
-    const emoji = '';
     return this.toggleReactionUseCase.execute(
       forumId,
       'post' as ReactionTargetType,
       postId,
       req.user.id,
-      emoji,
+      dto.emoji,
       false,
+    );
+  }
+
+  @Get('forums/:forumId/posts/:postId/reactions')
+  @ApiOperation({
+    summary: 'Danh sách reactions của bài viết (theo nhóm emoji)',
+  })
+  getPostReactions(
+    @Param('forumId') forumId: string,
+    @Param('postId') postId: string,
+    @Request() req: AuthReq,
+  ) {
+    return this.getReactionsUseCase.execute(
+      'post' as ReactionTargetType,
+      postId,
+      req.user.id,
     );
   }
 
@@ -88,20 +106,36 @@ export class ForumInteractionController {
     );
   }
 
+  @Get('forums/:forumId/posts/:postId/comments/:commentId/reactions')
+  @ApiOperation({
+    summary: 'Danh sách reactions của bình luận (theo nhóm emoji)',
+  })
+  getCommentReactions(
+    @Param('forumId') forumId: string,
+    @Param('commentId') commentId: string,
+    @Request() req: AuthReq,
+  ) {
+    return this.getReactionsUseCase.execute(
+      'comment' as ReactionTargetType,
+      commentId,
+      req.user.id,
+    );
+  }
+
   @Delete('forums/:forumId/posts/:postId/comments/:commentId/reactions')
   @ApiOperation({ summary: 'Bỏ reaction cho bình luận' })
   removeCommentReaction(
     @Param('forumId') forumId: string,
     @Param('commentId') commentId: string,
+    @Body() dto: ToggleReactionDto,
     @Request() req: AuthReq,
   ) {
-    const emoji = '';
     return this.toggleReactionUseCase.execute(
       forumId,
       'comment' as ReactionTargetType,
       commentId,
       req.user.id,
-      emoji,
+      dto.emoji,
       false,
     );
   }

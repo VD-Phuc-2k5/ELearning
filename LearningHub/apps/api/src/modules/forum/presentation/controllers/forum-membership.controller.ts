@@ -29,6 +29,7 @@ import { CreateInviteUseCase } from '../../application/use-cases/create-invite.u
 import { GetInvitesUseCase } from '../../application/use-cases/get-invites.use-case';
 import { RevokeInviteUseCase } from '../../application/use-cases/revoke-invite.use-case';
 import { AcceptInviteUseCase } from '../../application/use-cases/accept-invite.use-case';
+import { SearchMembersUseCase } from '../../application/use-cases/search-members.use-case';
 import {
   CreateInviteDto,
   CreateJoinRequestDto,
@@ -54,7 +55,20 @@ export class ForumMembershipController {
     private readonly getInvitesUseCase: GetInvitesUseCase,
     private readonly revokeInviteUseCase: RevokeInviteUseCase,
     private readonly acceptInviteUseCase: AcceptInviteUseCase,
+    private readonly searchMembersUseCase: SearchMembersUseCase,
   ) {}
+
+  @Get('forums/:id/members/search')
+  @ApiOperation({ summary: 'Tìm kiếm thành viên để @mention' })
+  @ApiQuery({ name: 'q', required: true })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  searchMembers(
+    @Param('id') id: string,
+    @Query('q') q: string,
+    @Query('limit') limit?: number,
+  ) {
+    return this.searchMembersUseCase.execute(id, q, limit);
+  }
 
   @Post('forums/:id/join')
   @ApiOperation({ summary: 'Tham gia diễn đàn hoặc tạo yêu cầu tham gia' })

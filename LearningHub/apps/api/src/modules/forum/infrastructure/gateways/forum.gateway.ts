@@ -4,11 +4,11 @@ import {
   MessageBody,
   OnGatewayConnection,
   OnGatewayDisconnect,
+  OnGatewayInit,
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
-import { Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { IForumGateway } from '../../application/interfaces/i-forum-gateway';
 
@@ -21,33 +21,38 @@ interface AuthSocket extends Socket {
   cors: { origin: true, credentials: true },
 })
 export class ForumGateway
-  implements OnGatewayConnection, OnGatewayDisconnect, IForumGateway
+  implements
+    OnGatewayInit,
+    OnGatewayConnection,
+    OnGatewayDisconnect,
+    IForumGateway
 {
-  private readonly logger = new Logger(ForumGateway.name);
-
   @WebSocketServer()
   server!: Server;
 
   constructor(private readonly jwt: JwtService) {}
 
-  async handleConnection(client: AuthSocket): Promise<void> {
-    try {
-      const token = client.handshake.auth?.token as string | undefined;
-      if (!token) {
-        client.disconnect(true);
-        return;
+  afterInit(server: Server): void {
+    server.use((socket, next) => {
+      try {
+        const token = socket.handshake.auth?.token as string | undefined;
+        if (!token) {
+          return next(new Error('Missing token'));
+        }
+        const payload = this.jwt.verify(token) as { sub?: string };
+        if (!payload.sub) {
+          return next(new Error('Invalid token payload'));
+        }
+        (socket as AuthSocket).userId = payload.sub;
+        next();
+      } catch (err) {
+        next(err instanceof Error ? err : new Error('Auth failed'));
       }
-      const payload = this.jwt.verify(token) as { sub?: string };
-      if (!payload.sub) {
-        client.disconnect(true);
-        return;
-      }
-      client.userId = payload.sub;
-      client.join(`user:${client.userId}`);
-    } catch (err) {
-      this.logger.warn(`Socket auth failed: ${(err as Error).message}`);
-      client.disconnect(true);
-    }
+    });
+  }
+
+  handleConnection(client: AuthSocket): void {
+    client.join(`user:${client.userId}`);
   }
 
   handleDisconnect(client: AuthSocket): void {
@@ -96,12 +101,18 @@ export class ForumGateway
     this.server?.to(`forum:${forumId}`).emit('post:new', payload);
   }
 
-  emitCommentNew(postId: string, payload: unknown): void {
-    this.server?.to(`post:${postId}`).emit('comment:new', payload);
+  emitCommentNew(forumId: string, postId: string, payload: unknown): void {
+    this.server
+      ?.to(`post:${postId}`)
+      .to(`forum:${forumId}`)
+      .emit('comment:new', payload);
   }
 
-  emitReactionUpdate(postId: string, payload: unknown): void {
-    this.server?.to(`post:${postId}`).emit('reaction:update', payload);
+  emitReactionUpdate(forumId: string, postId: string, payload: unknown): void {
+    this.server
+      ?.to(`post:${postId}`)
+      .to(`forum:${forumId}`)
+      .emit('reaction:update', payload);
   }
 
   emitPollUpdate(postId: string, payload: unknown): void {

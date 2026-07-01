@@ -4,6 +4,8 @@ export interface ForumCommentDomain {
   id: string;
   postId: string;
   authorId: string;
+  authorName: string;
+  authorAvatarUrl: string | null;
   parentId: string | null;
   depth: number;
   content: string;

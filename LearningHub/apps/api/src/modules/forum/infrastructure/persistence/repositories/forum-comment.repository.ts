@@ -25,6 +25,8 @@ export class ForumCommentRepository implements IForumCommentRepository {
       id: e.id,
       postId: e.postId,
       authorId: e.authorId,
+      authorName: e.author?.username ?? 'Unknown',
+      authorAvatarUrl: e.author?.avatarUrl ?? null,
       parentId: e.parentId,
       depth: e.depth,
       content: e.content,
@@ -46,11 +48,19 @@ export class ForumCommentRepository implements IForumCommentRepository {
       content: input.content,
       status: 'published',
     });
-    return this.toDomain(await this.repo.save(entity));
+    const saved = await this.repo.save(entity);
+    const loaded = await this.repo.findOneOrFail({
+      where: { id: saved.id },
+      relations: { author: true },
+    });
+    return this.toDomain(loaded);
   }
 
   async findById(id: string): Promise<ForumCommentDomain | null> {
-    const e = await this.repo.findOne({ where: { id } });
+    const e = await this.repo.findOne({
+      where: { id },
+      relations: { author: true },
+    });
     return e ? this.toDomain(e) : null;
   }
 
@@ -58,7 +68,10 @@ export class ForumCommentRepository implements IForumCommentRepository {
     id: string,
     postId: string,
   ): Promise<ForumCommentDomain | null> {
-    const e = await this.repo.findOne({ where: { id, postId } });
+    const e = await this.repo.findOne({
+      where: { id, postId },
+      relations: { author: true },
+    });
     return e ? this.toDomain(e) : null;
   }
 
@@ -66,6 +79,7 @@ export class ForumCommentRepository implements IForumCommentRepository {
     const { postId, page = 1, limit = 50 } = input;
     const qb = this.repo
       .createQueryBuilder('c')
+      .leftJoinAndSelect('c.author', 'author')
       .where('c.postId = :postId', { postId })
       .andWhere('c.status = :status', { status: 'published' })
       .orderBy('c.depth', 'ASC')
@@ -79,13 +93,19 @@ export class ForumCommentRepository implements IForumCommentRepository {
 
   async update(id: string, content: string): Promise<ForumCommentDomain> {
     await this.repo.update(id, { content });
-    const updated = await this.repo.findOneOrFail({ where: { id } });
+    const updated = await this.repo.findOneOrFail({
+      where: { id },
+      relations: { author: true },
+    });
     return this.toDomain(updated);
   }
 
   async updateStatus(id: string, status: string): Promise<ForumCommentDomain> {
     await this.repo.update(id, { status });
-    const updated = await this.repo.findOneOrFail({ where: { id } });
+    const updated = await this.repo.findOneOrFail({
+      where: { id },
+      relations: { author: true },
+    });
     return this.toDomain(updated);
   }
 

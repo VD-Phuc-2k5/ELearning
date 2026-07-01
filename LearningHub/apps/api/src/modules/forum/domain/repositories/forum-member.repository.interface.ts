@@ -12,6 +12,12 @@ export interface MemberListPage {
   total: number;
 }
 
+export interface MemberSearchResult {
+  userId: string;
+  username: string;
+  avatarUrl: string | null;
+}
+
 export interface IForumMemberRepository {
   create(input: CreateMemberInput): Promise<ForumMemberDomain>;
   findById(id: string): Promise<ForumMemberDomain | null>;
@@ -25,6 +31,11 @@ export interface IForumMemberRepository {
     limit?: number,
     role?: ForumMemberRole,
   ): Promise<MemberListPage>;
+  searchByName(
+    forumId: string,
+    keyword: string,
+    limit?: number,
+  ): Promise<MemberSearchResult[]>;
   updateRole(id: string, role: ForumMemberRole): Promise<ForumMemberDomain>;
   delete(id: string): Promise<void>;
   deleteByForumAndUser(forumId: string, userId: string): Promise<void>;

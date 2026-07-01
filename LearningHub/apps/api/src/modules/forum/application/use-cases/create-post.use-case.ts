@@ -13,6 +13,10 @@ import {
   IForumMemberRepository,
 } from '../../domain/repositories/forum-member.repository.interface';
 import {
+  FORUM_MENTION_REPOSITORY,
+  IForumMentionRepository,
+} from '../../domain/repositories/forum-notification.repository.interface';
+import {
   FORUM_POST_REPOSITORY,
   IForumPostRepository,
 } from '../../domain/repositories/forum-post.repository.interface';
@@ -21,11 +25,15 @@ import {
   IForumPollRepository,
 } from '../../domain/repositories/forum-poll.repository.interface';
 import { FORUM_GATEWAY, IForumGateway } from '../interfaces/i-forum-gateway';
+import { NotificationService } from '../services/notification.service';
 import type {
   ForumPostDomain,
   PostType,
 } from '../../domain/entities/forum-post.domain';
-import { validateTiptapDoc } from '../helpers/extract-mentions';
+import {
+  validateTiptapDoc,
+  extractMentions,
+} from '../helpers/extract-mentions';
 
 export interface CreatePostParams {
   title: string;
@@ -55,6 +63,9 @@ export class CreatePostUseCase {
     private readonly pollRepo: IForumPollRepository,
     @Inject(FORUM_GATEWAY)
     private readonly gateway: IForumGateway,
+    @Inject(FORUM_MENTION_REPOSITORY)
+    private readonly mentionRepo: IForumMentionRepository,
+    private readonly notificationService: NotificationService,
   ) {}
 
   async execute(
@@ -104,6 +115,28 @@ export class CreatePostUseCase {
 
     await this.forumRepo.incrementPostCount(forumId, 1);
     this.gateway.emitPostNew(forumId, { postId: post.id });
+
+    if (params.content) {
+      const mentionedIds = extractMentions(params.content).filter(
+        (id) => id !== authorId,
+      );
+      for (const mentionedUserId of mentionedIds) {
+        await this.mentionRepo.create({
+          postId: post.id,
+          mentionedUserId,
+        });
+        this.notificationService
+          .sendNotification({
+            recipientId: mentionedUserId,
+            actorId: authorId,
+            type: 'mention',
+            targetType: 'post',
+            targetId: post.id,
+          })
+          .catch(() => undefined);
+      }
+    }
+
     return post;
   }
 }

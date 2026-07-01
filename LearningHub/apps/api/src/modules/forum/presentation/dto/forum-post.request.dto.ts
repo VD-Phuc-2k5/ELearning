@@ -64,6 +64,11 @@ export class UpdatePostDto {
 export class CreateCommentDto {
   @ApiProperty() @IsString() content!: string;
   @ApiPropertyOptional() @IsOptional() @IsUUID() parentId?: string;
+  @ApiPropertyOptional({ type: [String] })
+  @IsOptional()
+  @IsArray()
+  @IsUUID('4', { each: true })
+  mentionIds?: string[];
 }
 
 export class UpdateCommentDto {

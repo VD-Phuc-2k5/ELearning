@@ -18,11 +18,17 @@ import {
   ICloudinaryService,
   CLOUDINARY_SERVICE,
 } from '../interfaces/i-cloudinary.service';
+import {
+  FORUM_MENTION_REPOSITORY,
+  IForumMentionRepository,
+} from '../../domain/repositories/forum-notification.repository.interface';
+import { NotificationService } from '../services/notification.service';
 import type { ForumPostDomain } from '../../domain/entities/forum-post.domain';
 import {
   validateTiptapDoc,
   extractCloudinaryUrls,
   extractPublicIdFromUrl,
+  extractMentions,
 } from '../helpers/extract-mentions';
 
 @Injectable()
@@ -34,6 +40,9 @@ export class UpdatePostUseCase {
     private readonly memberRepo: IForumMemberRepository,
     @Inject(CLOUDINARY_SERVICE)
     private readonly cloudinary: ICloudinaryService,
+    @Inject(FORUM_MENTION_REPOSITORY)
+    private readonly mentionRepo: IForumMentionRepository,
+    private readonly notificationService: NotificationService,
   ) {}
 
   async execute(
@@ -77,6 +86,31 @@ export class UpdatePostUseCase {
       }
     }
 
-    return this.postRepo.update(postId, input);
+    const updated = await this.postRepo.update(postId, input);
+
+    if (input.content) {
+      const oldMentions = extractMentions(post.content);
+      const newMentions = extractMentions(input.content).filter(
+        (id) => id !== userId,
+      );
+      const added = newMentions.filter((id) => !oldMentions.includes(id));
+      for (const mentionedUserId of added) {
+        await this.mentionRepo.create({
+          postId,
+          mentionedUserId,
+        });
+        this.notificationService
+          .sendNotification({
+            recipientId: mentionedUserId,
+            actorId: userId,
+            type: 'mention',
+            targetType: 'post',
+            targetId: postId,
+          })
+          .catch(() => undefined);
+      }
+    }
+
+    return updated;
   }
 }

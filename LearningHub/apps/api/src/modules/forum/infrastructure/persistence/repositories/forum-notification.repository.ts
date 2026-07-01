@@ -23,6 +23,8 @@ export class ForumNotificationRepository
       id: e.id,
       recipientId: e.recipientId,
       actorId: e.actorId,
+      actorName: e.actor?.username ?? null,
+      actorAvatarUrl: e.actor?.avatarUrl ?? null,
       type: e.type,
       targetType: e.targetType,
       targetId: e.targetId,
@@ -55,6 +57,7 @@ export class ForumNotificationRepository
     if (unreadOnly) where.isRead = false;
     const [entities, total] = await this.repo.findAndCount({
       where,
+      relations: { actor: true },
       skip: (page - 1) * limit,
       take: limit,
       order: { createdAt: 'DESC' },

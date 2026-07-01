@@ -81,6 +81,7 @@ import { ApproveJoinRequestUseCase } from './application/use-cases/approve-join-
 import { RejectJoinRequestUseCase } from './application/use-cases/reject-join-request.use-case';
 import { CreateInviteUseCase } from './application/use-cases/create-invite.use-case';
 import { AcceptInviteUseCase } from './application/use-cases/accept-invite.use-case';
+import { SearchMembersUseCase } from './application/use-cases/search-members.use-case';
 import { GetInvitesUseCase } from './application/use-cases/get-invites.use-case';
 import { RevokeInviteUseCase } from './application/use-cases/revoke-invite.use-case';
 import { CreatePostUseCase } from './application/use-cases/create-post.use-case';
@@ -97,6 +98,7 @@ import { DeleteCommentUseCase } from './application/use-cases/delete-comment.use
 import { VotePollUseCase } from './application/use-cases/vote-poll.use-case';
 import { RemovePollVoteUseCase } from './application/use-cases/remove-poll-vote.use-case';
 import { UploadForumImageUseCase } from './application/use-cases/upload-forum-image.use-case';
+import { GetReactionsUseCase } from './application/use-cases/get-reactions.use-case';
 import { ToggleReactionUseCase } from './application/use-cases/toggle-reaction.use-case';
 import { SearchForumUseCase } from './application/use-cases/search-forum.use-case';
 import { ListTagsUseCase } from './application/use-cases/list-tags.use-case';
@@ -200,6 +202,7 @@ const useCases = [
   AcceptInviteUseCase,
   GetInvitesUseCase,
   RevokeInviteUseCase,
+  SearchMembersUseCase,
   CreatePostUseCase,
   GetPostsUseCase,
   GetPostDetailUseCase,
@@ -214,6 +217,7 @@ const useCases = [
   VotePollUseCase,
   RemovePollVoteUseCase,
   UploadForumImageUseCase,
+  GetReactionsUseCase,
   ToggleReactionUseCase,
   ToggleBookmarkUseCase,
   GetBookmarksUseCase,

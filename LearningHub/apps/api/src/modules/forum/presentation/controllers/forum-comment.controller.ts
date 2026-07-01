@@ -52,6 +52,7 @@ export class ForumCommentController {
       postId,
       dto.content,
       dto.parentId,
+      dto.mentionIds,
       req.user.id,
     );
   }
