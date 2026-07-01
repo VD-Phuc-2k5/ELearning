@@ -17,6 +17,7 @@ import {
   TogglePostReactionUsecase,
   TogglePostBookmarkUsecase,
 } from '@learning-hub/domain';
+import { NetworkFailure } from '@learning-hub/core';
 import type {
   ForumListItem,
   ForumDetailResponse,
@@ -48,11 +49,12 @@ export async function listForums(params?: {
 
 export async function getForumDetail(
   slug: string,
-): Promise<ForumDetailResponse | undefined> {
+): Promise<ForumDetailResponse | null> {
   const token = await getToken();
   const repo = new ForumRepositoryImpl(new ForumRemoteDataSourceImpl(), token);
   const result = await new GetForumDetailUsecase(repo).execute(slug);
   if (result.type === 'right') return result.value;
+  if (result.value instanceof NetworkFailure) return null;
   throw new Error(result.value.message);
 }
 
