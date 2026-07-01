@@ -15,6 +15,7 @@ const nextConfig = {
   turbopack: {
     root: path.resolve(__dirname, '../..'),
     resolveAlias: {
+      '@/*': './src/*',
       '@learning-hub/core': '../../packages/core/src/index.ts',
       '@learning-hub/domain': '../../packages/domain/src/index.ts',
       '@learning-hub/data': '../../packages/data/src/index.ts',
