@@ -43,7 +43,7 @@ export async function listForums(params?: {
   const repo = new ForumRepositoryImpl(new ForumRemoteDataSourceImpl(), token);
   const result = await new ListForumsUsecase(repo).execute(params ?? {});
   if (result.type === 'right') return result.value;
-  throw new Error(result.value.message);
+  return { data: [], total: 0 };
 }
 
 export async function getForumDetail(
@@ -149,8 +149,9 @@ export async function createPost(
   console.log(
     '[createPost SERVER ACTION] image attrs:',
     JSON.stringify(
-      (input.content as any)?.content?.find?.((c: any) => c.type === 'image')
-        ?.attrs,
+      (input.content as any)?.content?.find?.(
+        (c: Record<string, unknown>) => c.type === 'image',
+      )?.attrs,
     ),
   );
   const result = await new CreatePostUsecase(repo).execute({

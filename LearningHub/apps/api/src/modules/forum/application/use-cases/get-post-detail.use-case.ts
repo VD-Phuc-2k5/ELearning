@@ -7,11 +7,6 @@ import {
   FORUM_POLL_REPOSITORY,
   IForumPollRepository,
 } from '../../domain/repositories/forum-poll.repository.interface';
-import {
-  FORUM_POST_ATTACHMENT_REPOSITORY,
-  IForumPostAttachmentRepository,
-} from '../../domain/repositories/forum-draft.repository.interface';
-import type { ForumPostAttachmentDomain } from '../../domain/entities/forum-draft.domain';
 import type {
   ForumPollDomain,
   ForumPollOptionDomain,
@@ -21,7 +16,6 @@ import type { ForumPostDomain } from '../../domain/entities/forum-post.domain';
 export interface PostDetailResult {
   post: ForumPostDomain;
   poll: { poll: ForumPollDomain; options: ForumPollOptionDomain[] } | null;
-  attachments: ForumPostAttachmentDomain[];
 }
 
 @Injectable()
@@ -31,8 +25,6 @@ export class GetPostDetailUseCase {
     private readonly postRepo: IForumPostRepository,
     @Inject(FORUM_POLL_REPOSITORY)
     private readonly pollRepo: IForumPollRepository,
-    @Inject(FORUM_POST_ATTACHMENT_REPOSITORY)
-    private readonly attachmentRepo: IForumPostAttachmentRepository,
   ) {}
 
   async execute(
@@ -55,8 +47,7 @@ export class GetPostDetailUseCase {
             options: await this.pollRepo.findOptions(poll.id),
           }
         : null;
-    const attachments = await this.attachmentRepo.findByPost(postId);
 
-    return { post, poll: pollDetail, attachments };
+    return { post, poll: pollDetail };
   }
 }

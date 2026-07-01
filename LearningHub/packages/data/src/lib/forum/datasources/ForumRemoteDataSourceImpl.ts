@@ -71,12 +71,17 @@ export class ForumRemoteDataSourceImpl implements IForumRemoteDataSource {
     try {
       const res = await this.api.get(`/forums/${slug}`);
       return res.data;
-    } catch (e: any) {
+    } catch (e: unknown) {
+      const err = e as {
+        code?: string;
+        message?: string;
+        config?: { url?: string };
+      };
       console.error(
         '[getForumDetail] ERROR:',
-        e?.code,
-        e?.message,
-        e?.config?.url,
+        err?.code,
+        err?.message,
+        err?.config?.url,
       );
       return handleAxiosError(e);
     }
@@ -239,12 +244,14 @@ export class ForumRemoteDataSourceImpl implements IForumRemoteDataSource {
               question: pollData.poll.question,
               isMultipleChoice: pollData.poll.isMultipleChoice,
               endsAt: pollData.poll.endsAt,
-              options: (pollData.options ?? []).map((o: any) => ({
-                id: o.id,
-                content: o.content,
-                voteCount: o.voteCount,
-                votedByMe: o.votedByMe,
-              })),
+              options: (pollData.options ?? []).map(
+                (o: Record<string, unknown>) => ({
+                  id: o.id,
+                  content: o.content,
+                  voteCount: o.voteCount,
+                  votedByMe: o.votedByMe,
+                }),
+              ),
             }
           : null,
         author: post.authorId

@@ -9,7 +9,6 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { UserEntity } from '../../../../auth/infrastructure/persistence/entities/user.entity';
-import { ForumCategoryEntity } from './forum-category.entity';
 
 @Entity('forums')
 export class ForumEntity {
@@ -46,13 +45,6 @@ export class ForumEntity {
   @ManyToOne(() => UserEntity)
   @JoinColumn({ name: 'owner_id' })
   owner!: UserEntity;
-
-  @Column({ name: 'category_id', nullable: true })
-  categoryId!: number | null;
-
-  @ManyToOne(() => ForumCategoryEntity)
-  @JoinColumn({ name: 'category_id' })
-  category!: ForumCategoryEntity | null;
 
   @Column({ name: 'is_locked', default: false })
   isLocked!: boolean;

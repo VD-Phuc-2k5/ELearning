@@ -60,7 +60,7 @@ export default function ForumListPage() {
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {data.data.map((forum) => (
+          {data.data.map((forum: any) => (
             <ForumCard key={forum.id} forum={forum} />
           ))}
         </div>
@@ -137,12 +137,8 @@ function ForumCard({ forum }: { forum: ForumListItem }) {
     <div className="group relative rounded-2xl border border-slate-100 bg-white shadow-sm transition hover:shadow-md overflow-hidden">
       {forum.bannerUrl ? (
         <Link href={`/forum/${forum.slug}`}>
-          <div className="aspect-[3/1] bg-slate-100">
-            <img
-              src={forum.bannerUrl}
-              alt={forum.name}
-              className="w-full h-full object-cover"
-            />
+          <div className="bg-slate-100 rounded-2xl border border-slate-100 overflow-hidden">
+            <img src={forum.bannerUrl} alt={forum.name} className="w-full" />
           </div>
         </Link>
       ) : (

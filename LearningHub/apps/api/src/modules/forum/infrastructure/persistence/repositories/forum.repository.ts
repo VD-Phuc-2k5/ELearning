@@ -30,7 +30,6 @@ export class ForumRepository implements IForumRepository {
       memberCount: e.memberCount,
       postCount: e.postCount,
       ownerId: e.ownerId,
-      categoryId: e.categoryId,
       isLocked: e.isLocked,
       createdAt: e.createdAt,
       updatedAt: e.updatedAt,
@@ -46,7 +45,6 @@ export class ForumRepository implements IForumRepository {
       bannerUrl: input.bannerUrl ?? null,
       iconUrl: input.iconUrl ?? null,
       ownerId: input.ownerId,
-      categoryId: input.categoryId ?? null,
       memberCount: 0,
       postCount: 0,
       isLocked: false,
@@ -55,14 +53,7 @@ export class ForumRepository implements IForumRepository {
   }
 
   async findAll(input: GetForumListInput): Promise<ForumListPage> {
-    const {
-      page = 1,
-      limit = 10,
-      search,
-      categoryId,
-      visibility,
-      userId,
-    } = input;
+    const { page = 1, limit = 10, search, visibility, userId } = input;
     const qb = this.repo.createQueryBuilder('f');
 
     if (visibility === 'visible') {
@@ -83,7 +74,6 @@ export class ForumRepository implements IForumRepository {
         s: `%${search}%`,
       });
     }
-    if (categoryId) qb.andWhere('f.categoryId = :categoryId', { categoryId });
 
     const [entities, total] = await qb
       .orderBy('f.createdAt', 'DESC')
@@ -113,7 +103,6 @@ export class ForumRepository implements IForumRepository {
       ...(input.visibility !== undefined && { visibility: input.visibility }),
       ...(input.bannerUrl !== undefined && { bannerUrl: input.bannerUrl }),
       ...(input.iconUrl !== undefined && { iconUrl: input.iconUrl }),
-      ...(input.categoryId !== undefined && { categoryId: input.categoryId }),
       ...(input.isLocked !== undefined && { isLocked: input.isLocked }),
     });
     const updated = await this.repo.findOneOrFail({ where: { id } });

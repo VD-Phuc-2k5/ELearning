@@ -94,6 +94,10 @@ export default function NewPostPage({ params }: NewPostPageProps) {
       setError('Title is required');
       return;
     }
+    if (!content) {
+      setError('Content is required');
+      return;
+    }
     createMutation.mutate();
   };
 
@@ -135,7 +139,7 @@ export default function NewPostPage({ params }: NewPostPageProps) {
               Tags
             </span>
             <div className="flex flex-wrap gap-2">
-              {tags.map((t) => (
+              {tags.map((t: any) => (
                 <button
                   key={t.id}
                   type="button"

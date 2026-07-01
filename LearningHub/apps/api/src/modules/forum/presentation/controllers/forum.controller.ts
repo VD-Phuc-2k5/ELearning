@@ -68,19 +68,16 @@ export class ForumController {
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'search', required: false })
-  @ApiQuery({ name: 'categoryId', required: false, type: Number })
   list(
     @Query('page') page?: number,
     @Query('limit') limit?: number,
     @Query('search') search?: string,
-    @Query('categoryId') categoryId?: number,
     @Request() req?: AuthReq,
   ) {
     return this.getForumListUseCase.execute({
       page,
       limit,
       search,
-      categoryId,
       userId: req?.user?.id,
     });
   }

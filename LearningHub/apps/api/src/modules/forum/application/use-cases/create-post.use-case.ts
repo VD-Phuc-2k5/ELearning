@@ -39,7 +39,6 @@ export interface CreatePostParams {
   };
   roadmapId?: string;
   questionBankId?: string;
-  tagIds?: number[];
 }
 
 @Injectable()
@@ -87,7 +86,6 @@ export class CreatePostUseCase {
       content: params.content,
       postType: postType,
       status: 'published',
-      tagIds: params.tagIds,
       roadmapId: params.roadmapId,
       questionBankId: params.questionBankId,
     });

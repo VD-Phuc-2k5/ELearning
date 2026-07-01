@@ -1,5 +1,6 @@
+export const FORUM_REPORT_REPOSITORY = Symbol('IForumReportRepository');
+
 import type {
-  ForumModerationLogDomain,
   ForumReportDomain,
   ReportTargetType,
 } from '../entities/forum-report.domain';
@@ -39,28 +40,3 @@ export interface IForumReportRepository {
     resolutionNote?: string,
   ): Promise<ForumReportDomain>;
 }
-
-export const FORUM_REPORT_REPOSITORY = Symbol('IForumReportRepository');
-
-export interface CreateModerationLogInput {
-  moderatorId: string;
-  action: string;
-  targetType?: string;
-  targetId?: string;
-  reasonCode?: string;
-  reasonText?: string;
-  forumId?: string;
-}
-
-export interface IForumModerationLogRepository {
-  create(input: CreateModerationLogInput): Promise<ForumModerationLogDomain>;
-  findByForum(
-    forumId: string,
-    page?: number,
-    limit?: number,
-  ): Promise<{ data: ForumModerationLogDomain[]; total: number }>;
-}
-
-export const FORUM_MODERATION_LOG_REPOSITORY = Symbol(
-  'IForumModerationLogRepository',
-);

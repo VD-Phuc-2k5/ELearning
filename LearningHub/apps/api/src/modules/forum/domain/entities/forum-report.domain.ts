@@ -15,15 +15,3 @@ export interface ForumReportDomain {
   createdAt: Date;
   updatedAt: Date;
 }
-
-export interface ForumModerationLogDomain {
-  id: string;
-  moderatorId: string;
-  action: string;
-  targetType: string | null;
-  targetId: string | null;
-  reasonCode: string | null;
-  reasonText: string | null;
-  forumId: string | null;
-  createdAt: Date;
-}

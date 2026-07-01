@@ -28,7 +28,7 @@ interface ForumRequest {
   forumMember?: { role: ForumMemberRole; userId: string; forumId: string };
 }
 
-export interface ForumMemberRequest extends ForumRequest {}
+export type ForumMemberRequest = ForumRequest;
 
 /**
  * Guard that verifies the authenticated user is a member of the forum

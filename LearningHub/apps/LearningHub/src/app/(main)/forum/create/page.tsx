@@ -92,10 +92,6 @@ export default function CreateForumPage() {
               </button>
             ))}
           </div>
-          <p className="text-xs text-slate-400">
-            public = listed for everyone · private = members-only view · hidden
-            = direct-link only
-          </p>
         </div>
 
         <div className="flex justify-end gap-3 pt-4">

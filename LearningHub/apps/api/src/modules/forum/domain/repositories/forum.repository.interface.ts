@@ -6,7 +6,6 @@ export interface CreateForumInput {
   visibility?: ForumVisibility;
   bannerUrl?: string;
   iconUrl?: string;
-  categoryId?: number;
   ownerId: string;
 }
 
@@ -14,7 +13,6 @@ export interface GetForumListInput {
   page?: number;
   limit?: number;
   search?: string;
-  categoryId?: number;
   visibility?: ForumVisibility | 'visible';
   userId?: string;
 }
@@ -25,7 +23,6 @@ export interface UpdateForumInput {
   visibility?: ForumVisibility;
   bannerUrl?: string;
   iconUrl?: string;
-  categoryId?: number;
   isLocked?: boolean;
 }
 

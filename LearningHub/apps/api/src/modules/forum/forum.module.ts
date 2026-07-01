@@ -5,7 +5,6 @@ import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
 import { ForumEntity } from './infrastructure/persistence/entities/forum.entity';
-import { ForumCategoryEntity } from './infrastructure/persistence/entities/forum-category.entity';
 import { ForumTagEntity } from './infrastructure/persistence/entities/forum-tag.entity';
 import { ForumRuleEntity } from './infrastructure/persistence/entities/forum-rule.entity';
 import { ForumMemberEntity } from './infrastructure/persistence/entities/forum-member.entity';
@@ -16,12 +15,9 @@ import { ForumCommentEntity } from './infrastructure/persistence/entities/forum-
 import { ForumPollEntity } from './infrastructure/persistence/entities/forum-poll.entity';
 import { ForumPollOptionEntity } from './infrastructure/persistence/entities/forum-poll-option.entity';
 import { ForumPollVoteEntity } from './infrastructure/persistence/entities/forum-poll-vote.entity';
-import { ForumDraftEntity } from './infrastructure/persistence/entities/forum-draft.entity';
-import { ForumPostAttachmentEntity } from './infrastructure/persistence/entities/forum-post-attachment.entity';
 import { ForumReactionEntity } from './infrastructure/persistence/entities/forum-reaction.entity';
 import { ForumBookmarkEntity } from './infrastructure/persistence/entities/forum-bookmark.entity';
 import { ForumReportEntity } from './infrastructure/persistence/entities/forum-report.entity';
-import { ForumModerationLogEntity } from './infrastructure/persistence/entities/forum-moderation-log.entity';
 import { ForumNotificationEntity } from './infrastructure/persistence/entities/forum-notification.entity';
 import { ForumMentionEntity } from './infrastructure/persistence/entities/forum-mention.entity';
 import { ForumFollowEntity } from './infrastructure/persistence/entities/forum-follow.entity';
@@ -34,12 +30,9 @@ import { ForumRuleRepository } from './infrastructure/persistence/repositories/f
 import { ForumPostRepository } from './infrastructure/persistence/repositories/forum-post.repository';
 import { ForumCommentRepository } from './infrastructure/persistence/repositories/forum-comment.repository';
 import { ForumPollRepository } from './infrastructure/persistence/repositories/forum-poll.repository';
-import { ForumDraftRepository } from './infrastructure/persistence/repositories/forum-draft.repository';
-import { ForumPostAttachmentRepository } from './infrastructure/persistence/repositories/forum-post-attachment.repository';
 import { ForumReactionRepository } from './infrastructure/persistence/repositories/forum-reaction.repository';
 import { ForumBookmarkRepository } from './infrastructure/persistence/repositories/forum-bookmark.repository';
 import { ForumReportRepository } from './infrastructure/persistence/repositories/forum-report.repository';
-import { ForumModerationLogRepository } from './infrastructure/persistence/repositories/forum-moderation-log.repository';
 import { ForumNotificationRepository } from './infrastructure/persistence/repositories/forum-notification.repository';
 import { ForumMentionRepository } from './infrastructure/persistence/repositories/forum-mention.repository';
 import { ForumTagRepository } from './infrastructure/persistence/repositories/forum-tag.repository';
@@ -63,16 +56,9 @@ import { FORUM_RULE_REPOSITORY } from './domain/repositories/forum-rule.reposito
 import { FORUM_POST_REPOSITORY } from './domain/repositories/forum-post.repository.interface';
 import { FORUM_COMMENT_REPOSITORY } from './domain/repositories/forum-comment.repository.interface';
 import { FORUM_POLL_REPOSITORY } from './domain/repositories/forum-poll.repository.interface';
-import {
-  FORUM_DRAFT_REPOSITORY,
-  FORUM_POST_ATTACHMENT_REPOSITORY,
-} from './domain/repositories/forum-draft.repository.interface';
 import { FORUM_REACTION_REPOSITORY } from './domain/repositories/forum-reaction.repository.interface';
 import { FORUM_BOOKMARK_REPOSITORY } from './domain/repositories/forum-bookmark.repository.interface';
-import {
-  FORUM_REPORT_REPOSITORY,
-  FORUM_MODERATION_LOG_REPOSITORY,
-} from './domain/repositories/forum-report.repository.interface';
+import { FORUM_REPORT_REPOSITORY } from './domain/repositories/forum-report.repository.interface';
 import {
   FORUM_NOTIFICATION_REPOSITORY,
   FORUM_MENTION_REPOSITORY,
@@ -110,11 +96,6 @@ import { UpdateCommentUseCase } from './application/use-cases/update-comment.use
 import { DeleteCommentUseCase } from './application/use-cases/delete-comment.use-case';
 import { VotePollUseCase } from './application/use-cases/vote-poll.use-case';
 import { RemovePollVoteUseCase } from './application/use-cases/remove-poll-vote.use-case';
-import { SaveDraftUseCase } from './application/use-cases/save-draft.use-case';
-import { ListMyDraftsUseCase } from './application/use-cases/list-my-drafts.use-case';
-import { PublishDraftUseCase } from './application/use-cases/publish-draft.use-case';
-import { DeleteDraftUseCase } from './application/use-cases/delete-draft.use-case';
-import { UploadAttachmentUseCase } from './application/use-cases/upload-attachment.use-case';
 import { UploadForumImageUseCase } from './application/use-cases/upload-forum-image.use-case';
 import { ToggleReactionUseCase } from './application/use-cases/toggle-reaction.use-case';
 import { SearchForumUseCase } from './application/use-cases/search-forum.use-case';
@@ -140,7 +121,6 @@ import {
   CreateReportUseCase,
   DismissReportUseCase,
   GetForumReportsUseCase,
-  GetModerationLogsUseCase,
   ResolveReportUseCase,
 } from './application/use-cases/forum-report.use-case';
 
@@ -149,7 +129,6 @@ import { ForumMembershipController } from './presentation/controllers/forum-memb
 import { ForumPostController } from './presentation/controllers/forum-post.controller';
 import { ForumCommentController } from './presentation/controllers/forum-comment.controller';
 import { ForumPollController } from './presentation/controllers/forum-poll.controller';
-import { ForumDraftController } from './presentation/controllers/forum-draft.controller';
 import { ForumUploadController } from './presentation/controllers/forum-upload.controller';
 import { ForumInteractionController } from './presentation/controllers/forum-interaction.controller';
 import { ForumModerationController } from './presentation/controllers/forum-moderation.controller';
@@ -159,7 +138,6 @@ import { ForumTagController } from './presentation/controllers/forum-tag.control
 
 const entities = [
   ForumEntity,
-  ForumCategoryEntity,
   ForumTagEntity,
   ForumRuleEntity,
   ForumMemberEntity,
@@ -170,12 +148,9 @@ const entities = [
   ForumPollEntity,
   ForumPollOptionEntity,
   ForumPollVoteEntity,
-  ForumDraftEntity,
-  ForumPostAttachmentEntity,
   ForumReactionEntity,
   ForumBookmarkEntity,
   ForumReportEntity,
-  ForumModerationLogEntity,
   ForumNotificationEntity,
   ForumMentionEntity,
   ForumFollowEntity,
@@ -193,18 +168,9 @@ const repositoryProviders = [
   { provide: FORUM_POST_REPOSITORY, useClass: ForumPostRepository },
   { provide: FORUM_COMMENT_REPOSITORY, useClass: ForumCommentRepository },
   { provide: FORUM_POLL_REPOSITORY, useClass: ForumPollRepository },
-  { provide: FORUM_DRAFT_REPOSITORY, useClass: ForumDraftRepository },
-  {
-    provide: FORUM_POST_ATTACHMENT_REPOSITORY,
-    useClass: ForumPostAttachmentRepository,
-  },
   { provide: FORUM_REACTION_REPOSITORY, useClass: ForumReactionRepository },
   { provide: FORUM_BOOKMARK_REPOSITORY, useClass: ForumBookmarkRepository },
   { provide: FORUM_REPORT_REPOSITORY, useClass: ForumReportRepository },
-  {
-    provide: FORUM_MODERATION_LOG_REPOSITORY,
-    useClass: ForumModerationLogRepository,
-  },
   {
     provide: FORUM_NOTIFICATION_REPOSITORY,
     useClass: ForumNotificationRepository,
@@ -247,11 +213,6 @@ const useCases = [
   DeleteCommentUseCase,
   VotePollUseCase,
   RemovePollVoteUseCase,
-  SaveDraftUseCase,
-  ListMyDraftsUseCase,
-  PublishDraftUseCase,
-  DeleteDraftUseCase,
-  UploadAttachmentUseCase,
   UploadForumImageUseCase,
   ToggleReactionUseCase,
   ToggleBookmarkUseCase,
@@ -264,7 +225,6 @@ const useCases = [
   GetForumReportsUseCase,
   ResolveReportUseCase,
   DismissReportUseCase,
-  GetModerationLogsUseCase,
   SearchForumUseCase,
   ListTagsUseCase,
   CreateTagUseCase,
@@ -300,7 +260,6 @@ const useCases = [
     ForumPostController,
     ForumCommentController,
     ForumPollController,
-    ForumDraftController,
     ForumUploadController,
     ForumInteractionController,
     ForumModerationController,

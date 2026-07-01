@@ -72,7 +72,7 @@ export class UpdatePostUseCase {
       for (const url of removedUrls) {
         const publicId = extractPublicIdFromUrl(url);
         if (publicId) {
-          this.cloudinary.deleteFile(publicId).catch(() => {});
+          this.cloudinary.deleteFile(publicId).catch(() => undefined);
         }
       }
     }

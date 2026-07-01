@@ -12,7 +12,6 @@ export interface ForumDomain {
   memberCount: number;
   postCount: number;
   ownerId: string;
-  categoryId: number | null;
   isLocked: boolean;
   createdAt: Date;
   updatedAt: Date;

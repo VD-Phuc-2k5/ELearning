@@ -18,7 +18,6 @@ export interface CreateForumParams {
   visibility?: ForumVisibility;
   bannerUrl?: string;
   iconUrl?: string;
-  categoryId?: number;
 }
 
 @Injectable()
@@ -40,7 +39,6 @@ export class CreateForumUseCase {
       visibility: params.visibility,
       bannerUrl: params.bannerUrl,
       iconUrl: params.iconUrl,
-      categoryId: params.categoryId,
       ownerId,
     });
     await this.memberRepo.create({

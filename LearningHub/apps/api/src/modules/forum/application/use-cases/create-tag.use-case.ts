@@ -19,7 +19,7 @@ export class CreateTagUseCase {
 
   async execute(
     params: CreateTagParams,
-    userId: string,
+    _userId: string,
   ): Promise<ForumTagDomain> {
     if (!params.name.trim()) {
       throw new ConflictException('Tag name is required');

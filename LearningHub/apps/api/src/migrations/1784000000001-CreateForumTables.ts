@@ -7,17 +7,6 @@ export class CreateForumTables1784000000001 implements MigrationInterface {
     await queryRunner.query(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`);
 
     await queryRunner.query(`
-      CREATE TABLE "forum_categories" (
-        "id" SERIAL NOT NULL,
-        "name" character varying NOT NULL,
-        "slug" character varying NOT NULL,
-        "order" integer NOT NULL DEFAULT 0,
-        CONSTRAINT "PK_forum_categories" PRIMARY KEY ("id"),
-        CONSTRAINT "UQ_forum_categories_slug" UNIQUE ("slug")
-      )
-    `);
-
-    await queryRunner.query(`
       CREATE TABLE "forum_tags" (
         "id" SERIAL NOT NULL,
         "name" character varying NOT NULL,
@@ -40,15 +29,13 @@ export class CreateForumTables1784000000001 implements MigrationInterface {
         "member_count" integer NOT NULL DEFAULT 0,
         "post_count" integer NOT NULL DEFAULT 0,
         "owner_id" uuid NOT NULL,
-        "category_id" integer,
         "is_locked" boolean NOT NULL DEFAULT false,
         "search_vector" tsvector,
         "created_at" TIMESTAMP NOT NULL DEFAULT now(),
         "updated_at" TIMESTAMP NOT NULL DEFAULT now(),
         CONSTRAINT "PK_forums" PRIMARY KEY ("id"),
         CONSTRAINT "UQ_forums_slug" UNIQUE ("slug"),
-        CONSTRAINT "FK_forums_owner" FOREIGN KEY ("owner_id") REFERENCES "users"("id") ON DELETE NO ACTION,
-        CONSTRAINT "FK_forums_category" FOREIGN KEY ("category_id") REFERENCES "forum_categories"("id") ON DELETE SET NULL
+        CONSTRAINT "FK_forums_owner" FOREIGN KEY ("owner_id") REFERENCES "users"("id") ON DELETE NO ACTION
       )
     `);
 
@@ -139,45 +126,6 @@ export class CreateForumTables1784000000001 implements MigrationInterface {
         CONSTRAINT "FK_forum_posts_author" FOREIGN KEY ("author_id") REFERENCES "users"("id") ON DELETE NO ACTION,
         CONSTRAINT "FK_forum_posts_roadmap" FOREIGN KEY ("roadmap_id") REFERENCES "roadmaps"("id") ON DELETE SET NULL,
         CONSTRAINT "FK_forum_posts_question_bank" FOREIGN KEY ("question_bank_id") REFERENCES "question_banks"("id") ON DELETE SET NULL
-      )
-    `);
-
-    await queryRunner.query(`
-      CREATE TABLE "forum_post_tags" (
-        "post_id" uuid NOT NULL,
-        "tag_id" integer NOT NULL,
-        CONSTRAINT "PK_forum_post_tags" PRIMARY KEY ("post_id", "tag_id"),
-        CONSTRAINT "FK_forum_post_tags_post" FOREIGN KEY ("post_id") REFERENCES "forum_posts"("id") ON DELETE CASCADE,
-        CONSTRAINT "FK_forum_post_tags_tag" FOREIGN KEY ("tag_id") REFERENCES "forum_tags"("id") ON DELETE CASCADE
-      )
-    `);
-
-    await queryRunner.query(`
-      CREATE TABLE "forum_post_attachments" (
-        "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
-        "post_id" uuid NOT NULL,
-        "file_url" character varying NOT NULL,
-        "file_name" character varying NOT NULL,
-        "file_type" character varying,
-        "file_size" integer,
-        CONSTRAINT "PK_forum_post_attachments" PRIMARY KEY ("id"),
-        CONSTRAINT "FK_forum_post_attachments_post" FOREIGN KEY ("post_id") REFERENCES "forum_posts"("id") ON DELETE CASCADE
-      )
-    `);
-
-    await queryRunner.query(`
-      CREATE TABLE "forum_drafts" (
-        "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
-        "author_id" uuid NOT NULL,
-        "forum_id" uuid,
-        "title" character varying,
-        "content" jsonb,
-        "post_type" character varying NOT NULL DEFAULT 'text',
-        "created_at" TIMESTAMP NOT NULL DEFAULT now(),
-        "updated_at" TIMESTAMP NOT NULL DEFAULT now(),
-        CONSTRAINT "PK_forum_drafts" PRIMARY KEY ("id"),
-        CONSTRAINT "FK_forum_drafts_author" FOREIGN KEY ("author_id") REFERENCES "users"("id") ON DELETE CASCADE,
-        CONSTRAINT "FK_forum_drafts_forum" FOREIGN KEY ("forum_id") REFERENCES "forums"("id") ON DELETE SET NULL
       )
     `);
 
@@ -328,23 +276,6 @@ export class CreateForumTables1784000000001 implements MigrationInterface {
     `);
 
     await queryRunner.query(`
-      CREATE TABLE "forum_moderation_logs" (
-        "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
-        "moderator_id" uuid NOT NULL,
-        "action" character varying NOT NULL,
-        "target_type" character varying,
-        "target_id" uuid,
-        "reason_code" character varying,
-        "reason_text" text,
-        "forum_id" uuid,
-        "created_at" TIMESTAMP NOT NULL DEFAULT now(),
-        CONSTRAINT "PK_forum_moderation_logs" PRIMARY KEY ("id"),
-        CONSTRAINT "FK_forum_moderation_logs_moderator" FOREIGN KEY ("moderator_id") REFERENCES "users"("id") ON DELETE NO ACTION,
-        CONSTRAINT "FK_forum_moderation_logs_forum" FOREIGN KEY ("forum_id") REFERENCES "forums"("id") ON DELETE SET NULL
-      )
-    `);
-
-    await queryRunner.query(`
       CREATE INDEX "IDX_forum_rules_forum" ON "forum_rules" ("forum_id", "order");
       CREATE INDEX "IDX_forum_members_forum" ON "forum_members" ("forum_id");
       CREATE INDEX "IDX_forum_members_user" ON "forum_members" ("user_id");
@@ -352,7 +283,6 @@ export class CreateForumTables1784000000001 implements MigrationInterface {
       CREATE INDEX "IDX_forum_join_requests_forum" ON "forum_join_requests" ("forum_id", "status");
       CREATE INDEX "IDX_forum_posts_forum_status_created" ON "forum_posts" ("forum_id", "status", "created_at" DESC);
       CREATE INDEX "IDX_forum_posts_author" ON "forum_posts" ("author_id");
-      CREATE INDEX "IDX_forum_post_attachments_post" ON "forum_post_attachments" ("post_id");
       CREATE INDEX "IDX_forum_poll_options_poll" ON "forum_poll_options" ("poll_id", "display_order");
       CREATE INDEX "IDX_forum_comments_post_depth_created" ON "forum_comments" ("post_id", "depth", "created_at");
       CREATE INDEX "IDX_forum_comments_parent" ON "forum_comments" ("parent_id");
@@ -360,7 +290,6 @@ export class CreateForumTables1784000000001 implements MigrationInterface {
       CREATE INDEX "IDX_forum_mentions_user" ON "forum_mentions" ("mentioned_user_id");
       CREATE INDEX "IDX_forum_notifications_recipient_read_created" ON "forum_notifications" ("recipient_id", "is_read", "created_at" DESC);
       CREATE INDEX "IDX_forum_reports_status" ON "forum_reports" ("status");
-      CREATE INDEX "IDX_forum_moderation_logs_forum" ON "forum_moderation_logs" ("forum_id", "created_at" DESC);
     `);
 
     await queryRunner.query(
@@ -411,7 +340,6 @@ export class CreateForumTables1784000000001 implements MigrationInterface {
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`DROP INDEX "IDX_forum_moderation_logs_forum";`);
     await queryRunner.query(`DROP INDEX "IDX_forum_reports_status";`);
     await queryRunner.query(
       `DROP INDEX "IDX_forum_notifications_recipient_read_created";`,
@@ -423,7 +351,6 @@ export class CreateForumTables1784000000001 implements MigrationInterface {
       `DROP INDEX "IDX_forum_comments_post_depth_created";`,
     );
     await queryRunner.query(`DROP INDEX "IDX_forum_poll_options_poll";`);
-    await queryRunner.query(`DROP INDEX "IDX_forum_post_attachments_post";`);
     await queryRunner.query(`DROP INDEX "IDX_forum_posts_author";`);
     await queryRunner.query(
       `DROP INDEX "IDX_forum_posts_forum_status_created";`,
@@ -447,7 +374,6 @@ export class CreateForumTables1784000000001 implements MigrationInterface {
     );
     await queryRunner.query(`DROP FUNCTION "forums_search_vector_update";`);
 
-    await queryRunner.query(`DROP TABLE "forum_moderation_logs";`);
     await queryRunner.query(`DROP TABLE "forum_reports";`);
     await queryRunner.query(`DROP TABLE "forum_notifications";`);
     await queryRunner.query(`DROP TABLE "forum_mentions";`);
@@ -458,9 +384,6 @@ export class CreateForumTables1784000000001 implements MigrationInterface {
     await queryRunner.query(`DROP TABLE "forum_poll_votes";`);
     await queryRunner.query(`DROP TABLE "forum_poll_options";`);
     await queryRunner.query(`DROP TABLE "forum_polls";`);
-    await queryRunner.query(`DROP TABLE "forum_drafts";`);
-    await queryRunner.query(`DROP TABLE "forum_post_attachments";`);
-    await queryRunner.query(`DROP TABLE "forum_post_tags";`);
     await queryRunner.query(`DROP TABLE "forum_posts";`);
     await queryRunner.query(`DROP TABLE "forum_join_requests";`);
     await queryRunner.query(`DROP TABLE "forum_invites";`);
@@ -468,6 +391,5 @@ export class CreateForumTables1784000000001 implements MigrationInterface {
     await queryRunner.query(`DROP TABLE "forum_rules";`);
     await queryRunner.query(`DROP TABLE "forums";`);
     await queryRunner.query(`DROP TABLE "forum_tags";`);
-    await queryRunner.query(`DROP TABLE "forum_categories";`);
   }
 }

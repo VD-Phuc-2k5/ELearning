@@ -4,14 +4,12 @@ import {
   DeleteDateColumn,
   Entity,
   JoinColumn,
-  ManyToMany,
   ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { ForumEntity } from './forum.entity';
 import { UserEntity } from '../../../../auth/infrastructure/persistence/entities/user.entity';
-import { ForumTagEntity } from './forum-tag.entity';
 import { QuestionBankEntity } from '../../../../quiz/infrastructure/persistence/entities/question-bank.entity';
 
 @Entity('forum_posts')
@@ -66,9 +64,6 @@ export class ForumPostEntity {
   @ManyToOne(() => QuestionBankEntity, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'question_bank_id' })
   questionBank!: QuestionBankEntity;
-
-  @ManyToMany(() => ForumTagEntity)
-  tags!: ForumTagEntity[];
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;

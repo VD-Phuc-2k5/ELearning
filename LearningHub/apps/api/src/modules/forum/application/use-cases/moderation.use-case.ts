@@ -17,14 +17,9 @@ import {
   IForumMemberRepository,
 } from '../../domain/repositories/forum-member.repository.interface';
 import {
-  FORUM_MODERATION_LOG_REPOSITORY,
-  IForumModerationLogRepository,
-} from '../../domain/repositories/forum-report.repository.interface';
-import {
   FORUM_REPOSITORY,
   IForumRepository,
 } from '../../domain/repositories/forum.repository.interface';
-import type { ForumModerationLogDomain } from '../../domain/entities/forum-report.domain';
 
 @Injectable()
 export class HidePostUseCase {
@@ -33,8 +28,6 @@ export class HidePostUseCase {
     private readonly postRepo: IForumPostRepository,
     @Inject(FORUM_MEMBER_REPOSITORY)
     private readonly memberRepo: IForumMemberRepository,
-    @Inject(FORUM_MODERATION_LOG_REPOSITORY)
-    private readonly modLogRepo: IForumModerationLogRepository,
     @Inject(FORUM_REPOSITORY)
     private readonly forumRepo: IForumRepository,
   ) {}
@@ -45,7 +38,9 @@ export class HidePostUseCase {
     moderatorId: string,
     reasonCode: string,
     reasonText?: string,
-  ): Promise<ForumModerationLogDomain> {
+  ): Promise<void> {
+    void reasonCode;
+    void reasonText;
     const post = await this.postRepo.findByIdAndForum(postId, forumId);
     if (!post) throw new NotFoundException('Post not found');
 
@@ -60,15 +55,6 @@ export class HidePostUseCase {
     if (post.status === 'published') {
       await this.forumRepo.incrementPostCount(forumId, -1);
     }
-    return this.modLogRepo.create({
-      moderatorId,
-      action: 'hide_post',
-      targetType: 'post',
-      targetId: postId,
-      reasonCode,
-      reasonText,
-      forumId,
-    });
   }
 }
 
@@ -79,8 +65,6 @@ export class RestorePostUseCase {
     private readonly postRepo: IForumPostRepository,
     @Inject(FORUM_MEMBER_REPOSITORY)
     private readonly memberRepo: IForumMemberRepository,
-    @Inject(FORUM_MODERATION_LOG_REPOSITORY)
-    private readonly modLogRepo: IForumModerationLogRepository,
     @Inject(FORUM_REPOSITORY)
     private readonly forumRepo: IForumRepository,
   ) {}
@@ -89,7 +73,7 @@ export class RestorePostUseCase {
     forumId: string,
     postId: string,
     moderatorId: string,
-  ): Promise<ForumModerationLogDomain> {
+  ): Promise<void> {
     const post = await this.postRepo.findByIdAndForum(postId, forumId);
     if (!post) throw new NotFoundException('Post not found');
 
@@ -104,13 +88,6 @@ export class RestorePostUseCase {
     if (post.status === 'hidden') {
       await this.forumRepo.incrementPostCount(forumId, 1);
     }
-    return this.modLogRepo.create({
-      moderatorId,
-      action: 'restore_post',
-      targetType: 'post',
-      targetId: postId,
-      forumId,
-    });
   }
 }
 
@@ -121,8 +98,6 @@ export class HideCommentUseCase {
     private readonly commentRepo: IForumCommentRepository,
     @Inject(FORUM_MEMBER_REPOSITORY)
     private readonly memberRepo: IForumMemberRepository,
-    @Inject(FORUM_MODERATION_LOG_REPOSITORY)
-    private readonly modLogRepo: IForumModerationLogRepository,
   ) {}
 
   async execute(
@@ -131,7 +106,9 @@ export class HideCommentUseCase {
     moderatorId: string,
     reasonCode: string,
     reasonText?: string,
-  ): Promise<ForumModerationLogDomain> {
+  ): Promise<void> {
+    void reasonCode;
+    void reasonText;
     const member = await this.memberRepo.findByForumAndUser(
       forumId,
       moderatorId,
@@ -140,15 +117,6 @@ export class HideCommentUseCase {
       throw new ForbiddenException('Only moderators can hide comments');
     }
     await this.commentRepo.updateStatus(commentId, 'hidden');
-    return this.modLogRepo.create({
-      moderatorId,
-      action: 'hide_comment',
-      targetType: 'comment',
-      targetId: commentId,
-      reasonCode,
-      reasonText,
-      forumId,
-    });
   }
 }
 
@@ -159,15 +127,13 @@ export class RestoreCommentUseCase {
     private readonly commentRepo: IForumCommentRepository,
     @Inject(FORUM_MEMBER_REPOSITORY)
     private readonly memberRepo: IForumMemberRepository,
-    @Inject(FORUM_MODERATION_LOG_REPOSITORY)
-    private readonly modLogRepo: IForumModerationLogRepository,
   ) {}
 
   async execute(
     forumId: string,
     commentId: string,
     moderatorId: string,
-  ): Promise<ForumModerationLogDomain> {
+  ): Promise<void> {
     const member = await this.memberRepo.findByForumAndUser(
       forumId,
       moderatorId,
@@ -176,12 +142,5 @@ export class RestoreCommentUseCase {
       throw new ForbiddenException('Only moderators can restore comments');
     }
     await this.commentRepo.updateStatus(commentId, 'published');
-    return this.modLogRepo.create({
-      moderatorId,
-      action: 'restore_comment',
-      targetType: 'comment',
-      targetId: commentId,
-      forumId,
-    });
   }
 }

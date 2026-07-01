@@ -10,14 +10,12 @@ export interface CreatePostInput {
   status?: PostStatus;
   roadmapId?: string;
   questionBankId?: string;
-  tagIds?: number[];
 }
 
 export interface GetPostsInput {
   forumId: string;
   page?: number;
   limit?: number;
-  tagId?: number;
   search?: string;
   status?: PostStatus;
   includeHidden?: boolean;
@@ -27,7 +25,6 @@ export interface GetPostsInput {
 export interface UpdatePostInput {
   title?: string;
   content?: Record<string, unknown>;
-  tagIds?: number[];
 }
 
 export interface PostListPage {

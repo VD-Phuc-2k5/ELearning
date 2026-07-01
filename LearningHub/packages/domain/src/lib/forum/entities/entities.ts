@@ -23,6 +23,11 @@ export interface ForumRule {
   readonly body: string;
 }
 
+export interface ForumRuleInput {
+  title: string;
+  body: string;
+}
+
 export interface ForumDetailResponse {
   forum: ForumDetail;
   memberRole: 'owner' | 'moderator' | 'member' | null;
@@ -210,5 +215,5 @@ export interface UpdateForumParams {
 
 export interface SetForumRulesParams {
   id: string;
-  rules: Array<{ title: string; body: string }>;
+  rules: ForumRuleInput[];
 }

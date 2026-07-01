@@ -9,14 +9,10 @@ import {
   Query,
   Request,
   UseGuards,
-  UseInterceptors,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { FileInterceptor } from '@nestjs/platform-express';
 import {
   ApiBearerAuth,
-  ApiBody,
-  ApiConsumes,
   ApiOperation,
   ApiQuery,
   ApiTags,
@@ -28,7 +24,6 @@ import { UpdatePostUseCase } from '../../application/use-cases/update-post.use-c
 import { DeletePostUseCase } from '../../application/use-cases/delete-post.use-case';
 import { PinPostUseCase } from '../../application/use-cases/pin-post.use-case';
 import { LockPostUseCase } from '../../application/use-cases/lock-post.use-case';
-import { UploadAttachmentUseCase } from '../../application/use-cases/upload-attachment.use-case';
 import type { PostType } from '../../domain/entities/forum-post.domain';
 import { CreatePostDto, UpdatePostDto } from '../dto/forum-post.request.dto';
 import { AuthReq } from '../types';
@@ -47,7 +42,6 @@ export class ForumPostController {
     private readonly deletePostUseCase: DeletePostUseCase,
     private readonly pinPostUseCase: PinPostUseCase,
     private readonly lockPostUseCase: LockPostUseCase,
-    private readonly uploadAttachmentUseCase: UploadAttachmentUseCase,
   ) {}
 
   @Post('forums/:forumId/posts')
@@ -75,7 +69,6 @@ export class ForumPostController {
               isMultipleChoice: dto.poll.isMultipleChoice,
             }
           : undefined,
-        tagIds: dto.tagIds,
         roadmapId: dto.roadmapId,
         questionBankId: dto.questionBankId,
       },
@@ -88,20 +81,17 @@ export class ForumPostController {
   @ApiOperation({ summary: 'Danh sách bài viết trong diễn đàn' })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
-  @ApiQuery({ name: 'tagId', required: false, type: Number })
   @ApiQuery({ name: 'search', required: false, type: String })
   list(
     @Param('forumId') forumId: string,
     @Query('page') page?: number,
     @Query('limit') limit?: number,
-    @Query('tagId') tagId?: number,
     @Query('search') search?: string,
   ) {
     return this.getPostsUseCase.execute({
       forumId,
       page,
       limit,
-      tagId,
       search,
     });
   }
@@ -127,7 +117,6 @@ export class ForumPostController {
       {
         title: dto.title,
         content: dto.content,
-        tagIds: dto.tagIds,
       },
       req.user.id,
     );
@@ -168,21 +157,5 @@ export class ForumPostController {
       req.user.id,
       body.lock,
     );
-  }
-
-  @Post('forums/:forumId/posts/:postId/attachments')
-  @ApiOperation({ summary: 'Upload đính kèm cho bài viết' })
-  @ApiConsumes('multipart/form-data')
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: { file: { type: 'string', format: 'binary' } },
-    },
-  })
-  @UseInterceptors(
-    FileInterceptor('file', { limits: { fileSize: 10 * 1024 * 1024 } }),
-  )
-  uploadAttachment(@Param('postId') postId: string, file: Express.Multer.File) {
-    return this.uploadAttachmentUseCase.execute(postId, file);
   }
 }

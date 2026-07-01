@@ -3,7 +3,6 @@ import {
   IsArray,
   IsBoolean,
   IsDateString,
-  IsInt,
   IsObject,
   IsOptional,
   IsString,
@@ -41,11 +40,6 @@ export class CreatePostDto {
   @ApiPropertyOptional() @IsOptional() poll?: PollDto;
   @ApiPropertyOptional() @IsOptional() @IsUUID() roadmapId?: string;
   @ApiPropertyOptional() @IsOptional() @IsUUID() questionBankId?: string;
-  @ApiPropertyOptional({ type: [Number] })
-  @IsOptional()
-  @IsArray()
-  @IsInt({ each: true })
-  tagIds?: number[];
 }
 
 export class UpdatePostDto {
@@ -54,11 +48,6 @@ export class UpdatePostDto {
     string,
     unknown
   >;
-  @ApiPropertyOptional({ type: [Number] })
-  @IsOptional()
-  @IsArray()
-  @IsInt({ each: true })
-  tagIds?: number[];
 }
 
 export class CreateCommentDto {
@@ -75,21 +64,4 @@ export class VotePollDto {
   @IsArray()
   @IsUUID('4', { each: true })
   optionIds!: string[];
-}
-
-export class SaveDraftDto {
-  @ApiPropertyOptional() @IsOptional() @IsString() title?: string;
-  @ApiPropertyOptional() @IsOptional() @IsObject() content?: Record<
-    string,
-    unknown
-  >;
-  @ApiPropertyOptional({ enum: POST_TYPES })
-  @IsOptional()
-  @IsString()
-  postType?: string;
-  @ApiPropertyOptional() @IsOptional() @IsUUID() forumId?: string;
-}
-
-export class PublishDraftDto {
-  @ApiPropertyOptional() @IsOptional() @IsUUID() forumId?: string;
 }

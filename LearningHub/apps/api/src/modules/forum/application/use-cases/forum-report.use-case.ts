@@ -7,9 +7,7 @@ import {
 } from '@nestjs/common';
 import {
   FORUM_REPORT_REPOSITORY,
-  FORUM_MODERATION_LOG_REPOSITORY,
   IForumReportRepository,
-  IForumModerationLogRepository,
   type GetReportsInput,
 } from '../../domain/repositories/forum-report.repository.interface';
 import {
@@ -17,7 +15,6 @@ import {
   IForumMemberRepository,
 } from '../../domain/repositories/forum-member.repository.interface';
 import type {
-  ForumModerationLogDomain,
   ForumReportDomain,
   ReportTargetType,
 } from '../../domain/entities/forum-report.domain';
@@ -73,8 +70,6 @@ export class ResolveReportUseCase {
     private readonly reportRepo: IForumReportRepository,
     @Inject(FORUM_MEMBER_REPOSITORY)
     private readonly memberRepo: IForumMemberRepository,
-    @Inject(FORUM_MODERATION_LOG_REPOSITORY)
-    private readonly modLogRepo: IForumModerationLogRepository,
   ) {}
 
   async execute(
@@ -92,21 +87,12 @@ export class ResolveReportUseCase {
     }
     const report = await this.reportRepo.findById(reportId);
     if (!report) throw new NotFoundException('Report not found');
-    const updated = await this.reportRepo.updateStatus(
+    return this.reportRepo.updateStatus(
       reportId,
       'resolved',
       moderatorId,
       resolutionNote,
     );
-    await this.modLogRepo.create({
-      moderatorId,
-      action: 'resolve_report',
-      targetType: report.targetType,
-      targetId: report.targetId,
-      reasonText: resolutionNote,
-      forumId,
-    });
-    return updated;
   }
 }
 
@@ -140,21 +126,5 @@ export class DismissReportUseCase {
       moderatorId,
       note,
     );
-  }
-}
-
-@Injectable()
-export class GetModerationLogsUseCase {
-  constructor(
-    @Inject(FORUM_MODERATION_LOG_REPOSITORY)
-    private readonly modLogRepo: IForumModerationLogRepository,
-  ) {}
-
-  execute(
-    forumId: string,
-    page?: number,
-    limit?: number,
-  ): Promise<{ data: ForumModerationLogDomain[]; total: number }> {
-    return this.modLogRepo.findByForum(forumId, page, limit);
   }
 }

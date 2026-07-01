@@ -40,54 +40,12 @@ export class ForumPostRepository implements IForumPostRepository {
       commentCount: e.commentCount,
       reactionCount: e.reactionCount,
       viewCount: e.viewCount,
-      tags: [],
       roadmapId: e.roadmapId,
       questionBankId: e.questionBank,
       createdAt: e.createdAt,
       updatedAt: e.updatedAt,
       deletedAt: e.deletedAt,
     };
-  }
-
-  private async loadTagsForPosts(
-    postIds: string[],
-  ): Promise<
-    Map<
-      string,
-      Array<{ id: number; name: string; slug: string; color: string | null }>
-    >
-  > {
-    const map = new Map<
-      string,
-      Array<{ id: number; name: string; slug: string; color: string | null }>
-    >();
-    if (postIds.length === 0) return map;
-    for (const pid of postIds) map.set(pid, []);
-
-    const rows: Array<{
-      post_id: string;
-      id: number;
-      name: string;
-      slug: string;
-      color: string | null;
-    }> = await this.dataSource.manager.query(
-      `SELECT pt.post_id, t.id, t.name, t.slug, t.color
-         FROM forum_post_tags pt
-         JOIN forum_tags t ON t.id = pt.tag_id
-         WHERE pt.post_id = ANY($1)`,
-      [postIds],
-    );
-    for (const row of rows) {
-      const arr = map.get(row.post_id) ?? [];
-      arr.push({
-        id: row.id,
-        name: row.name,
-        slug: row.slug,
-        color: row.color,
-      });
-      map.set(row.post_id, arr);
-    }
-    return map;
   }
 
   async create(input: CreatePostInput): Promise<ForumPostDomain> {
@@ -104,16 +62,7 @@ export class ForumPostRepository implements IForumPostRepository {
       });
       const saved = await manager.save(ForumPostEntity, entity);
 
-      if (input.tagIds && input.tagIds.length > 0) {
-        await manager.query(
-          `INSERT INTO forum_post_tags (post_id, tag_id) VALUES ${input.tagIds.map(() => `($1, $2)`).join(', ')}`,
-          input.tagIds.flatMap((tid) => [saved.id, tid]),
-        );
-      }
-
       const domain = this.toDomain(saved);
-      const tagMap = await this.loadTagsForPosts([saved.id]);
-      domain.tags = tagMap.get(saved.id) ?? [];
       if (input.authorId) {
         const user = await manager.findOne(UserEntity, {
           where: { id: input.authorId },
@@ -129,8 +78,6 @@ export class ForumPostRepository implements IForumPostRepository {
     const e = await this.repo.findOne({ where: { id } });
     if (!e) return null;
     const domain = this.toDomain(e);
-    const tagMap = await this.loadTagsForPosts([e.id]);
-    domain.tags = tagMap.get(e.id) ?? [];
     const user = await this.dataSource.manager.findOne(UserEntity, {
       where: { id: e.authorId },
       select: { id: true, username: true },
@@ -146,8 +93,6 @@ export class ForumPostRepository implements IForumPostRepository {
     const e = await this.repo.findOne({ where: { id, forumId } });
     if (!e) return null;
     const domain = this.toDomain(e);
-    const tagMap = await this.loadTagsForPosts([e.id]);
-    domain.tags = tagMap.get(e.id) ?? [];
     const user = await this.dataSource.manager.findOne(UserEntity, {
       where: { id: e.authorId },
       select: { id: true, username: true },
@@ -161,7 +106,6 @@ export class ForumPostRepository implements IForumPostRepository {
       forumId,
       page = 1,
       limit = 10,
-      tagId,
       search,
       status = 'published',
       includeHidden = false,
@@ -176,13 +120,6 @@ export class ForumPostRepository implements IForumPostRepository {
       qb.andWhere('p.status = :status', { status });
     } else if (status) {
       qb.andWhere('p.status = :status', { status });
-    }
-
-    if (tagId) {
-      qb.andWhere(
-        `EXISTS (SELECT 1 FROM forum_post_tags pt WHERE pt.post_id = p.id AND pt.tag_id = :tagId)`,
-        { tagId },
-      );
     }
 
     if (search) {
@@ -213,14 +150,10 @@ export class ForumPostRepository implements IForumPostRepository {
       }
     }
 
-    const postIds = entities.map((e) => e.id);
-    const tagMap = await this.loadTagsForPosts(postIds);
-
     return {
       data: entities.map((e) => {
         const domain = this.toDomain(e);
         domain.authorName = authorMap.get(e.authorId) ?? 'Unknown';
-        domain.tags = tagMap.get(e.id) ?? [];
         return domain;
       }),
       total,
@@ -235,24 +168,10 @@ export class ForumPostRepository implements IForumPostRepository {
         if (input.content !== undefined) updateData.content = input.content;
         await manager.update(ForumPostEntity, { id }, updateData as never);
       }
-      if (input.tagIds !== undefined) {
-        await manager.query(`DELETE FROM forum_post_tags WHERE post_id = $1`, [
-          id,
-        ]);
-        if (input.tagIds.length > 0) {
-          const values = input.tagIds.map(() => `($1, $2)`).join(', ');
-          await manager.query(
-            `INSERT INTO forum_post_tags (post_id, tag_id) VALUES ${values}`,
-            input.tagIds.flatMap((tid) => [id, tid]),
-          );
-        }
-      }
       const updated = await manager.findOneOrFail(ForumPostEntity, {
         where: { id },
       });
       const domain = this.toDomain(updated);
-      const tagMap = await this.loadTagsForPosts([id]);
-      domain.tags = tagMap.get(id) ?? [];
       const user = await manager.findOne(UserEntity, {
         where: { id: updated.authorId },
         select: { id: true, username: true },
@@ -266,8 +185,6 @@ export class ForumPostRepository implements IForumPostRepository {
     await this.repo.update(id, { status });
     const updated = await this.repo.findOneOrFail({ where: { id } });
     const domain = this.toDomain(updated);
-    const tagMap = await this.loadTagsForPosts([id]);
-    domain.tags = tagMap.get(id) ?? [];
     const user = await this.dataSource.manager.findOne(UserEntity, {
       where: { id: updated.authorId },
       select: { id: true, username: true },
@@ -280,8 +197,6 @@ export class ForumPostRepository implements IForumPostRepository {
     await this.repo.update(id, { isPinned });
     const updated = await this.repo.findOneOrFail({ where: { id } });
     const domain = this.toDomain(updated);
-    const tagMap = await this.loadTagsForPosts([id]);
-    domain.tags = tagMap.get(id) ?? [];
     const user = await this.dataSource.manager.findOne(UserEntity, {
       where: { id: updated.authorId },
       select: { id: true, username: true },
@@ -294,8 +209,6 @@ export class ForumPostRepository implements IForumPostRepository {
     await this.repo.update(id, { isLocked });
     const updated = await this.repo.findOneOrFail({ where: { id } });
     const domain = this.toDomain(updated);
-    const tagMap = await this.loadTagsForPosts([id]);
-    domain.tags = tagMap.get(id) ?? [];
     const user = await this.dataSource.manager.findOne(UserEntity, {
       where: { id: updated.authorId },
       select: { id: true, username: true },

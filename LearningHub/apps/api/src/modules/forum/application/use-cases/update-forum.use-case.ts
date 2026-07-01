@@ -50,7 +50,7 @@ export class UpdateForumUseCase {
       input.bannerUrl !== forum.bannerUrl
     ) {
       const publicId = extractPublicIdFromUrl(forum.bannerUrl);
-      if (publicId) this.cloudinary.deleteFile(publicId).catch(() => {});
+      if (publicId) this.cloudinary.deleteFile(publicId).catch(() => undefined);
     }
     if (
       input.iconUrl !== undefined &&
@@ -58,7 +58,7 @@ export class UpdateForumUseCase {
       input.iconUrl !== forum.iconUrl
     ) {
       const publicId = extractPublicIdFromUrl(forum.iconUrl);
-      if (publicId) this.cloudinary.deleteFile(publicId).catch(() => {});
+      if (publicId) this.cloudinary.deleteFile(publicId).catch(() => undefined);
     }
 
     return this.forumRepo.update(id, input);

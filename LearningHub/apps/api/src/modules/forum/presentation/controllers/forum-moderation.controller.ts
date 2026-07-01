@@ -20,7 +20,6 @@ import {
   CreateReportUseCase,
   DismissReportUseCase,
   GetForumReportsUseCase,
-  GetModerationLogsUseCase,
   ResolveReportUseCase,
 } from '../../application/use-cases/forum-report.use-case';
 import {
@@ -48,7 +47,6 @@ export class ForumModerationController {
     private readonly getForumReportsUseCase: GetForumReportsUseCase,
     private readonly resolveReportUseCase: ResolveReportUseCase,
     private readonly dismissReportUseCase: DismissReportUseCase,
-    private readonly getModerationLogsUseCase: GetModerationLogsUseCase,
     private readonly hidePostUseCase: HidePostUseCase,
     private readonly restorePostUseCase: RestorePostUseCase,
     private readonly hideCommentUseCase: HideCommentUseCase,
@@ -119,18 +117,6 @@ export class ForumModerationController {
       req.user.id,
       dto.note,
     );
-  }
-
-  @Get('forums/:forumId/moderation-logs')
-  @ApiOperation({ summary: 'Lịch sử moderation trong forum' })
-  @ApiQuery({ name: 'page', required: false, type: Number })
-  @ApiQuery({ name: 'limit', required: false, type: Number })
-  listModerationLogs(
-    @Param('forumId') forumId: string,
-    @Query('page') page?: number,
-    @Query('limit') limit?: number,
-  ) {
-    return this.getModerationLogsUseCase.execute(forumId, page, limit);
   }
 
   @Patch('forums/:forumId/posts/:postId/hide')
