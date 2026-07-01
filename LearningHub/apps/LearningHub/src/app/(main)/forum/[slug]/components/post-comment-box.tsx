@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { MessageSquare } from 'lucide-react';
 import { createComment } from '../../../../actions/forum.actions';
+import { CommentMentionInput } from '@/components/ui/comment-mention-input';
 
 interface PostCommentBoxProps {
   postId: string;
@@ -12,12 +13,16 @@ interface PostCommentBoxProps {
 
 export function PostCommentBox({ postId, forumId }: PostCommentBoxProps) {
   const qc = useQueryClient();
-  const [text, setText] = useState('');
   const [commentError, setCommentError] = useState<string | null>(null);
   const addComment = useMutation({
-    mutationFn: () => createComment(forumId, postId, text, undefined),
+    mutationFn: ({
+      text,
+      mentionIds,
+    }: {
+      text: string;
+      mentionIds: string[];
+    }) => createComment(forumId, postId, text, undefined, mentionIds),
     onSuccess: () => {
-      setText('');
       setCommentError(null);
       qc.invalidateQueries({ queryKey: ['forum-posts', forumId] });
     },
@@ -32,24 +37,15 @@ export function PostCommentBox({ postId, forumId }: PostCommentBoxProps) {
         <div className="h-7 w-7 shrink-0 rounded-full bg-indigo-100 flex items-center justify-center">
           <MessageSquare className="h-3.5 w-3.5 text-indigo-500" />
         </div>
-        <div className="flex-1 flex items-center gap-2">
-          <input
-            value={text}
-            onChange={(e) => setText(e.target.value)}
+        <div className="flex-1">
+          <CommentMentionInput
+            forumId={forumId}
             placeholder="Write a quick comment..."
-            className="flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-indigo-400 focus:bg-white transition"
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && text.trim()) addComment.mutate();
-            }}
+            onSubmit={(text, mentionIds) =>
+              addComment.mutate({ text, mentionIds })
+            }
+            disabled={addComment.isPending}
           />
-          <button
-            type="button"
-            onClick={() => addComment.mutate()}
-            disabled={!text.trim() || addComment.isPending}
-            className="shrink-0 rounded-xl bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-indigo-700 disabled:opacity-40"
-          >
-            {addComment.isPending ? '...' : 'Send'}
-          </button>
         </div>
       </div>
     </div>

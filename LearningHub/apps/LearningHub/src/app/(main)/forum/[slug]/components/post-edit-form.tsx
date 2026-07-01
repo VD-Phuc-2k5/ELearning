@@ -18,6 +18,7 @@ interface PostEditFormProps {
   isSaving: boolean;
   onSave: () => void;
   onCancel: () => void;
+  forumId: string;
 }
 
 export function PostEditForm({
@@ -32,6 +33,7 @@ export function PostEditForm({
   isSaving,
   onSave,
   onCancel,
+  forumId,
 }: PostEditFormProps) {
   return (
     <div className="p-5 space-y-4">
@@ -46,6 +48,7 @@ export function PostEditForm({
         content={content ?? undefined}
         onChange={(json) => onContentChange(json)}
         placeholder="Edit your post..."
+        forumId={forumId}
       />
       {tags.length > 0 && (
         <div className="space-y-1.5">

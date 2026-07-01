@@ -136,6 +136,7 @@ export default function NewPostPage({ params }: NewPostPageProps) {
             content={content ?? undefined}
             onChange={(json) => setContent(json)}
             placeholder="Write your post..."
+            forumId={forumId}
           />
         </div>
 

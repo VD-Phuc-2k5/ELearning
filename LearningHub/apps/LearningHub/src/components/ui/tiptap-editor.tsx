@@ -16,10 +16,11 @@ interface TiptapEditorProps {
   content?: Record<string, unknown>;
   onChange: (json: Record<string, unknown>) => void;
   placeholder?: string;
+  forumId?: string;
 }
 
 export const TiptapEditor = forwardRef<TiptapEditorHandle, TiptapEditorProps>(
-  function TiptapEditor({ content, onChange, placeholder }, ref) {
+  function TiptapEditor({ content, onChange, placeholder, forumId }, ref) {
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const {
@@ -32,7 +33,7 @@ export const TiptapEditor = forwardRef<TiptapEditorHandle, TiptapEditorProps>(
       linkError,
       setLinkError,
       pendingImagesRef,
-    } = useTiptapEditor({ content, onChange, placeholder, ref });
+    } = useTiptapEditor({ content, onChange, placeholder, forumId, ref });
 
     const {
       boxRef: linkBoxRef,

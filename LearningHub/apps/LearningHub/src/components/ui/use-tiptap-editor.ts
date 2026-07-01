@@ -7,7 +7,9 @@ import CodeBlockLowlightExtension from '@tiptap/extension-code-block-lowlight';
 import TaskListExtension from '@tiptap/extension-task-list';
 import TaskItemExtension from '@tiptap/extension-task-item';
 import PlaceholderExtension from '@tiptap/extension-placeholder';
+import MentionExtension from '@tiptap/extension-mention';
 import { common, createLowlight } from 'lowlight';
+import { createMentionSuggestion } from './mention-list';
 import {
   useCallback,
   useEffect,
@@ -40,6 +42,7 @@ interface UseTiptapEditorOptions {
   content?: Record<string, unknown>;
   onChange: (json: Record<string, unknown>) => void;
   placeholder?: string;
+  forumId?: string;
   ref: React.ForwardedRef<TiptapEditorHandle>;
 }
 
@@ -91,6 +94,7 @@ export function useTiptapEditor({
   content,
   onChange,
   placeholder,
+  forumId,
   ref,
 }: UseTiptapEditorOptions) {
   const pendingImagesRef = useRef<PendingImage[]>([]);
@@ -141,6 +145,18 @@ export function useTiptapEditor({
       PlaceholderExtension.configure({
         placeholder: placeholder ?? 'Write your content...',
       }),
+      ...(forumId
+        ? [
+            MentionExtension.configure({
+              HTMLAttributes: { class: 'text-indigo-600 font-medium' },
+              suggestion: {
+                char: '@',
+                allowSpaces: false,
+                render: () => createMentionSuggestion({ forumId }) as any,
+              } as any,
+            }),
+          ]
+        : []),
     ],
     content: content ?? undefined,
     editable: true,

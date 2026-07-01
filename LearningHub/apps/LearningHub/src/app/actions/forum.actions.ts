@@ -16,6 +16,7 @@ import {
   CreateCommentUsecase,
   TogglePostReactionUsecase,
   TogglePostBookmarkUsecase,
+  SearchMembersUsecase,
 } from '@learning-hub/domain';
 import { NetworkFailure } from '@learning-hub/core';
 import type {
@@ -24,6 +25,7 @@ import type {
   PostDetail,
   PostListItem,
   CommentItem,
+  GetReactionsResult,
   PaginatedResponse,
   UploadImageResult,
   ForumTag,
@@ -185,6 +187,7 @@ export async function createComment(
   postId: string,
   content: string,
   parentId?: string,
+  mentionIds?: string[],
 ): Promise<CommentItem> {
   const token = await getToken();
   const repo = new ForumRepositoryImpl(new ForumRemoteDataSourceImpl(), token);
@@ -193,9 +196,43 @@ export async function createComment(
     postId,
     content,
     parentId,
+    mentionIds,
   });
   if (result.type === 'right') return result.value;
   throw new Error(result.value.message);
+}
+
+export async function toggleCommentReaction(
+  forumId: string,
+  postId: string,
+  commentId: string,
+  emoji: string,
+  add: boolean,
+): Promise<void> {
+  const token = await getToken();
+  const repo = new ForumRepositoryImpl(new ForumRemoteDataSourceImpl(), token);
+  const result = await repo.toggleCommentReaction({
+    forumId,
+    postId,
+    commentId,
+    emoji,
+    add,
+  });
+  if (result.type === 'right') return;
+  throw new Error(result.value.message);
+}
+
+export async function getTargetReactions(params: {
+  targetType: 'post' | 'comment';
+  targetId: string;
+  forumId: string;
+  postId?: string;
+}): Promise<GetReactionsResult> {
+  const token = await getToken();
+  const repo = new ForumRepositoryImpl(new ForumRemoteDataSourceImpl(), token);
+  const result = await repo.getTargetReactions(params);
+  if (result.type === 'right') return result.value;
+  return { groups: [], total: 0 };
 }
 
 export async function togglePostReaction(
@@ -364,4 +401,26 @@ export async function updatePostTags(
   });
   if (result.type === 'right') return result.value;
   return undefined;
+}
+
+export interface MemberSuggestion {
+  userId: string;
+  username: string;
+  avatarUrl: string | null;
+}
+
+export async function searchForumMembers(
+  forumId: string,
+  query: string,
+  limit = 5,
+): Promise<MemberSuggestion[]> {
+  const token = await getToken();
+  const repo = new ForumRepositoryImpl(new ForumRemoteDataSourceImpl(), token);
+  const result = await new SearchMembersUsecase(repo).execute({
+    forumId,
+    query,
+    limit,
+  });
+  if (result.type === 'right') return result.value;
+  return [];
 }

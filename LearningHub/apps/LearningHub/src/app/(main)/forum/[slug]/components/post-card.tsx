@@ -1,10 +1,16 @@
 'use client';
 
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { PostListItem } from '@learning-hub/domain';
 import { MessageSquare, Clock, Edit3, Trash2 } from 'lucide-react';
 import { TiptapViewer } from '../../../../../components/ui';
-import { PostLikeButton } from './post-like-button';
-import { PostCommentBox } from './post-comment-box';
+import {
+  togglePostReaction,
+  getTargetReactions,
+} from '../../../../actions/forum.actions';
+import { ReactionBar } from './reaction-bar';
+import { CommentSection } from './comment-section';
 
 interface PostCardProps {
   post: PostListItem;
@@ -23,10 +29,30 @@ export function PostCard({
   onStartEdit,
   onDelete,
 }: PostCardProps) {
+  const qc = useQueryClient();
+  const [showComments, setShowComments] = useState(false);
   const isAuthor = currentUserId ? post.authorId === currentUserId : false;
   const isAdmin = memberRole === 'owner' || memberRole === 'moderator';
   const canEdit = isAuthor;
   const canDelete = isAuthor || isAdmin;
+
+  const { data: reactions } = useQuery({
+    queryKey: ['forum-post-reactions', forumId, post.id],
+    queryFn: () =>
+      getTargetReactions({ targetType: 'post', targetId: post.id, forumId }),
+    staleTime: 5000,
+  });
+
+  const react = useMutation({
+    mutationFn: ({ emoji, add }: { emoji: string; add: boolean }) =>
+      togglePostReaction(forumId, post.id, emoji, add),
+    onSuccess: () => {
+      qc.invalidateQueries({
+        queryKey: ['forum-post-reactions', forumId, post.id],
+      });
+      qc.invalidateQueries({ queryKey: ['forum-posts', forumId] });
+    },
+  });
 
   return (
     <article className="rounded-2xl border border-slate-100 bg-white shadow-sm">
@@ -80,12 +106,31 @@ export function PostCard({
         )}
       </div>
 
-      <div className="flex items-center gap-3 border-t border-slate-50 px-5 py-2.5">
-        <span className="inline-flex items-center gap-1.5 text-xs text-slate-400">
+      <div className="flex items-center gap-3 border-t border-slate-50 px-5 py-2.5 overflow-visible">
+        <button
+          type="button"
+          onClick={() => setShowComments(!showComments)}
+          className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium transition ${
+            showComments
+              ? 'text-indigo-600 bg-indigo-50'
+              : 'text-slate-400 hover:text-indigo-600 hover:bg-indigo-50'
+          }`}
+        >
           <MessageSquare className="h-3.5 w-3.5" />
           {post.commentCount} comments
-        </span>
-        <PostLikeButton postId={post.id} forumId={forumId} />
+        </button>
+        {reactions && (
+          <ReactionBar
+            reactions={reactions.groups}
+            onReact={(emoji) => {
+              const existing = reactions?.groups.find(
+                (r: any) => r.emoji === emoji,
+              );
+              react.mutate({ emoji, add: !existing?.reacted });
+            }}
+            disabled={react.isPending}
+          />
+        )}
         {canEdit && (
           <button
             type="button"
@@ -105,7 +150,13 @@ export function PostCard({
           </button>
         )}
       </div>
-      <PostCommentBox postId={post.id} forumId={forumId} />
+      {showComments && (
+        <CommentSection
+          postId={post.id}
+          forumId={forumId}
+          currentUserId={currentUserId}
+        />
+      )}
     </article>
   );
 }

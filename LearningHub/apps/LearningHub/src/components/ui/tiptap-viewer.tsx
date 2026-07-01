@@ -6,6 +6,7 @@ import ImageExtension from '@tiptap/extension-image';
 import CodeBlockLowlightExtension from '@tiptap/extension-code-block-lowlight';
 import TaskListExtension from '@tiptap/extension-task-list';
 import TaskItemExtension from '@tiptap/extension-task-item';
+import MentionExtension from '@tiptap/extension-mention';
 import { common, createLowlight } from 'lowlight';
 import 'highlight.js/styles/github.css';
 
@@ -27,6 +28,9 @@ export function TiptapViewer({ content }: TiptapViewerProps) {
       CodeBlockLowlightExtension.configure({ lowlight }),
       TaskListExtension,
       TaskItemExtension.configure({ nested: true }),
+      MentionExtension.configure({
+        HTMLAttributes: { class: 'text-indigo-600 font-medium' },
+      }),
     ],
     content: content as never,
     editable: false,

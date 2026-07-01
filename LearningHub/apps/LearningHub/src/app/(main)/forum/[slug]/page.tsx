@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 import {
+  keepPreviousData,
   useInfiniteQuery,
   useQuery,
   useQueryClient,
@@ -71,6 +72,7 @@ export default function ForumDetailPage({ params }: ForumDetailPageProps) {
   const {
     data: postsData,
     isLoading: postsLoading,
+    isFetching,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
@@ -88,6 +90,7 @@ export default function ForumDetailPage({ params }: ForumDetailPageProps) {
       const totalFetched = allPages.reduce((sum, p) => sum + p.data.length, 0);
       return totalFetched < lastPage.total ? allPages.length + 1 : undefined;
     },
+    placeholderData: keepPreviousData,
     enabled: !!forumId,
   });
 
@@ -142,10 +145,25 @@ export default function ForumDetailPage({ params }: ForumDetailPageProps) {
     qc.invalidateQueries({ queryKey: ['forum', slug] });
   }, [qc, forumId, slug]);
 
+  const handleCommentNew = useCallback(() => {
+    qc.invalidateQueries({ queryKey: ['forum-comments', forumId] });
+    qc.invalidateQueries({ queryKey: ['forum-posts', forumId] });
+  }, [qc, forumId]);
+
+  const handleReactionUpdate = useCallback(() => {
+    qc.invalidateQueries({ queryKey: ['forum-post-reactions', forumId] });
+    qc.invalidateQueries({ queryKey: ['forum-comment-reactions', forumId] });
+    qc.invalidateQueries({ queryKey: ['forum-posts', forumId] });
+  }, [qc, forumId]);
+
   useForumSocket({
     forumId,
     enabled: !!forumId,
-    handlers: { onPostNew: handlePostNew },
+    handlers: {
+      onPostNew: handlePostNew,
+      onCommentNew: handleCommentNew,
+      onReactionUpdate: handleReactionUpdate,
+    },
   });
 
   const startEditName = () => {
@@ -334,7 +352,7 @@ export default function ForumDetailPage({ params }: ForumDetailPageProps) {
 
       <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
         <section>
-          {postsLoading ? (
+          {postsLoading && !posts.length ? (
             <div className="space-y-3">
               {[1, 2, 3].map((i) => (
                 <div
@@ -350,6 +368,11 @@ export default function ForumDetailPage({ params }: ForumDetailPageProps) {
             </div>
           ) : (
             <div className="space-y-4">
+              {isFetching && posts.length > 0 && (
+                <div className="h-0.5 w-full overflow-hidden rounded-full bg-slate-100">
+                  <div className="h-full w-1/3 animate-[pulse_1.5s_ease-in-out_infinite] rounded-full bg-indigo-400" />
+                </div>
+              )}
               {posts.map((p) => (
                 <article
                   key={p.id}
@@ -372,6 +395,7 @@ export default function ForumDetailPage({ params }: ForumDetailPageProps) {
                       isSaving={mutations.updatePostMutation.isPending}
                       onSave={handleSavePost}
                       onCancel={cancelEditPost}
+                      forumId={forumId}
                     />
                   ) : (
                     <PostCard

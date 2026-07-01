@@ -55,6 +55,8 @@ const doRefresh = (): Promise<string> => {
   return refreshPromise;
 };
 
+export const refreshAccessToken = (): Promise<string> => doRefresh();
+
 const makeErrorHandler = (instance: typeof api) => async (error: ApiError) => {
   const originalRequest = error.config as RetryConfig | undefined;
   const is401 =

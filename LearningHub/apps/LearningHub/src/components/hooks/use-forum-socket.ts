@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react';
 import type { Socket } from 'socket.io-client';
 import { io } from 'socket.io-client';
+import { refreshAccessToken } from '../../lib/api';
 
 interface ForumSocketHandlers {
   onCommentNew?: (payload: unknown) => void;
@@ -26,23 +27,32 @@ export function useForumSocket({
   handlers,
 }: UseForumSocketArgs): Socket | null {
   const socketRef = useRef<Socket | null>(null);
+  const handlersRef = useRef<ForumSocketHandlers | undefined>(handlers);
+  handlersRef.current = handlers;
 
   useEffect(() => {
     if (!enabled) return;
-    const token =
-      typeof window !== 'undefined'
-        ? localStorage.getItem('accessToken')
-        : null;
     const socketUrl = (
       process.env.NEXT_PUBLIC_NEST_API_URL ?? 'http://localhost:8080'
     ).replace(/\/api\/?$/, '');
     const socket = io(`${socketUrl}/forum`, {
-      auth: { token: token ?? '' },
+      auth: (cb: (data: { token: string }) => void) => {
+        const t =
+          typeof window !== 'undefined'
+            ? (localStorage.getItem('accessToken') ?? '')
+            : '';
+        cb({ token: t });
+      },
       transports: ['websocket'],
       autoConnect: false,
     });
-    const connectTimer = window.setTimeout(() => socket.connect(), 0);
     socketRef.current = socket;
+    socket.on('connect_error', (err: Error) => {
+      if (err.message?.includes('jwt expired')) {
+        refreshAccessToken().catch(() => undefined);
+      }
+    });
+    const connectTimer = window.setTimeout(() => socket.connect(), 0);
     return () => {
       window.clearTimeout(connectTimer);
       socket.disconnect();
@@ -60,14 +70,15 @@ export function useForumSocket({
       socket.emit('join:forum', { forumId });
     }
     const onCommentNew = (payload: unknown) =>
-      handlers?.onCommentNew?.(payload);
+      handlersRef.current?.onCommentNew?.(payload);
     const onReactionUpdate = (payload: unknown) =>
-      handlers?.onReactionUpdate?.(payload);
+      handlersRef.current?.onReactionUpdate?.(payload);
     const onPollUpdate = (payload: unknown) =>
-      handlers?.onPollUpdate?.(payload);
+      handlersRef.current?.onPollUpdate?.(payload);
     const onNotification = (payload: unknown) =>
-      handlers?.onNotification?.(payload);
-    const onPostNew = (payload: unknown) => handlers?.onPostNew?.(payload);
+      handlersRef.current?.onNotification?.(payload);
+    const onPostNew = (payload: unknown) =>
+      handlersRef.current?.onPostNew?.(payload);
     socket.on('comment:new', onCommentNew);
     socket.on('reaction:update', onReactionUpdate);
     socket.on('poll:update', onPollUpdate);
@@ -83,7 +94,7 @@ export function useForumSocket({
       socket.off('notification', onNotification);
       socket.off('post:new', onPostNew);
     };
-  }, [postId, forumId, handlers]);
+  }, [postId, forumId]);
 
   return socketRef.current;
 }

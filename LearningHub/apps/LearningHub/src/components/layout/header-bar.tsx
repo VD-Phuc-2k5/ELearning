@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { LogOut, Plus, HelpCircle } from 'lucide-react';
 import { Button } from '../ui';
 import { Brand } from './brand';
+import { NotificationBell } from '../ui/notification-bell';
 
 interface HeaderBarProps {
   onLogout: () => void;
@@ -24,6 +25,7 @@ export function HeaderBar({ onLogout }: HeaderBarProps) {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <NotificationBell />
           <Button size="sm" variant="ghost">
             <HelpCircle className="h-4 w-full" />
             <span className="hidden sm:inline">Help</span>
