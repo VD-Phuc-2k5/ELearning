@@ -144,6 +144,7 @@ export function useTiptapEditor({
     ],
     content: content ?? undefined,
     editable: true,
+    autofocus: false,
     immediatelyRender: true,
     editorProps: {
       attributes: { class: EDITOR_CLASSES },

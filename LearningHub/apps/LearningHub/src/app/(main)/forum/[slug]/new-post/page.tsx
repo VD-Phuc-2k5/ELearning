@@ -94,7 +94,13 @@ export default function NewPostPage({ params }: NewPostPageProps) {
       setError('Title is required');
       return;
     }
-    if (!content) {
+    const extractText = (node: Record<string, unknown>): string =>
+      node.type === 'text'
+        ? String(node.text ?? '')
+        : ((node.content as Record<string, unknown>[]) ?? [])
+            .map(extractText)
+            .join('');
+    if (!content || !extractText(content).trim()) {
       setError('Content is required');
       return;
     }
