@@ -1,9 +1,9 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class AddBankFkSetNullOnProgress1782610512970
+export class AddBankFkSetNullOnProgress1783000000011
   implements MigrationInterface
 {
-  name = 'AddBankFkSetNullOnProgress1782610512970';
+  name = 'AddBankFkSetNullOnProgress1783000000011';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(

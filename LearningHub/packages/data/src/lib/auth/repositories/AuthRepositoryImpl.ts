@@ -131,6 +131,36 @@ export class AuthRepositoryImpl implements IAuthRepository {
     }
   }
 
+  async forgotPassword(email: string): Promise<Either<Failure, void>> {
+    try {
+      await this.dataSource.forgotPassword({ email });
+      return right(undefined);
+    } catch (e) {
+      return left(toFailure(e));
+    }
+  }
+
+  async resetPassword(
+    token: string,
+    newPassword: string,
+  ): Promise<Either<Failure, void>> {
+    try {
+      await this.dataSource.resetPassword({ token, newPassword });
+      return right(undefined);
+    } catch (e) {
+      return left(toFailure(e));
+    }
+  }
+
+  async verifyResetToken(token: string): Promise<Either<Failure, void>> {
+    try {
+      await this.dataSource.verifyResetToken(token);
+      return right(undefined);
+    } catch (e) {
+      return left(toFailure(e));
+    }
+  }
+
   async getUsers(): Promise<Either<Failure, User[]>> {
     try {
       return right(await this.dataSource.getUsers(this.token));

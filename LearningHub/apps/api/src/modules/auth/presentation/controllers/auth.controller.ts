@@ -1,6 +1,8 @@
 import {
   Controller,
   Post,
+  Get,
+  Query,
   Body,
   BadRequestException,
   ConflictException,
@@ -18,6 +20,11 @@ import { RegisterDto } from '../../application/dto/register.dto';
 import { LoginDto } from '../../application/dto/login.dto';
 import { RefreshTokenDto } from '../../application/dto/refresh-token.dto';
 import { LogoutDto } from '../../application/dto/logout.dto';
+import { ForgotPasswordDto } from '../../application/dto/forgot-password.dto';
+import { ResetPasswordDto } from '../../application/dto/reset-password.dto';
+import { ForgotPasswordUseCase } from '../../application/use-cases/forgot-password.use-case';
+import { ResetPasswordUseCase } from '../../application/use-cases/reset-password.use-case';
+import { VerifyResetTokenUseCase } from '../../application/use-cases/verify-reset-token.use-case';
 import { AuthFailures } from '../../domain/errors/auth.failures';
 import { CurrentUser } from '../../infrastructure/decorators/current-user.decorator';
 import { User } from '../../domain/entities/user.entity';
@@ -32,6 +39,9 @@ export class AuthController {
     private readonly adminRegisterUseCase: AdminRegisterUseCase,
     private readonly refreshUseCase: RefreshTokenUseCase,
     private readonly logoutUseCase: LogoutUseCase,
+    private readonly forgotPasswordUseCase: ForgotPasswordUseCase,
+    private readonly resetPasswordUseCase: ResetPasswordUseCase,
+    private readonly verifyResetTokenUseCase: VerifyResetTokenUseCase,
   ) {}
 
   @Public()
@@ -149,5 +159,35 @@ export class AuthController {
       throw new BadRequestException(result.value.message);
     }
     return result.value;
+  }
+
+  @Public()
+  @Post('forgot-password')
+  async forgotPassword(@Body() dto: ForgotPasswordDto) {
+    const result = await this.forgotPasswordUseCase.execute(dto);
+    if (result.type === 'left') {
+      throw new BadRequestException(result.value.message);
+    }
+    return { success: true };
+  }
+
+  @Public()
+  @Post('reset-password')
+  async resetPassword(@Body() dto: ResetPasswordDto) {
+    const result = await this.resetPasswordUseCase.execute(dto);
+    if (result.type === 'left') {
+      throw new BadRequestException(result.value.message);
+    }
+    return { success: true };
+  }
+
+  @Public()
+  @Get('verify-reset-token')
+  async verifyResetToken(@Query('token') token: string) {
+    const result = await this.verifyResetTokenUseCase.execute({ token });
+    if (result.type === 'left') {
+      throw new BadRequestException(result.value.message);
+    }
+    return { valid: true };
   }
 }

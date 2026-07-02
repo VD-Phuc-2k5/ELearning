@@ -93,4 +93,15 @@ export class AuthFailures extends Failure {
       'CANNOT_DELETE_SELF',
     );
   }
+
+  static invalidOrUsedResetToken(): AuthFailures {
+    return new AuthFailures(
+      'Token is invalid or has already been used',
+      'INVALID_OR_USED_RESET_TOKEN',
+    );
+  }
+
+  static resetTokenExpired(): AuthFailures {
+    return new AuthFailures('Reset token has expired', 'RESET_TOKEN_EXPIRED');
+  }
 }

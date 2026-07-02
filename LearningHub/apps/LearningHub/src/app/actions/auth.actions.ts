@@ -9,6 +9,9 @@ import {
   LoginUsecase,
   LogoutUsecase,
   RegisterUsecase,
+  ForgotPasswordUsecase,
+  ResetPasswordUsecase,
+  VerifyResetTokenUsecase,
 } from '@learning-hub/domain';
 import { cookies } from 'next/headers';
 
@@ -57,6 +60,34 @@ export async function registerAction(
 ): Promise<{ success: true } | { success: false; error: string }> {
   const repo = new AuthRepositoryImpl(new AuthRemoteDataSourceImpl());
   const result = await new RegisterUsecase(repo).execute(data);
+  if (result.type === 'right') return { success: true };
+  return { success: false, error: result.value.message };
+}
+
+export async function forgotPasswordAction(
+  email: string,
+): Promise<{ success: true } | { success: false; error: string }> {
+  const repo = new AuthRepositoryImpl(new AuthRemoteDataSourceImpl());
+  const result = await new ForgotPasswordUsecase(repo).execute({ email });
+  if (result.type === 'right') return { success: true };
+  return { success: false, error: result.value.message };
+}
+
+export async function resetPasswordAction(data: {
+  token: string;
+  newPassword: string;
+}): Promise<{ success: true } | { success: false; error: string }> {
+  const repo = new AuthRepositoryImpl(new AuthRemoteDataSourceImpl());
+  const result = await new ResetPasswordUsecase(repo).execute(data);
+  if (result.type === 'right') return { success: true };
+  return { success: false, error: result.value.message };
+}
+
+export async function verifyResetTokenAction(
+  token: string,
+): Promise<{ success: true } | { success: false; error: string }> {
+  const repo = new AuthRepositoryImpl(new AuthRemoteDataSourceImpl());
+  const result = await new VerifyResetTokenUsecase(repo).execute({ token });
   if (result.type === 'right') return { success: true };
   return { success: false, error: result.value.message };
 }

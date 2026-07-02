@@ -1,9 +1,9 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class AddCascadeDeleteToRoadmapItem1782610764877
+export class AddCascadeDeleteToRoadmapItem1783000000012
   implements MigrationInterface
 {
-  name = 'AddCascadeDeleteToRoadmapItem1782610764877';
+  name = 'AddCascadeDeleteToRoadmapItem1783000000012';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(

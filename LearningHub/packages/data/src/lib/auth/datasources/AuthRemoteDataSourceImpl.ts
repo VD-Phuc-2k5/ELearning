@@ -102,6 +102,33 @@ export class AuthRemoteDataSourceImpl implements IAuthRemoteDataSource {
     }
   }
 
+  async forgotPassword(data: { email: string }): Promise<void> {
+    try {
+      await this.api.post('/auth/forgot-password', data);
+    } catch (e) {
+      return this.handleError(e);
+    }
+  }
+
+  async resetPassword(data: {
+    token: string;
+    newPassword: string;
+  }): Promise<void> {
+    try {
+      await this.api.post('/auth/reset-password', data);
+    } catch (e) {
+      return this.handleError(e);
+    }
+  }
+
+  async verifyResetToken(token: string): Promise<void> {
+    try {
+      await this.api.get(`/auth/verify-reset-token?token=${token}`);
+    } catch (e) {
+      return this.handleError(e);
+    }
+  }
+
   async getUsers(token?: string): Promise<User[]> {
     try {
       const res = await this.api.get('/admin/users', {

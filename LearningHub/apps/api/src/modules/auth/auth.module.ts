@@ -13,6 +13,7 @@ import { PermissionEntity } from './infrastructure/persistence/entities/permissi
 import { RolePermissionEntity } from './infrastructure/persistence/entities/role-permission.entity';
 import { UserRoleEntity } from './infrastructure/persistence/entities/user-role.entity';
 import { UserPermissionEntity } from './infrastructure/persistence/entities/user-permission.entity';
+import { PasswordResetTokenEntity } from './infrastructure/persistence/entities/password-reset-token.entity';
 
 // Repositories
 import { UserRepository } from './infrastructure/persistence/repositories/user.repository';
@@ -22,6 +23,7 @@ import { PermissionRepository } from './infrastructure/persistence/repositories/
 import { RolePermissionRepository } from './infrastructure/persistence/repositories/role-permission.repository';
 import { UserRoleRepository } from './infrastructure/persistence/repositories/user-role.repository';
 import { UserPermissionRepository } from './infrastructure/persistence/repositories/user-permission.repository';
+import { PasswordResetTokenRepository } from './infrastructure/persistence/repositories/password-reset-token.repository';
 
 // Services & Strategies
 import { PasswordService } from './infrastructure/services/password.service';
@@ -29,6 +31,7 @@ import { HashService } from './infrastructure/services/hash.service';
 import { TokenService } from './infrastructure/services/token.service';
 import { PermissionResolverService } from './infrastructure/services/permission-resolver.service';
 import { ResourceRegistryService } from './infrastructure/services/resource-registry.service';
+import { NodemailerEmailService } from './infrastructure/services/nodemailer-email.service';
 import { JwtStrategy } from './infrastructure/strategies/jwt.strategy';
 import { JwtAuthGuard } from './infrastructure/guards/jwt-auth.guard';
 import { PermissionGuard } from './infrastructure/guards/permission.guard';
@@ -42,6 +45,9 @@ import { LogoutUseCase } from './application/use-cases/logout.use-case';
 import { AdminRegisterUseCase } from './application/use-cases/admin-register.use-case';
 import { UpdateUserUseCase } from './application/use-cases/update-user.use-case';
 import { DeleteUserUseCase } from './application/use-cases/delete-user.use-case';
+import { ForgotPasswordUseCase } from './application/use-cases/forgot-password.use-case';
+import { ResetPasswordUseCase } from './application/use-cases/reset-password.use-case';
+import { VerifyResetTokenUseCase } from './application/use-cases/verify-reset-token.use-case';
 
 // Use Cases — RBAC
 import { CreateRoleUseCase } from './application/use-cases/create-role.use-case';
@@ -74,6 +80,7 @@ import { UserPermissionController } from './presentation/controllers/user-permis
       RolePermissionEntity,
       UserRoleEntity,
       UserPermissionEntity,
+      PasswordResetTokenEntity,
     ]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
@@ -107,6 +114,10 @@ import { UserPermissionController } from './presentation/controllers/user-permis
       provide: 'IUserPermissionRepository',
       useClass: UserPermissionRepository,
     },
+    {
+      provide: 'IPasswordResetTokenRepository',
+      useClass: PasswordResetTokenRepository,
+    },
     // Services / Strategies
     { provide: 'IPasswordService', useClass: PasswordService },
     { provide: 'IHashService', useClass: HashService },
@@ -116,6 +127,7 @@ import { UserPermissionController } from './presentation/controllers/user-permis
       useClass: PermissionResolverService,
     },
     { provide: 'IResourceRegistryService', useClass: ResourceRegistryService },
+    { provide: 'IEmailService', useClass: NodemailerEmailService },
     ResourceRegistryService,
     JwtStrategy,
     JwtAuthGuard,
@@ -129,6 +141,9 @@ import { UserPermissionController } from './presentation/controllers/user-permis
     AdminRegisterUseCase,
     RefreshTokenUseCase,
     LogoutUseCase,
+    ForgotPasswordUseCase,
+    ResetPasswordUseCase,
+    VerifyResetTokenUseCase,
     // Use Cases — RBAC
     CreateRoleUseCase,
     UpdateRoleUseCase,

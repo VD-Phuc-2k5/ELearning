@@ -21,6 +21,12 @@ export interface IAuthRepository {
   refreshToken(token: string): Promise<Either<Failure, AuthTokens>>;
   logout(): Promise<Either<Failure, void>>;
   getProfile(): Promise<Either<Failure, User>>;
+  forgotPassword(email: string): Promise<Either<Failure, void>>;
+  resetPassword(
+    token: string,
+    newPassword: string,
+  ): Promise<Either<Failure, void>>;
+  verifyResetToken(token: string): Promise<Either<Failure, void>>;
 
   // Admin Users
   getUsers(): Promise<Either<Failure, User[]>>;

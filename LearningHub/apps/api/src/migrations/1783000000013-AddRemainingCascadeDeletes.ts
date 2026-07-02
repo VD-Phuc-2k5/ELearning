@@ -1,9 +1,9 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class AddRemainingCascadeDeletes1782611068704
+export class AddRemainingCascadeDeletes1783000000013
   implements MigrationInterface
 {
-  name = 'AddRemainingCascadeDeletes1782611068704';
+  name = 'AddRemainingCascadeDeletes1783000000013';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(

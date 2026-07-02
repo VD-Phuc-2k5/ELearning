@@ -27,3 +27,6 @@ export * from './RevokeUserPermissionUsecase';
 export * from './SearchUsersUsecase';
 export * from './UpdateAdminUsecase';
 export * from './UpdateRoleUsecase';
+export * from './ForgotPasswordUsecase';
+export * from './ResetPasswordUsecase';
+export * from './VerifyResetTokenUsecase';

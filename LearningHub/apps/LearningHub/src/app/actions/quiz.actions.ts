@@ -87,7 +87,7 @@ async function getRepo() {
 export async function getBanks(params?: GetBanksQuizParams) {
   const repo = await getRepo();
   const result = await new GetBanksQuizUsecase(repo).execute(params ?? {});
-  return result.type === 'right' ? result.value : [];
+  return result.type === 'right' ? result.value : { data: [], total: 0 };
 }
 
 export async function getBankDetail(id: string): Promise<QuestionBank> {

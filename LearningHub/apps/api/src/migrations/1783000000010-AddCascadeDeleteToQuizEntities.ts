@@ -1,9 +1,9 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class AddCascadeDeleteToQuizEntities1782610330302
+export class AddCascadeDeleteToQuizEntities1783000000010
   implements MigrationInterface
 {
-  name = 'AddCascadeDeleteToQuizEntities1782610330302';
+  name = 'AddCascadeDeleteToQuizEntities1783000000010';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(

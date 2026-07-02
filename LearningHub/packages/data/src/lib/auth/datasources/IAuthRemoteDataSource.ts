@@ -19,6 +19,9 @@ export interface IAuthRemoteDataSource {
   refreshToken(data: { refreshToken: string }): Promise<AuthTokens>;
   logout(token?: string): Promise<void>;
   getProfile(token?: string): Promise<User>;
+  forgotPassword(data: { email: string }): Promise<void>;
+  resetPassword(data: { token: string; newPassword: string }): Promise<void>;
+  verifyResetToken(token: string): Promise<void>;
   getUsers(token?: string): Promise<User[]>;
   registerAdmin(data: RegisterParams, token?: string): Promise<{ user: User }>;
   updateUser(
