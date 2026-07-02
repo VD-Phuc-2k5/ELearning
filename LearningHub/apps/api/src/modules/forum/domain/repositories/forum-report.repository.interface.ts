@@ -56,4 +56,5 @@ export interface IForumReportRepository {
   findAllWithDetails(
     input: FindAllWithDetailsInput,
   ): Promise<{ data: AdminReportDetail[]; total: number }>;
+  deleteResolvedBefore(date: Date): Promise<number>;
 }

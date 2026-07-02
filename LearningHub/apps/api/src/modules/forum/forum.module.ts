@@ -46,11 +46,14 @@ import { NotificationProcessor } from './infrastructure/queues/notification.proc
 import { ViewFlushProcessor } from './infrastructure/queues/view-flush.processor';
 import { InviteCleanupProcessor } from './infrastructure/queues/invite-cleanup.processor';
 import { InviteCleanupInitializer } from './infrastructure/queues/invite-cleanup.initializer';
+import { ReportCleanupProcessor } from './infrastructure/queues/report-cleanup.processor';
+import { ReportCleanupInitializer } from './infrastructure/queues/report-cleanup.initializer';
 import { NotificationService } from './application/services/notification.service';
 import {
   FORUM_QUEUE_NAME,
   FORUM_VIEWS_QUEUE_NAME,
   FORUM_INVITE_CLEANUP_QUEUE_NAME,
+  FORUM_REPORT_CLEANUP_QUEUE_NAME,
 } from './infrastructure/queues/queue-names';
 
 import { FORUM_REPOSITORY } from './domain/repositories/forum.repository.interface';
@@ -260,6 +263,8 @@ const useCases = [
   ViewFlushProcessor,
   InviteCleanupProcessor,
   InviteCleanupInitializer,
+  ReportCleanupProcessor,
+  ReportCleanupInitializer,
 ];
 
 @Module({
@@ -269,6 +274,7 @@ const useCases = [
       { name: FORUM_QUEUE_NAME },
       { name: FORUM_VIEWS_QUEUE_NAME },
       { name: FORUM_INVITE_CLEANUP_QUEUE_NAME },
+      { name: FORUM_REPORT_CLEANUP_QUEUE_NAME },
     ),
     JwtModule.registerAsync({
       imports: [ConfigModule],

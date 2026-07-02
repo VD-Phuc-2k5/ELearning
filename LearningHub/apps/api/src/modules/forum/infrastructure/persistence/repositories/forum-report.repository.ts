@@ -211,4 +211,16 @@ export class ForumReportRepository implements IForumReportRepository {
 
     return { data, total };
   }
+
+  async deleteResolvedBefore(date: Date): Promise<number> {
+    const result = await this.repo
+      .createQueryBuilder()
+      .delete()
+      .where('status IN (:...statuses)', {
+        statuses: ['resolved', 'dismissed'],
+      })
+      .andWhere('resolved_at < :date', { date })
+      .execute();
+    return result.affected ?? 0;
+  }
 }
