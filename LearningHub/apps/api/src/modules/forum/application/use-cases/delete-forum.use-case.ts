@@ -12,6 +12,11 @@ import {
   FORUM_REPOSITORY,
   IForumRepository,
 } from '../../domain/repositories/forum.repository.interface';
+import {
+  ICloudinaryService,
+  CLOUDINARY_SERVICE,
+} from '../interfaces/i-cloudinary.service';
+import { extractPublicIdFromUrl } from '../helpers/extract-mentions';
 
 @Injectable()
 export class DeleteForumUseCase {
@@ -20,6 +25,8 @@ export class DeleteForumUseCase {
     private readonly forumRepo: IForumRepository,
     @Inject(FORUM_MEMBER_REPOSITORY)
     private readonly memberRepo: IForumMemberRepository,
+    @Inject(CLOUDINARY_SERVICE)
+    private readonly cloudinary: ICloudinaryService,
   ) {}
 
   async execute(id: string, userId: string): Promise<void> {
@@ -30,6 +37,16 @@ export class DeleteForumUseCase {
     if (!member || member.role !== 'owner') {
       throw new ForbiddenException('Only the owner can delete this forum');
     }
+
+    if (forum.bannerUrl) {
+      const publicId = extractPublicIdFromUrl(forum.bannerUrl);
+      if (publicId) this.cloudinary.deleteFile(publicId).catch(() => undefined);
+    }
+    if (forum.iconUrl) {
+      const publicId = extractPublicIdFromUrl(forum.iconUrl);
+      if (publicId) this.cloudinary.deleteFile(publicId).catch(() => undefined);
+    }
+
     await this.forumRepo.delete(id);
   }
 }
