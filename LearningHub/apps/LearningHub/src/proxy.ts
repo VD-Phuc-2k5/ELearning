@@ -1,8 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function proxy(request: NextRequest) {
-  // Skip refresh for static assets and the refresh endpoint itself (prevent recursion)
-  const { pathname } = request.nextUrl;
+  const { pathname, searchParams } = request.nextUrl;
+
+  const token = searchParams.get('token');
+  if (token) {
+    const cleanUrl = new URL(request.url);
+    cleanUrl.searchParams.delete('token');
+    const response = NextResponse.redirect(cleanUrl);
+    response.cookies.set('accessToken', token, {
+      maxAge: 900,
+      path: '/',
+      sameSite: 'lax',
+    });
+    return response;
+  }
+
   if (pathname.startsWith('/api/auth/refresh')) return NextResponse.next();
 
   // If accessToken cookie is present, nothing to do

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   keepPreviousData,
   useInfiniteQuery,
@@ -21,6 +22,7 @@ import { useForumMutations } from './hooks/use-forum-mutations';
 import { ForumBanner } from './components/forum-banner';
 import { ForumHeader } from './components/forum-header';
 import { ForumSidebar } from './components/forum-sidebar';
+import { ForumInvitePanel } from './components/forum-invite-panel';
 import { PostCard } from './components/post-card';
 import { PostEditForm } from './components/post-edit-form';
 import { DeletePostModal } from './components/delete-post-modal';
@@ -61,18 +63,24 @@ export default function ForumDetailPage({ params }: ForumDetailPageProps) {
   const editorRef = useRef<TiptapEditorHandle>(null);
   const loadMoreRef = useRef<HTMLDivElement>(null);
   const iconInputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
   const { user: currentUser } = useCurrentUser();
 
-  const { data: detail, isLoading: detailLoading } = useQuery({
+  const {
+    data: detail,
+    isLoading: detailLoading,
+    isError: detailIsError,
+    error: detailError,
+  } = useQuery({
     queryKey: ['forum', slug],
     queryFn: () => getForumDetail(slug),
+    retry: false,
   });
   const forumId = detail?.forum.id ?? '';
 
   const {
     data: postsData,
     isLoading: postsLoading,
-    isFetching,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
@@ -150,11 +158,21 @@ export default function ForumDetailPage({ params }: ForumDetailPageProps) {
     qc.invalidateQueries({ queryKey: ['forum-posts', forumId] });
   }, [qc, forumId]);
 
+  const handleCommentDeleted = useCallback(() => {
+    qc.invalidateQueries({ queryKey: ['forum-comments', forumId] });
+    qc.invalidateQueries({ queryKey: ['forum-posts', forumId] });
+  }, [qc, forumId]);
+
   const handleReactionUpdate = useCallback(() => {
     qc.invalidateQueries({ queryKey: ['forum-post-reactions', forumId] });
     qc.invalidateQueries({ queryKey: ['forum-comment-reactions', forumId] });
     qc.invalidateQueries({ queryKey: ['forum-posts', forumId] });
   }, [qc, forumId]);
+
+  const handlePostVisibilityChange = useCallback(() => {
+    qc.invalidateQueries({ queryKey: ['forum-posts', forumId] });
+    qc.invalidateQueries({ queryKey: ['forum', slug] });
+  }, [qc, forumId, slug]);
 
   useForumSocket({
     forumId,
@@ -162,7 +180,10 @@ export default function ForumDetailPage({ params }: ForumDetailPageProps) {
     handlers: {
       onPostNew: handlePostNew,
       onCommentNew: handleCommentNew,
+      onCommentDeleted: handleCommentDeleted,
       onReactionUpdate: handleReactionUpdate,
+      onPostHidden: handlePostVisibilityChange,
+      onPostRestored: handlePostVisibilityChange,
     },
   });
 
@@ -236,7 +257,20 @@ export default function ForumDetailPage({ params }: ForumDetailPageProps) {
     );
   };
 
-  if (detailLoading || !detail) {
+  const handleDeleteForum = () => {
+    if (
+      !window.confirm(
+        'Are you sure you want to delete this forum? This action cannot be undone.',
+      )
+    )
+      return;
+    mutations.deleteForumMutation.mutate(undefined, {
+      onSuccess: () => router.push('/'),
+      onError: (e: Error) => setError(e.message),
+    });
+  };
+
+  if (detailLoading) {
     return (
       <div className="space-y-4">
         <div className="h-24 rounded-2xl bg-slate-100 animate-pulse" />
@@ -245,8 +279,97 @@ export default function ForumDetailPage({ params }: ForumDetailPageProps) {
     );
   }
 
+  if (detailIsError || !detail) {
+    return (
+      <div className="rounded-2xl border-2 border-red-200 bg-red-50 p-8 text-center">
+        <BookOpen className="mx-auto h-10 w-10 text-red-400 mb-3" />
+        <p className="font-semibold text-red-700 mb-1">
+          {detailIsError
+            ? detailError instanceof Error
+              ? detailError.message
+              : 'Failed to load forum'
+            : 'Forum not found'}
+        </p>
+        {detailIsError && (
+          <p className="text-sm text-red-500 mb-2">
+            The forum may be private or the server is unreachable.
+          </p>
+        )}
+      </div>
+    );
+  }
+
   const { forum, memberRole: role, rules } = detail;
   const memberRole = role ?? undefined;
+
+  const isPrivateNonMember = forum.visibility === 'private' && !memberRole;
+  const isJoining = mutations.join.isPending;
+
+  if (isPrivateNonMember) {
+    return (
+      <div className="max-w-2xl mx-auto mt-20">
+        <div className="rounded-2xl border border-amber-200 bg-white shadow-sm overflow-hidden">
+          <div className="relative h-32 bg-gradient-to-br from-amber-50 to-orange-50 flex items-center justify-center">
+            {forum.bannerUrl ? (
+              <img
+                src={forum.bannerUrl}
+                alt={forum.name}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <BookOpen className="h-12 w-12 text-amber-300" />
+            )}
+          </div>
+          <div className="p-8 text-center">
+            {forum.iconUrl && (
+              <img
+                src={forum.iconUrl}
+                alt=""
+                className="mx-auto -mt-14 h-16 w-16 rounded-2xl border-4 border-white shadow object-cover"
+              />
+            )}
+            <h2 className="mt-4 text-2xl font-bold text-slate-900">
+              {forum.name}
+            </h2>
+            <span className="inline-block mt-1 rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700">
+              Private Forum
+            </span>
+            {forum.description && (
+              <p className="mt-4 text-slate-600 text-sm max-w-md mx-auto">
+                {forum.description}
+              </p>
+            )}
+            <div className="mt-2 flex items-center justify-center gap-4 text-xs text-slate-400">
+              <span>{forum.memberCount} members</span>
+              <span>{forum.postCount} posts</span>
+            </div>
+            <div className="mt-8 rounded-xl border border-amber-100 bg-amber-50 p-5">
+              <p className="text-sm font-medium text-amber-800 mb-4">
+                This forum is private. You need to be a member to view and
+                participate in discussions.
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  mutations.join.mutate();
+                  qc.invalidateQueries({ queryKey: ['forum', slug] });
+                }}
+                disabled={isJoining}
+                className="inline-flex items-center gap-2 rounded-xl bg-amber-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-amber-700 transition disabled:opacity-60"
+              >
+                {isJoining ? 'Requesting...' : 'Request to Join'}
+              </button>
+            </div>
+          </div>
+        </div>
+        {error && (
+          <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 text-center">
+            {error}
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -298,6 +421,8 @@ export default function ForumDetailPage({ params }: ForumDetailPageProps) {
           isLeaving={mutations.leave.isPending}
           onJoin={() => mutations.join.mutate()}
           onLeave={() => mutations.leave.mutate()}
+          isDeletingForum={mutations.deleteForumMutation.isPending}
+          onDeleteForum={handleDeleteForum}
         />
       </header>
 
@@ -368,11 +493,6 @@ export default function ForumDetailPage({ params }: ForumDetailPageProps) {
             </div>
           ) : (
             <div className="space-y-4">
-              {isFetching && posts.length > 0 && (
-                <div className="h-0.5 w-full overflow-hidden rounded-full bg-slate-100">
-                  <div className="h-full w-1/3 animate-[pulse_1.5s_ease-in-out_infinite] rounded-full bg-indigo-400" />
-                </div>
-              )}
               {posts.map((p) => (
                 <article
                   key={p.id}
@@ -434,39 +554,46 @@ export default function ForumDetailPage({ params }: ForumDetailPageProps) {
           )}
         </section>
 
-        <ForumSidebar
-          memberCount={forum.memberCount}
-          postCount={forum.postCount}
-          rules={rules}
-          isOwner={memberRole === 'owner'}
-          isMember={!!memberRole}
-          onEditRules={startEditRules}
-          editingRules={editingRules}
-          rulesDraft={rulesDraft}
-          setRulesDraft={setRulesDraft}
-          onSaveRules={() =>
-            mutations.saveRules.mutate(rulesDraft, {
-              onSuccess: () => setEditingRules(false),
-            })
-          }
-          saving={mutations.saveRules.isPending}
-          onCancelRules={() => setEditingRules(false)}
-          tags={tags}
-          showTagManager={showTagManager}
-          setShowTagManager={setShowTagManager}
-          newTagName={newTagName}
-          setNewTagName={setNewTagName}
-          newTagColor={newTagColor}
-          setNewTagColor={setNewTagColor}
-          onCreateTag={() =>
-            mutations.createTagMutation.mutate({
-              name: newTagName,
-              color: newTagColor,
-            })
-          }
-          creatingTag={mutations.createTagMutation.isPending}
-          onDeleteTag={(id: number) => mutations.deleteTagMutation.mutate(id)}
-        />
+        <div className="space-y-4">
+          <ForumSidebar
+            memberCount={forum.memberCount}
+            postCount={forum.postCount}
+            rules={rules}
+            isOwner={memberRole === 'owner'}
+            isMember={!!memberRole}
+            onEditRules={startEditRules}
+            editingRules={editingRules}
+            rulesDraft={rulesDraft}
+            setRulesDraft={setRulesDraft}
+            onSaveRules={() =>
+              mutations.saveRules.mutate(rulesDraft, {
+                onSuccess: () => setEditingRules(false),
+              })
+            }
+            saving={mutations.saveRules.isPending}
+            onCancelRules={() => setEditingRules(false)}
+            tags={tags}
+            showTagManager={showTagManager}
+            setShowTagManager={setShowTagManager}
+            newTagName={newTagName}
+            setNewTagName={setNewTagName}
+            newTagColor={newTagColor}
+            setNewTagColor={setNewTagColor}
+            onCreateTag={() =>
+              mutations.createTagMutation.mutate({
+                name: newTagName,
+                color: newTagColor,
+              })
+            }
+            creatingTag={mutations.createTagMutation.isPending}
+            onDeleteTag={(id: number) => mutations.deleteTagMutation.mutate(id)}
+          />
+          {memberRole && (
+            <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+              <ForumInvitePanel forumId={forumId} />
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

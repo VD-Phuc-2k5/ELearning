@@ -16,6 +16,7 @@ import {
   deletePost,
   updatePost,
   uploadForumImage,
+  deleteForum,
 } from '../../../../actions/forum.actions';
 
 interface UseForumMutationsParams {
@@ -40,6 +41,7 @@ export function useForumMutations({
   const join = useMutation({
     mutationFn: () => joinForum(forumId),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['forum', slug] }),
+    onError: (e: Error) => onError(e.message),
   });
 
   const leave = useMutation({
@@ -176,6 +178,11 @@ export function useForumMutations({
     onError: (e: Error) => onError(e.message),
   });
 
+  const deleteForumMutation = useMutation({
+    mutationFn: () => deleteForum(forumId),
+    onError: (e: Error) => onError(e.message),
+  });
+
   return {
     join,
     leave,
@@ -190,5 +197,6 @@ export function useForumMutations({
     deleteTagMutation,
     deletePostMutation,
     updatePostMutation,
+    deleteForumMutation,
   };
 }

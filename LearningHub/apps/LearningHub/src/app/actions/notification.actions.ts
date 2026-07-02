@@ -1,42 +1,25 @@
 'use server';
 
-import axios from 'axios';
+import {
+  NotificationRemoteDataSourceImpl,
+  NotificationRepositoryImpl,
+} from '@learning-hub/data';
+import {
+  ListNotificationsUsecase,
+  CountUnreadNotificationsUsecase,
+  MarkNotificationReadUsecase,
+  MarkAllNotificationsReadUsecase,
+  DeleteReadNotificationsUsecase,
+  type NotificationsPage,
+} from '@learning-hub/domain';
+import { NetworkFailure, type NoParams } from '@learning-hub/core';
 import { cookies } from 'next/headers';
 
-export interface NotificationItem {
-  id: string;
-  actorId: string | null;
-  actorName: string | null;
-  actorAvatarUrl: string | null;
-  type: string;
-  targetType: string | null;
-  targetId: string | null;
-  metadata: Record<string, unknown> | null;
-  isRead: boolean;
-  createdAt: string;
-}
-
-export interface NotificationsPage {
-  data: NotificationItem[];
-  total: number;
-}
-
-const baseURL =
-  process.env.NEST_API_URL ||
-  process.env.NEXT_PUBLIC_API_URL ||
-  'http://127.0.0.1:8080/api';
+const noParams = {} as NoParams;
 
 async function getToken(): Promise<string | undefined> {
-  return (await cookies()).get('accessToken')?.value;
-}
-
-async function api() {
-  const token = await getToken();
-  return axios.create({
-    baseURL,
-    timeout: 10000,
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
-  });
+  const store = await cookies();
+  return store.get('accessToken')?.value ?? store.get('adminToken')?.value;
 }
 
 export async function listNotifications(
@@ -44,43 +27,70 @@ export async function listNotifications(
   page = 1,
   limit = 20,
 ): Promise<NotificationsPage> {
-  try {
-    const client = await api();
-    const params: Record<string, string> = {};
-    if (unreadOnly) params.unreadOnly = 'true';
-    if (page > 1) params.page = String(page);
-    if (limit !== 20) params.limit = String(limit);
-    const res = await client.get('/me/forum-notifications', { params });
-    return res.data;
-  } catch {
-    return { data: [], total: 0 };
-  }
+  const token = await getToken();
+  const repo = new NotificationRepositoryImpl(
+    new NotificationRemoteDataSourceImpl(),
+    token,
+  );
+  const result = await new ListNotificationsUsecase(repo).execute({
+    unreadOnly,
+    page,
+    limit,
+  });
+  if (result.type === 'right') return result.value;
+  return { data: [], total: 0 };
 }
 
 export async function getUnreadNotificationCount(): Promise<number> {
-  try {
-    const client = await api();
-    const res = await client.get('/me/forum-notifications/unread-count');
-    return typeof res.data === 'number' ? res.data : (res.data?.count ?? 0);
-  } catch {
-    return 0;
-  }
+  const token = await getToken();
+  const repo = new NotificationRepositoryImpl(
+    new NotificationRemoteDataSourceImpl(),
+    token,
+  );
+  const result = await new CountUnreadNotificationsUsecase(repo).execute(
+    noParams,
+  );
+  if (result.type === 'right') return result.value;
+  return 0;
 }
 
-export async function markNotificationRead(id: string): Promise<void> {
-  try {
-    const client = await api();
-    await client.patch(`/me/forum-notifications/${id}/read`);
-  } catch {
-    /* ignore */
-  }
+export async function markNotificationRead(id: string): Promise<boolean> {
+  const token = await getToken();
+  const repo = new NotificationRepositoryImpl(
+    new NotificationRemoteDataSourceImpl(),
+    token,
+  );
+  const result = await new MarkNotificationReadUsecase(repo).execute(id);
+  if (result.type === 'left' && result.value instanceof NetworkFailure)
+    return false;
+  if (result.type === 'left') throw new Error(result.value.message);
+  return true;
 }
 
-export async function markAllNotificationsRead(): Promise<void> {
-  try {
-    const client = await api();
-    await client.patch('/me/forum-notifications/read-all');
-  } catch {
-    /* ignore */
-  }
+export async function markAllNotificationsRead(): Promise<boolean> {
+  const token = await getToken();
+  const repo = new NotificationRepositoryImpl(
+    new NotificationRemoteDataSourceImpl(),
+    token,
+  );
+  const result = await new MarkAllNotificationsReadUsecase(repo).execute(
+    noParams,
+  );
+  if (result.type === 'left' && result.value instanceof NetworkFailure)
+    return false;
+  if (result.type === 'left') throw new Error(result.value.message);
+  return true;
+}
+
+export async function deleteReadNotifications(): Promise<void> {
+  const token = await getToken();
+  const repo = new NotificationRepositoryImpl(
+    new NotificationRemoteDataSourceImpl(),
+    token,
+  );
+  const result = await new DeleteReadNotificationsUsecase(repo).execute(
+    noParams,
+  );
+  if (result.type === 'left' && result.value instanceof NetworkFailure) return;
+  if (result.type === 'left') throw new Error(result.value.message);
 }

@@ -7,10 +7,13 @@ import { refreshAccessToken } from '../../lib/api';
 
 interface ForumSocketHandlers {
   onCommentNew?: (payload: unknown) => void;
+  onCommentDeleted?: (payload: unknown) => void;
   onReactionUpdate?: (payload: unknown) => void;
   onPollUpdate?: (payload: unknown) => void;
   onNotification?: (payload: unknown) => void;
   onPostNew?: (payload: unknown) => void;
+  onPostHidden?: (payload: unknown) => void;
+  onPostRestored?: (payload: unknown) => void;
 }
 
 interface UseForumSocketArgs {
@@ -71,6 +74,8 @@ export function useForumSocket({
     }
     const onCommentNew = (payload: unknown) =>
       handlersRef.current?.onCommentNew?.(payload);
+    const onCommentDeleted = (payload: unknown) =>
+      handlersRef.current?.onCommentDeleted?.(payload);
     const onReactionUpdate = (payload: unknown) =>
       handlersRef.current?.onReactionUpdate?.(payload);
     const onPollUpdate = (payload: unknown) =>
@@ -79,20 +84,30 @@ export function useForumSocket({
       handlersRef.current?.onNotification?.(payload);
     const onPostNew = (payload: unknown) =>
       handlersRef.current?.onPostNew?.(payload);
+    const onPostHidden = (payload: unknown) =>
+      handlersRef.current?.onPostHidden?.(payload);
+    const onPostRestored = (payload: unknown) =>
+      handlersRef.current?.onPostRestored?.(payload);
     socket.on('comment:new', onCommentNew);
+    socket.on('comment:deleted', onCommentDeleted);
     socket.on('reaction:update', onReactionUpdate);
     socket.on('poll:update', onPollUpdate);
     socket.on('notification', onNotification);
     socket.on('post:new', onPostNew);
+    socket.on('post:hidden', onPostHidden);
+    socket.on('post:restored', onPostRestored);
 
     return () => {
       if (postId) socket.emit('leave:post', { postId });
       if (forumId) socket.emit('leave:forum', { forumId });
       socket.off('comment:new', onCommentNew);
+      socket.off('comment:deleted', onCommentDeleted);
       socket.off('reaction:update', onReactionUpdate);
       socket.off('poll:update', onPollUpdate);
       socket.off('notification', onNotification);
       socket.off('post:new', onPostNew);
+      socket.off('post:hidden', onPostHidden);
+      socket.off('post:restored', onPostRestored);
     };
   }, [postId, forumId]);
 

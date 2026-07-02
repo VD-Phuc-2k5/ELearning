@@ -97,7 +97,7 @@ export function ForumSidebar({
                   className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium"
                   style={{
                     backgroundColor: t.color ? `${t.color}20` : '#f1f5f9',
-                    color: t.color ?? '#64748b',
+                    color: '#111111',
                   }}
                 >
                   {t.name}

@@ -3,14 +3,15 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { io } from 'socket.io-client';
 import { useRouter } from 'next/navigation';
-import { Bell, Check } from 'lucide-react';
+import { Bell, Check, Trash2 } from 'lucide-react';
 import {
   listNotifications,
   markNotificationRead,
   markAllNotificationsRead,
+  deleteReadNotifications,
   getUnreadNotificationCount,
-  type NotificationItem,
 } from '../../app/actions/notification.actions';
+import type { NotificationItem } from '@learning-hub/domain';
 
 function timeAgo(dateStr: string): string {
   const seconds = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
@@ -29,6 +30,10 @@ function notificationText(n: NotificationItem): string {
   if (n.type === 'mention') return `${name} mentioned you in a comment`;
   if (n.type === 'reply') return `${name} replied to your comment`;
   if (n.type === 'comment') return `${name} commented on your post`;
+  if (n.type === 'report_resolved')
+    return `Báo cáo của bạn đã được giải quyết${n.metadata?.note ? `: ${n.metadata.note}` : ''}`;
+  if (n.type === 'report_dismissed')
+    return `Báo cáo của bạn đã bị bỏ qua${n.metadata?.note ? `: ${n.metadata.note}` : ''}`;
   return `${name} sent a notification`;
 }
 
@@ -113,8 +118,15 @@ export function NotificationBell() {
 
   const handleClick = async (n: NotificationItem) => {
     if (!n.isRead) {
-      await markNotificationRead(n.id);
-      setCount((prev) => Math.max(0, prev - 1));
+      const ok = await markNotificationRead(n.id);
+      if (ok) {
+        setCount((prev) => Math.max(0, prev - 1));
+        setItems((prev) =>
+          prev.map((item) =>
+            item.id === n.id ? { ...item, isRead: true } : item,
+          ),
+        );
+      }
     }
     setOpen(false);
     const slug = (n.metadata as Record<string, unknown> | null)?.forumSlug;
@@ -124,9 +136,20 @@ export function NotificationBell() {
   };
 
   const handleMarkAll = async () => {
-    await markAllNotificationsRead();
-    setCount(0);
-    setItems((prev) => prev.map((n) => ({ ...n, isRead: true })));
+    const ok = await markAllNotificationsRead();
+    if (ok) {
+      setCount(0);
+      setItems((prev) => prev.map((n) => ({ ...n, isRead: true })));
+    }
+  };
+
+  const handleDeleteRead = async () => {
+    try {
+      await deleteReadNotifications();
+      setItems((prev) => prev.filter((n) => !n.isRead));
+    } catch {
+      // API failed, keep current state
+    }
   };
 
   return (
@@ -149,15 +172,26 @@ export function NotificationBell() {
             <span className="text-sm font-semibold text-slate-800">
               Notifications
             </span>
-            {items.some((n) => !n.isRead) && (
-              <button
-                onClick={handleMarkAll}
-                className="inline-flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-700 font-medium"
-              >
-                <Check className="h-3 w-3" />
-                Mark all read
-              </button>
-            )}
+            <div className="flex items-center gap-2">
+              {items.some((n) => !n.isRead) && (
+                <button
+                  onClick={handleMarkAll}
+                  className="inline-flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-700 font-medium"
+                >
+                  <Check className="h-3 w-3" />
+                  Mark all read
+                </button>
+              )}
+              {items.some((n) => n.isRead) && (
+                <button
+                  onClick={handleDeleteRead}
+                  className="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-red-500 font-medium"
+                >
+                  <Trash2 className="h-3 w-3" />
+                  Clear read
+                </button>
+              )}
+            </div>
           </div>
           <div className="max-h-[360px] overflow-y-auto">
             {loading && (

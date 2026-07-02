@@ -45,7 +45,9 @@ export async function loginAction(data: {
 
 export async function getCurrentUser(): Promise<User | null> {
   const cookieStore = await cookies();
-  const token = cookieStore.get('accessToken')?.value;
+  const token =
+    cookieStore.get('accessToken')?.value ??
+    cookieStore.get('adminToken')?.value;
   if (!token) return null;
   try {
     const payload = JSON.parse(

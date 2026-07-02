@@ -2,7 +2,7 @@
 
 import type { RefObject } from 'react';
 import Link from 'next/link';
-import { Plus, Lock, Save, X, Shield } from 'lucide-react';
+import { Plus, Lock, Save, X, Shield, Trash2 } from 'lucide-react';
 import type { ForumDetail } from '@learning-hub/domain';
 import { Button, Input } from '../../../../../components/ui';
 import { ForumIconManager } from './forum-icon-manager';
@@ -51,6 +51,8 @@ interface ForumHeaderProps {
   isLeaving: boolean;
   onJoin: () => void;
   onLeave: () => void;
+  isDeletingForum: boolean;
+  onDeleteForum: () => void;
 }
 
 export function ForumHeader({
@@ -83,6 +85,8 @@ export function ForumHeader({
   isLeaving,
   onJoin,
   onLeave,
+  isDeletingForum,
+  onDeleteForum,
 }: ForumHeaderProps) {
   return (
     <div className="p-6">
@@ -198,6 +202,18 @@ export function ForumHeader({
                   onClick={onLeave}
                 >
                   Leave
+                </Button>
+              )}
+              {memberRole === 'owner' && (
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
+                  isLoading={isDeletingForum}
+                  onClick={onDeleteForum}
+                  icon={<Trash2 className="h-3.5 w-3.5" />}
+                >
+                  Delete
                 </Button>
               )}
             </>

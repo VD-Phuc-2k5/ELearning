@@ -28,10 +28,14 @@ const fmtTime = (iso: string) =>
     minute: '2-digit',
   });
 
-export function RecentAttempts() {
+interface Props {
+  userId?: string;
+}
+
+export function RecentAttempts({ userId }: Props) {
   const { data, isLoading } = useQuery({
-    queryKey: ['quiz-attempts-recent'],
-    queryFn: () => listAttempts({ limit: 5 }),
+    queryKey: ['quiz-attempts-recent', userId],
+    queryFn: () => listAttempts({ limit: 5, uploaderId: userId }),
   });
 
   const attempts = data?.data ?? [];

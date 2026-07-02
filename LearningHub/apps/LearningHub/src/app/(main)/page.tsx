@@ -199,7 +199,7 @@ export default function DashboardPage() {
 
       <section className="grid gap-8 lg:grid-cols-2">
         <CompletedRoadmaps />
-        <RecentAttempts />
+        <RecentAttempts userId={user?.id} />
       </section>
     </div>
   );
