@@ -42,7 +42,7 @@ export class ForumPostRepository implements IForumPostRepository {
       reactionCount: e.reactionCount,
       viewCount: e.viewCount,
       roadmapId: e.roadmapId,
-      questionBankId: e.questionBank,
+      questionBankId: e.questionBankId ?? null,
       tags: (e.tags ?? []).map((t) => ({
         id: t.id,
         name: t.name,

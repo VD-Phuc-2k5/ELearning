@@ -61,7 +61,3 @@ export class UpdateMemberRoleDto {
 export class CreateInviteDto {
   @ApiPropertyOptional() @IsOptional() @IsString() inviteeId?: string;
 }
-
-export class CreateJoinRequestDto {
-  @ApiPropertyOptional() @IsOptional() @IsString() message?: string;
-}

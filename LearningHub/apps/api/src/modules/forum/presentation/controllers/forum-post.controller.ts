@@ -51,10 +51,6 @@ export class ForumPostController {
     @Body() dto: CreatePostDto,
     @Request() req: AuthReq,
   ) {
-    console.log(
-      '[API createPost] received content:',
-      JSON.stringify(dto.content).substring(0, 500),
-    );
     return this.createPostUseCase.execute(
       forumId,
       {

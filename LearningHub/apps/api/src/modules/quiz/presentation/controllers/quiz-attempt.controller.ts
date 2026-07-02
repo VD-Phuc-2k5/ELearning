@@ -54,16 +54,19 @@ export class QuizAttemptController {
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'bankId', required: false })
+  @ApiQuery({ name: 'uploaderId', required: false, type: String })
   async getAttempts(
     @Request() req: AuthenticatedRequest,
     @Query('page') page?: number,
     @Query('limit') limit?: number,
     @Query('bankId') bankId?: string,
+    @Query('uploaderId') uploaderId?: string,
   ) {
     return this.getQuizAttemptsUseCase.execute(req.user.id, {
       page,
       limit,
       bankId,
+      uploaderId,
     });
   }
 

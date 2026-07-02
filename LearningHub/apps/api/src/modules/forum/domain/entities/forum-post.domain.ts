@@ -1,5 +1,3 @@
-import { QuestionBankEntity } from '../../../quiz/infrastructure/persistence/entities/question-bank.entity';
-
 export type PostType =
   | 'text'
   | 'poll'
@@ -24,7 +22,7 @@ export interface ForumPostDomain {
   reactionCount: number;
   viewCount: number;
   roadmapId: string | null;
-  questionBankId: QuestionBankEntity;
+  questionBankId: string | null;
   tags: Array<{ id: number; name: string; slug: string; color: string | null }>;
   createdAt: Date;
   updatedAt: Date;

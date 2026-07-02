@@ -20,6 +20,18 @@ import {
   FORUM_REPOSITORY,
   IForumRepository,
 } from '../../domain/repositories/forum.repository.interface';
+import { FORUM_GATEWAY, IForumGateway } from '../interfaces/i-forum-gateway';
+import type { IUserRoleRepository } from '../../../auth/domain/repositories/i-user-role.repository';
+
+async function isSystemAdmin(
+  userRoleRepo: IUserRoleRepository,
+  userId: string,
+): Promise<boolean> {
+  const roles = await userRoleRepo.findByUserId(userId);
+  return roles.some(
+    (ur) => ur.role.code === 'ADMIN' || ur.role.code === 'OWNER',
+  );
+}
 
 @Injectable()
 export class HidePostUseCase {
@@ -30,6 +42,10 @@ export class HidePostUseCase {
     private readonly memberRepo: IForumMemberRepository,
     @Inject(FORUM_REPOSITORY)
     private readonly forumRepo: IForumRepository,
+    @Inject(FORUM_GATEWAY)
+    private readonly gateway: IForumGateway,
+    @Inject('IUserRoleRepository')
+    private readonly userRoleRepo: IUserRoleRepository,
   ) {}
 
   async execute(
@@ -44,17 +60,22 @@ export class HidePostUseCase {
     const post = await this.postRepo.findByIdAndForum(postId, forumId);
     if (!post) throw new NotFoundException('Post not found');
 
-    const member = await this.memberRepo.findByForumAndUser(
-      forumId,
-      moderatorId,
-    );
-    if (!member || (member.role !== 'moderator' && member.role !== 'owner')) {
-      throw new ForbiddenException('Only moderators can hide posts');
+    const admin = await isSystemAdmin(this.userRoleRepo, moderatorId);
+    if (!admin) {
+      const member = await this.memberRepo.findByForumAndUser(
+        forumId,
+        moderatorId,
+      );
+      if (!member || (member.role !== 'moderator' && member.role !== 'owner')) {
+        throw new ForbiddenException('Only moderators can hide posts');
+      }
     }
+
     await this.postRepo.updateStatus(postId, 'hidden');
     if (post.status === 'published') {
       await this.forumRepo.incrementPostCount(forumId, -1);
     }
+    this.gateway.emitPostHidden(forumId, { postId, forumId });
   }
 }
 
@@ -67,6 +88,10 @@ export class RestorePostUseCase {
     private readonly memberRepo: IForumMemberRepository,
     @Inject(FORUM_REPOSITORY)
     private readonly forumRepo: IForumRepository,
+    @Inject(FORUM_GATEWAY)
+    private readonly gateway: IForumGateway,
+    @Inject('IUserRoleRepository')
+    private readonly userRoleRepo: IUserRoleRepository,
   ) {}
 
   async execute(
@@ -77,17 +102,22 @@ export class RestorePostUseCase {
     const post = await this.postRepo.findByIdAndForum(postId, forumId);
     if (!post) throw new NotFoundException('Post not found');
 
-    const member = await this.memberRepo.findByForumAndUser(
-      forumId,
-      moderatorId,
-    );
-    if (!member || (member.role !== 'moderator' && member.role !== 'owner')) {
-      throw new ForbiddenException('Only moderators can restore posts');
+    const admin = await isSystemAdmin(this.userRoleRepo, moderatorId);
+    if (!admin) {
+      const member = await this.memberRepo.findByForumAndUser(
+        forumId,
+        moderatorId,
+      );
+      if (!member || (member.role !== 'moderator' && member.role !== 'owner')) {
+        throw new ForbiddenException('Only moderators can restore posts');
+      }
     }
+
     await this.postRepo.updateStatus(postId, 'published');
     if (post.status === 'hidden') {
       await this.forumRepo.incrementPostCount(forumId, 1);
     }
+    this.gateway.emitPostRestored(forumId, { postId, forumId });
   }
 }
 

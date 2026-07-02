@@ -15,6 +15,7 @@ export interface GetForumListInput {
   search?: string;
   visibility?: ForumVisibility | 'visible';
   userId?: string;
+  isAdmin?: boolean;
 }
 
 export interface UpdateForumInput {

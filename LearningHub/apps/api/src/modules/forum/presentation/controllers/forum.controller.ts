@@ -86,7 +86,10 @@ export class ForumController {
   @Get(':slug')
   @ApiOperation({ summary: 'Chi tiết diễn đàn theo slug' })
   detail(@Param('slug') slug: string, @Request() req: AuthReq) {
-    return this.getForumDetailUseCase.execute(slug, req.user?.id);
+    const authHeader = (req as any).headers?.authorization as
+      | string
+      | undefined;
+    return this.getForumDetailUseCase.execute(slug, req.user?.id, authHeader);
   }
 
   @Patch(':id')

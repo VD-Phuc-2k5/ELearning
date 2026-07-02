@@ -16,6 +16,7 @@ import {
   FORUM_POST_REPOSITORY,
   IForumPostRepository,
 } from '../../domain/repositories/forum-post.repository.interface';
+import { FORUM_GATEWAY, IForumGateway } from '../interfaces/i-forum-gateway';
 
 @Injectable()
 export class DeleteCommentUseCase {
@@ -26,6 +27,8 @@ export class DeleteCommentUseCase {
     private readonly postRepo: IForumPostRepository,
     @Inject(FORUM_MEMBER_REPOSITORY)
     private readonly memberRepo: IForumMemberRepository,
+    @Inject(FORUM_GATEWAY)
+    private readonly gateway: IForumGateway,
   ) {}
 
   async execute(
@@ -53,5 +56,6 @@ export class DeleteCommentUseCase {
     }
     await this.commentRepo.softDelete(commentId);
     await this.postRepo.incrementCommentCount(postId, -1);
+    this.gateway.emitCommentDeleted(forumId, postId, { commentId });
   }
 }

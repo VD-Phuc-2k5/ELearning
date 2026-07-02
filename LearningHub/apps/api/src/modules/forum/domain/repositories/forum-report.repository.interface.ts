@@ -1,6 +1,7 @@
 export const FORUM_REPORT_REPOSITORY = Symbol('IForumReportRepository');
 
 import type {
+  AdminReportDetail,
   ForumReportDomain,
   ReportTargetType,
 } from '../entities/forum-report.domain';
@@ -21,6 +22,18 @@ export interface GetReportsInput {
   limit?: number;
 }
 
+export interface FindAllWithDetailsInput {
+  status?: string;
+  targetType?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface FindByTargetInput {
+  targetType: ReportTargetType;
+  targetId: string;
+}
+
 export interface IForumReportRepository {
   create(input: CreateReportInput): Promise<ForumReportDomain>;
   findById(id: string): Promise<ForumReportDomain | null>;
@@ -33,10 +46,14 @@ export interface IForumReportRepository {
     data: ForumReportDomain[];
     total: number;
   }>;
+  findByTarget(input: FindByTargetInput): Promise<ForumReportDomain[]>;
   updateStatus(
     id: string,
     status: string,
     resolvedBy: string,
     resolutionNote?: string,
   ): Promise<ForumReportDomain>;
+  findAllWithDetails(
+    input: FindAllWithDetailsInput,
+  ): Promise<{ data: AdminReportDetail[]; total: number }>;
 }

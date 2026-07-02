@@ -38,4 +38,7 @@ export class ForumInviteEntity {
 
   @Column({ name: 'expires_at', type: 'timestamp' })
   expiresAt!: Date;
+
+  @Column({ name: 'accepted_count', default: 0 })
+  acceptedCount!: number;
 }

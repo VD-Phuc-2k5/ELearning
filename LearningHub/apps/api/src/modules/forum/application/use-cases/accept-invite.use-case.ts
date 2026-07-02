@@ -23,6 +23,7 @@ import { ForumMemberDomain } from '../../domain/entities/forum-member.domain';
 export interface AcceptInviteResult {
   member: ForumMemberDomain;
   forumId: string;
+  forumSlug: string;
 }
 
 @Injectable()
@@ -39,8 +40,11 @@ export class AcceptInviteUseCase {
   async execute(token: string, userId: string): Promise<AcceptInviteResult> {
     const invite = await this.inviteRepo.findByToken(token);
     if (!invite) throw new NotFoundException('Invite not found');
-    if (invite.status !== 'pending') {
-      throw new BadRequestException('Invite is no longer valid');
+    if (invite.status === 'closed') {
+      throw new BadRequestException('Invite has been closed');
+    }
+    if (invite.status === 'expired') {
+      throw new BadRequestException('Invite has expired');
     }
     if (invite.expiresAt < new Date()) {
       await this.inviteRepo.updateStatus(invite.id, 'expired');
@@ -56,13 +60,18 @@ export class AcceptInviteUseCase {
     );
     if (existing) throw new ConflictException('Already a member');
 
+    const forum = await this.forumRepo.findById(invite.forumId);
     const member = await this.memberRepo.create({
       forumId: invite.forumId,
       userId,
       role: 'member',
     });
     await this.forumRepo.incrementMemberCount(invite.forumId, 1);
-    await this.inviteRepo.updateStatus(invite.id, 'accepted');
-    return { member, forumId: invite.forumId };
+    await this.inviteRepo.incrementAcceptedCount(invite.id);
+    return {
+      member,
+      forumId: invite.forumId,
+      forumSlug: forum?.slug ?? invite.forumId,
+    };
   }
 }

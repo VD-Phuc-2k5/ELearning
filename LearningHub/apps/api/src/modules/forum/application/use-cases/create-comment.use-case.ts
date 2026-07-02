@@ -26,9 +26,11 @@ import {
 } from '../../domain/repositories/forum.repository.interface';
 import { FORUM_GATEWAY, IForumGateway } from '../interfaces/i-forum-gateway';
 import { NotificationService } from '../services/notification.service';
+import type { IUserRoleRepository } from '../../../auth/domain/repositories/i-user-role.repository';
 import { ForumCommentDomain } from '../../domain/entities/forum-comment.domain';
 
 const MAX_COMMENT_DEPTH = 2;
+const ADMIN_ROLES = new Set(['ADMIN', 'OWNER']);
 
 @Injectable()
 export class CreateCommentUseCase {
@@ -46,6 +48,8 @@ export class CreateCommentUseCase {
     @Inject(FORUM_GATEWAY)
     private readonly gateway: IForumGateway,
     private readonly notificationService: NotificationService,
+    @Inject('IUserRoleRepository')
+    private readonly userRoleRepo: IUserRoleRepository,
   ) {}
 
   async execute(
@@ -64,8 +68,12 @@ export class CreateCommentUseCase {
     const forumSlug = forum?.slug ?? forumId;
 
     const member = await this.memberRepo.findByForumAndUser(forumId, authorId);
-    if (!member)
-      throw new BadRequestException('Only forum members can comment');
+    if (!member) {
+      const roles = await this.userRoleRepo.findByUserId(authorId);
+      const isAdmin = roles.some((r) => ADMIN_ROLES.has(r.role.code));
+      if (!isAdmin)
+        throw new BadRequestException('Only forum members can comment');
+    }
 
     let depth = 0;
     let parentComment: ForumCommentDomain | null = null;

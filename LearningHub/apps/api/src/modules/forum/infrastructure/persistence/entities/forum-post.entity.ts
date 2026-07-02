@@ -64,6 +64,9 @@ export class ForumPostEntity {
   @Column({ name: 'roadmap_id', type: 'varchar', nullable: true })
   roadmapId!: string | null;
 
+  @Column({ name: 'question_bank_id', type: 'uuid', nullable: true })
+  questionBankId!: string | null;
+
   @ManyToOne(() => QuestionBankEntity, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'question_bank_id' })
   questionBank!: QuestionBankEntity;

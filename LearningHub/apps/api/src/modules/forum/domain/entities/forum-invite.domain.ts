@@ -1,4 +1,9 @@
-export type ForumInviteStatus = 'pending' | 'accepted' | 'declined' | 'expired';
+export type ForumInviteStatus =
+  | 'pending'
+  | 'accepted'
+  | 'declined'
+  | 'expired'
+  | 'closed';
 
 export interface ForumInviteDomain {
   id: string;
@@ -8,4 +13,5 @@ export interface ForumInviteDomain {
   token: string;
   status: ForumInviteStatus;
   expiresAt: Date;
+  acceptedCount: number;
 }

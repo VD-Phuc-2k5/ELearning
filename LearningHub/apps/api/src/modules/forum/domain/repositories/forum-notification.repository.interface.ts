@@ -27,6 +27,7 @@ export interface IForumNotificationRepository {
   markRead(id: string, recipientId: string): Promise<void>;
   markAllRead(recipientId: string): Promise<void>;
   countUnread(recipientId: string): Promise<number>;
+  deleteRead(recipientId: string): Promise<void>;
 }
 
 export const FORUM_NOTIFICATION_REPOSITORY = Symbol(

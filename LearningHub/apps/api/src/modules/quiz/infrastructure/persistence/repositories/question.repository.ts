@@ -138,19 +138,17 @@ export class QuestionRepository implements IQuestionRepository {
           currentOptions = await manager.save(optionEntities);
         }
 
-        let targetCorrectLabels = input.correctOptionLabels;
-        if (
-          targetCorrectLabels === undefined &&
-          input.answerOptions !== undefined
-        ) {
-          const oldCorrectOptionIds =
-            question.correctAnswers?.map((ca) => ca.optionId) ?? [];
-          targetCorrectLabels =
-            question.answerOptions
-              ?.filter((opt) => oldCorrectOptionIds.includes(opt.id))
-              .map((opt) => opt.optionLabel) ?? [];
-        }
-
+        const targetCorrectLabels =
+          input.correctOptionLabels ??
+          (input.answerOptions !== undefined
+            ? (question.answerOptions
+                ?.filter((opt) =>
+                  (
+                    question.correctAnswers?.map((ca) => ca.optionId) ?? []
+                  ).includes(opt.id),
+                )
+                .map((opt) => opt.optionLabel) ?? [])
+            : undefined);
         if (targetCorrectLabels !== undefined) {
           if (input.answerOptions === undefined) {
             await manager.delete(CorrectAnswerEntity, { questionId: id });

@@ -72,9 +72,14 @@ export class QuizAttemptRepository implements IQuizAttemptRepository {
 
   async findByUser(
     userId: string,
-    input: { page?: number; limit?: number; bankId?: string },
+    input: {
+      page?: number;
+      limit?: number;
+      bankId?: string;
+      uploaderId?: string;
+    },
   ) {
-    const { page = 1, limit = 10, bankId } = input;
+    const { page = 1, limit = 10, bankId, uploaderId } = input;
     const qb = this.repo
       .createQueryBuilder('a')
       .where('a.userId = :userId', { userId })
@@ -82,6 +87,12 @@ export class QuizAttemptRepository implements IQuizAttemptRepository {
       .skip((page - 1) * limit)
       .take(limit);
     if (bankId) qb.andWhere('a.questionBankId = :bankId', { bankId });
+    if (uploaderId) {
+      qb.leftJoin('a.questionBank', 'qb').andWhere(
+        'qb.uploaderId = :uploaderId',
+        { uploaderId },
+      );
+    }
     const [data, total] = await qb.getManyAndCount();
     return { data: data.map(this.toDomain.bind(this)), total };
   }

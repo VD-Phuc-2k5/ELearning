@@ -53,18 +53,29 @@ export class ForumRepository implements IForumRepository {
   }
 
   async findAll(input: GetForumListInput): Promise<ForumListPage> {
-    const { page = 1, limit = 10, search, visibility, userId } = input;
+    const { page = 1, limit = 10, search, visibility, userId, isAdmin } = input;
     const qb = this.repo.createQueryBuilder('f');
 
-    if (visibility === 'visible') {
+    if (isAdmin) {
+      // Admins see all forums, no visibility filter
+    } else if (visibility === 'visible') {
       qb.andWhere('f.visibility = :v1', { v1: 'public' });
     } else if (visibility) {
       qb.andWhere('f.visibility = :v', { v: visibility });
     } else if (userId) {
-      qb.andWhere('(f.visibility = :v1 OR f.ownerId = :uid)', {
-        v1: 'public',
-        uid: userId,
-      });
+      qb.leftJoin(
+        'forum_members',
+        'fm',
+        'f.id = fm."forum_id" AND fm."user_id" = :uid',
+        { uid: userId },
+      );
+      qb.andWhere(
+        '(f.visibility = :v1 OR f.ownerId = :uid OR fm.id IS NOT NULL)',
+        {
+          v1: 'public',
+          uid: userId,
+        },
+      );
     } else {
       qb.andWhere('f.visibility = :v1', { v1: 'public' });
     }

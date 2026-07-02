@@ -97,6 +97,18 @@ export class ForumGateway
     return { ok: true };
   }
 
+  @SubscribeMessage('join:admin')
+  handleJoinAdmin(@ConnectedSocket() client: AuthSocket): { ok: true } {
+    client.join('admin:reports');
+    return { ok: true };
+  }
+
+  @SubscribeMessage('leave:admin')
+  handleLeaveAdmin(@ConnectedSocket() client: AuthSocket): { ok: true } {
+    client.leave('admin:reports');
+    return { ok: true };
+  }
+
   emitPostNew(forumId: string, payload: unknown): void {
     this.server?.to(`forum:${forumId}`).emit('post:new', payload);
   }
@@ -106,6 +118,13 @@ export class ForumGateway
       ?.to(`post:${postId}`)
       .to(`forum:${forumId}`)
       .emit('comment:new', payload);
+  }
+
+  emitCommentDeleted(forumId: string, postId: string, payload: unknown): void {
+    this.server
+      ?.to(`post:${postId}`)
+      .to(`forum:${forumId}`)
+      .emit('comment:deleted', payload);
   }
 
   emitReactionUpdate(forumId: string, postId: string, payload: unknown): void {
@@ -129,5 +148,9 @@ export class ForumGateway
 
   emitNotification(userId: string, payload: unknown): void {
     this.server?.to(`user:${userId}`).emit('notification', payload);
+  }
+
+  emitReportCreated(payload: unknown): void {
+    this.server?.to('admin:reports').emit('report:new', payload);
   }
 }

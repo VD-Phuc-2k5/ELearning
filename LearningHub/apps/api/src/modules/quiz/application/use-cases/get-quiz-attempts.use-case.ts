@@ -13,7 +13,12 @@ export class GetQuizAttemptsUseCase {
 
   execute(
     userId: string,
-    input: { page?: number; limit?: number; bankId?: string },
+    input: {
+      page?: number;
+      limit?: number;
+      bankId?: string;
+      uploaderId?: string;
+    },
   ) {
     return this.repo.findByUser(userId, input);
   }

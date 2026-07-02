@@ -29,7 +29,12 @@ export interface IQuizAttemptRepository {
   create(input: CreateAttemptInput): Promise<QuizAttemptDomain>;
   findByUser(
     userId: string,
-    input: { page?: number; limit?: number; bankId?: string },
+    input: {
+      page?: number;
+      limit?: number;
+      bankId?: string;
+      uploaderId?: string;
+    },
   ): Promise<{ data: QuizAttemptDomain[]; total: number }>;
   findById(
     id: string,

@@ -20,6 +20,7 @@ import {
   CreateReportUseCase,
   DismissReportUseCase,
   GetForumReportsUseCase,
+  GetPostReportsUseCase,
   ResolveReportUseCase,
 } from '../../application/use-cases/forum-report.use-case';
 import {
@@ -45,6 +46,7 @@ export class ForumModerationController {
   constructor(
     private readonly createReportUseCase: CreateReportUseCase,
     private readonly getForumReportsUseCase: GetForumReportsUseCase,
+    private readonly getPostReportsUseCase: GetPostReportsUseCase,
     private readonly resolveReportUseCase: ResolveReportUseCase,
     private readonly dismissReportUseCase: DismissReportUseCase,
     private readonly hidePostUseCase: HidePostUseCase,
@@ -85,6 +87,15 @@ export class ForumModerationController {
       page,
       limit,
     });
+  }
+
+  @Get('forums/:forumId/posts/:postId/reports')
+  @ApiOperation({ summary: 'Danh sách báo cáo cho một bài viết' })
+  getPostReports(
+    @Param('forumId') forumId: string,
+    @Param('postId') postId: string,
+  ) {
+    return this.getPostReportsUseCase.execute(forumId, postId);
   }
 
   @Patch('forums/:forumId/reports/:reportId/resolve')

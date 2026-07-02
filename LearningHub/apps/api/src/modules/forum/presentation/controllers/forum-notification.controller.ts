@@ -1,5 +1,6 @@
 import {
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -16,6 +17,7 @@ import {
 } from '@nestjs/swagger';
 import {
   CountUnreadNotificationsUseCase,
+  DeleteReadNotificationsUseCase,
   GetMyNotificationsUseCase,
   MarkAllNotificationsReadUseCase,
   MarkNotificationReadUseCase,
@@ -32,6 +34,7 @@ export class ForumNotificationController {
     private readonly markNotificationReadUseCase: MarkNotificationReadUseCase,
     private readonly markAllNotificationsReadUseCase: MarkAllNotificationsReadUseCase,
     private readonly countUnreadNotificationsUseCase: CountUnreadNotificationsUseCase,
+    private readonly deleteReadNotificationsUseCase: DeleteReadNotificationsUseCase,
   ) {}
 
   @Get('me/forum-notifications')
@@ -69,5 +72,11 @@ export class ForumNotificationController {
   @ApiOperation({ summary: 'Đánh dấu đã đọc toàn bộ' })
   markAllRead(@Request() req: AuthReq) {
     return this.markAllNotificationsReadUseCase.execute(req.user.id);
+  }
+
+  @Delete('me/forum-notifications/read')
+  @ApiOperation({ summary: 'Xoá toàn bộ thông báo đã đọc' })
+  deleteRead(@Request() req: AuthReq) {
+    return this.deleteReadNotificationsUseCase.execute(req.user.id);
   }
 }

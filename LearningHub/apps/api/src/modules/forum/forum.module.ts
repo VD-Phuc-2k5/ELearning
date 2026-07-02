@@ -9,7 +9,7 @@ import { ForumTagEntity } from './infrastructure/persistence/entities/forum-tag.
 import { ForumRuleEntity } from './infrastructure/persistence/entities/forum-rule.entity';
 import { ForumMemberEntity } from './infrastructure/persistence/entities/forum-member.entity';
 import { ForumInviteEntity } from './infrastructure/persistence/entities/forum-invite.entity';
-import { ForumJoinRequestEntity } from './infrastructure/persistence/entities/forum-join-request.entity';
+
 import { ForumPostEntity } from './infrastructure/persistence/entities/forum-post.entity';
 import { ForumCommentEntity } from './infrastructure/persistence/entities/forum-comment.entity';
 import { ForumPollEntity } from './infrastructure/persistence/entities/forum-poll.entity';
@@ -21,11 +21,12 @@ import { ForumReportEntity } from './infrastructure/persistence/entities/forum-r
 import { ForumNotificationEntity } from './infrastructure/persistence/entities/forum-notification.entity';
 import { ForumMentionEntity } from './infrastructure/persistence/entities/forum-mention.entity';
 import { ForumFollowEntity } from './infrastructure/persistence/entities/forum-follow.entity';
+import { UserRoleEntity } from '../auth/infrastructure/persistence/entities/user-role.entity';
 
 import { ForumRepository } from './infrastructure/persistence/repositories/forum.repository';
 import { ForumMemberRepository } from './infrastructure/persistence/repositories/forum-member.repository';
 import { ForumInviteRepository } from './infrastructure/persistence/repositories/forum-invite.repository';
-import { ForumJoinRequestRepository } from './infrastructure/persistence/repositories/forum-join-request.repository';
+
 import { ForumRuleRepository } from './infrastructure/persistence/repositories/forum-rule.repository';
 import { ForumPostRepository } from './infrastructure/persistence/repositories/forum-post.repository';
 import { ForumCommentRepository } from './infrastructure/persistence/repositories/forum-comment.repository';
@@ -36,22 +37,26 @@ import { ForumReportRepository } from './infrastructure/persistence/repositories
 import { ForumNotificationRepository } from './infrastructure/persistence/repositories/forum-notification.repository';
 import { ForumMentionRepository } from './infrastructure/persistence/repositories/forum-mention.repository';
 import { ForumTagRepository } from './infrastructure/persistence/repositories/forum-tag.repository';
+import { UserRoleRepository } from '../auth/infrastructure/persistence/repositories/user-role.repository';
 import { CloudinaryService } from './infrastructure/services/cloudinary.service';
 import { ForumGateway } from './infrastructure/gateways/forum.gateway';
 import { CLOUDINARY_SERVICE } from './application/interfaces/i-cloudinary.service';
 import { FORUM_GATEWAY } from './application/interfaces/i-forum-gateway';
 import { NotificationProcessor } from './infrastructure/queues/notification.processor';
 import { ViewFlushProcessor } from './infrastructure/queues/view-flush.processor';
+import { InviteCleanupProcessor } from './infrastructure/queues/invite-cleanup.processor';
+import { InviteCleanupInitializer } from './infrastructure/queues/invite-cleanup.initializer';
 import { NotificationService } from './application/services/notification.service';
 import {
   FORUM_QUEUE_NAME,
   FORUM_VIEWS_QUEUE_NAME,
+  FORUM_INVITE_CLEANUP_QUEUE_NAME,
 } from './infrastructure/queues/queue-names';
 
 import { FORUM_REPOSITORY } from './domain/repositories/forum.repository.interface';
 import { FORUM_MEMBER_REPOSITORY } from './domain/repositories/forum-member.repository.interface';
 import { FORUM_INVITE_REPOSITORY } from './domain/repositories/forum-invite.repository.interface';
-import { FORUM_JOIN_REQUEST_REPOSITORY } from './domain/repositories/forum-join-request.repository.interface';
+
 import { FORUM_RULE_REPOSITORY } from './domain/repositories/forum-rule.repository.interface';
 import { FORUM_POST_REPOSITORY } from './domain/repositories/forum-post.repository.interface';
 import { FORUM_COMMENT_REPOSITORY } from './domain/repositories/forum-comment.repository.interface';
@@ -76,9 +81,7 @@ import { LeaveForumUseCase } from './application/use-cases/leave-forum.use-case'
 import { GetForumMembersUseCase } from './application/use-cases/get-forum-members.use-case';
 import { UpdateMemberRoleUseCase } from './application/use-cases/update-member-role.use-case';
 import { RemoveMemberUseCase } from './application/use-cases/remove-member.use-case';
-import { GetJoinRequestsUseCase } from './application/use-cases/get-join-requests.use-case';
-import { ApproveJoinRequestUseCase } from './application/use-cases/approve-join-request.use-case';
-import { RejectJoinRequestUseCase } from './application/use-cases/reject-join-request.use-case';
+
 import { CreateInviteUseCase } from './application/use-cases/create-invite.use-case';
 import { AcceptInviteUseCase } from './application/use-cases/accept-invite.use-case';
 import { SearchMembersUseCase } from './application/use-cases/search-members.use-case';
@@ -108,6 +111,7 @@ import { DeleteTagUseCase } from './application/use-cases/delete-tag.use-case';
 import { ToggleBookmarkUseCase } from './application/use-cases/toggle-bookmark.use-case';
 import {
   CountUnreadNotificationsUseCase,
+  DeleteReadNotificationsUseCase,
   GetMyNotificationsUseCase,
   MarkAllNotificationsReadUseCase,
   MarkNotificationReadUseCase,
@@ -123,8 +127,16 @@ import {
   CreateReportUseCase,
   DismissReportUseCase,
   GetForumReportsUseCase,
+  GetPostReportsUseCase,
   ResolveReportUseCase,
 } from './application/use-cases/forum-report.use-case';
+import {
+  AdminGetAllReportsUseCase,
+  AdminResolveReportUseCase,
+  AdminDismissReportUseCase,
+  AdminHidePostUseCase,
+  AdminRestorePostUseCase,
+} from './application/use-cases/admin-moderation.use-case';
 
 import { ForumController } from './presentation/controllers/forum.controller';
 import { ForumMembershipController } from './presentation/controllers/forum-membership.controller';
@@ -134,6 +146,7 @@ import { ForumPollController } from './presentation/controllers/forum-poll.contr
 import { ForumUploadController } from './presentation/controllers/forum-upload.controller';
 import { ForumInteractionController } from './presentation/controllers/forum-interaction.controller';
 import { ForumModerationController } from './presentation/controllers/forum-moderation.controller';
+import { AdminForumModerationController } from './presentation/controllers/admin-forum-moderation.controller';
 import { ForumSearchController } from './presentation/controllers/forum-search.controller';
 import { ForumNotificationController } from './presentation/controllers/forum-notification.controller';
 import { ForumTagController } from './presentation/controllers/forum-tag.controller';
@@ -144,7 +157,7 @@ const entities = [
   ForumRuleEntity,
   ForumMemberEntity,
   ForumInviteEntity,
-  ForumJoinRequestEntity,
+
   ForumPostEntity,
   ForumCommentEntity,
   ForumPollEntity,
@@ -156,16 +169,14 @@ const entities = [
   ForumNotificationEntity,
   ForumMentionEntity,
   ForumFollowEntity,
+  UserRoleEntity,
 ];
 
 const repositoryProviders = [
   { provide: FORUM_REPOSITORY, useClass: ForumRepository },
   { provide: FORUM_MEMBER_REPOSITORY, useClass: ForumMemberRepository },
   { provide: FORUM_INVITE_REPOSITORY, useClass: ForumInviteRepository },
-  {
-    provide: FORUM_JOIN_REQUEST_REPOSITORY,
-    useClass: ForumJoinRequestRepository,
-  },
+
   { provide: FORUM_RULE_REPOSITORY, useClass: ForumRuleRepository },
   { provide: FORUM_POST_REPOSITORY, useClass: ForumPostRepository },
   { provide: FORUM_COMMENT_REPOSITORY, useClass: ForumCommentRepository },
@@ -181,6 +192,7 @@ const repositoryProviders = [
   { provide: FORUM_TAG_REPOSITORY, useClass: ForumTagRepository },
   { provide: CLOUDINARY_SERVICE, useClass: CloudinaryService },
   { provide: FORUM_GATEWAY, useClass: ForumGateway },
+  { provide: 'IUserRoleRepository', useClass: UserRoleRepository },
 ];
 
 const useCases = [
@@ -195,9 +207,7 @@ const useCases = [
   GetForumMembersUseCase,
   UpdateMemberRoleUseCase,
   RemoveMemberUseCase,
-  GetJoinRequestsUseCase,
-  ApproveJoinRequestUseCase,
-  RejectJoinRequestUseCase,
+
   CreateInviteUseCase,
   AcceptInviteUseCase,
   GetInvitesUseCase,
@@ -227,8 +237,14 @@ const useCases = [
   RestoreCommentUseCase,
   CreateReportUseCase,
   GetForumReportsUseCase,
+  GetPostReportsUseCase,
   ResolveReportUseCase,
   DismissReportUseCase,
+  AdminGetAllReportsUseCase,
+  AdminResolveReportUseCase,
+  AdminDismissReportUseCase,
+  AdminHidePostUseCase,
+  AdminRestorePostUseCase,
   SearchForumUseCase,
   ListTagsUseCase,
   CreateTagUseCase,
@@ -238,9 +254,12 @@ const useCases = [
   MarkNotificationReadUseCase,
   MarkAllNotificationsReadUseCase,
   CountUnreadNotificationsUseCase,
+  DeleteReadNotificationsUseCase,
   NotificationService,
   NotificationProcessor,
   ViewFlushProcessor,
+  InviteCleanupProcessor,
+  InviteCleanupInitializer,
 ];
 
 @Module({
@@ -249,6 +268,7 @@ const useCases = [
     BullModule.registerQueue(
       { name: FORUM_QUEUE_NAME },
       { name: FORUM_VIEWS_QUEUE_NAME },
+      { name: FORUM_INVITE_CLEANUP_QUEUE_NAME },
     ),
     JwtModule.registerAsync({
       imports: [ConfigModule],
@@ -267,6 +287,7 @@ const useCases = [
     ForumUploadController,
     ForumInteractionController,
     ForumModerationController,
+    AdminForumModerationController,
     ForumSearchController,
     ForumNotificationController,
     ForumTagController,

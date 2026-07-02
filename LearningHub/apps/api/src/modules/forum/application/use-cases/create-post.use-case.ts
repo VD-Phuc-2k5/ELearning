@@ -26,6 +26,7 @@ import {
 } from '../../domain/repositories/forum-poll.repository.interface';
 import { FORUM_GATEWAY, IForumGateway } from '../interfaces/i-forum-gateway';
 import { NotificationService } from '../services/notification.service';
+import type { IUserRoleRepository } from '../../../auth/domain/repositories/i-user-role.repository';
 import type {
   ForumPostDomain,
   PostType,
@@ -34,6 +35,8 @@ import {
   validateTiptapDoc,
   extractMentions,
 } from '../helpers/extract-mentions';
+
+const ADMIN_ROLES = new Set(['ADMIN', 'OWNER']);
 
 export interface CreatePostParams {
   title: string;
@@ -66,6 +69,8 @@ export class CreatePostUseCase {
     @Inject(FORUM_MENTION_REPOSITORY)
     private readonly mentionRepo: IForumMentionRepository,
     private readonly notificationService: NotificationService,
+    @Inject('IUserRoleRepository')
+    private readonly userRoleRepo: IUserRoleRepository,
   ) {}
 
   async execute(
@@ -87,7 +92,11 @@ export class CreatePostUseCase {
 
     const member = await this.memberRepo.findByForumAndUser(forumId, authorId);
     if (!member) {
-      throw new BadRequestException('Only forum members can create posts');
+      const roles = await this.userRoleRepo.findByUserId(authorId);
+      const isAdmin = roles.some((r) => ADMIN_ROLES.has(r.role.code));
+      if (!isAdmin) {
+        throw new BadRequestException('Only forum members can create posts');
+      }
     }
 
     const postType = params.postType ?? 'text';

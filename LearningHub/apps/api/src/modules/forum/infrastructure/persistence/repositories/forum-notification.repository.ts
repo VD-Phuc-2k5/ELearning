@@ -76,4 +76,13 @@ export class ForumNotificationRepository
   async countUnread(recipientId: string): Promise<number> {
     return this.repo.count({ where: { recipientId, isRead: false } });
   }
+
+  async deleteRead(recipientId: string): Promise<void> {
+    await this.repo
+      .createQueryBuilder()
+      .delete()
+      .where('recipient_id = :recipientId', { recipientId })
+      .andWhere('is_read = :isRead', { isRead: true })
+      .execute();
+  }
 }

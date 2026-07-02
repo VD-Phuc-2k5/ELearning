@@ -22,19 +22,13 @@ import { LeaveForumUseCase } from '../../application/use-cases/leave-forum.use-c
 import { GetForumMembersUseCase } from '../../application/use-cases/get-forum-members.use-case';
 import { UpdateMemberRoleUseCase } from '../../application/use-cases/update-member-role.use-case';
 import { RemoveMemberUseCase } from '../../application/use-cases/remove-member.use-case';
-import { GetJoinRequestsUseCase } from '../../application/use-cases/get-join-requests.use-case';
-import { ApproveJoinRequestUseCase } from '../../application/use-cases/approve-join-request.use-case';
-import { RejectJoinRequestUseCase } from '../../application/use-cases/reject-join-request.use-case';
+
 import { CreateInviteUseCase } from '../../application/use-cases/create-invite.use-case';
 import { GetInvitesUseCase } from '../../application/use-cases/get-invites.use-case';
 import { RevokeInviteUseCase } from '../../application/use-cases/revoke-invite.use-case';
 import { AcceptInviteUseCase } from '../../application/use-cases/accept-invite.use-case';
 import { SearchMembersUseCase } from '../../application/use-cases/search-members.use-case';
-import {
-  CreateInviteDto,
-  CreateJoinRequestDto,
-  UpdateMemberRoleDto,
-} from '../dto/forum.request.dto';
+import { CreateInviteDto, UpdateMemberRoleDto } from '../dto/forum.request.dto';
 import { AuthReq } from '../types';
 
 @ApiTags('Forum Membership')
@@ -48,9 +42,7 @@ export class ForumMembershipController {
     private readonly getForumMembersUseCase: GetForumMembersUseCase,
     private readonly updateMemberRoleUseCase: UpdateMemberRoleUseCase,
     private readonly removeMemberUseCase: RemoveMemberUseCase,
-    private readonly getJoinRequestsUseCase: GetJoinRequestsUseCase,
-    private readonly approveJoinRequestUseCase: ApproveJoinRequestUseCase,
-    private readonly rejectJoinRequestUseCase: RejectJoinRequestUseCase,
+
     private readonly createInviteUseCase: CreateInviteUseCase,
     private readonly getInvitesUseCase: GetInvitesUseCase,
     private readonly revokeInviteUseCase: RevokeInviteUseCase,
@@ -74,7 +66,7 @@ export class ForumMembershipController {
   @ApiOperation({ summary: 'Tham gia diễn đàn hoặc tạo yêu cầu tham gia' })
   join(
     @Param('id') id: string,
-    @Body() dto: CreateJoinRequestDto,
+    @Body() dto: { message?: string },
     @Request() req: AuthReq,
   ) {
     return this.joinForumUseCase.execute(id, req.user.id, dto.message);
@@ -126,40 +118,6 @@ export class ForumMembershipController {
     return this.removeMemberUseCase.execute(id, userId, req.user.id);
   }
 
-  @Get('forums/:id/join-requests')
-  @ApiOperation({ summary: 'Danh sách yêu cầu tham gia' })
-  @ApiQuery({ name: 'status', required: false })
-  @ApiQuery({ name: 'page', required: false, type: Number })
-  @ApiQuery({ name: 'limit', required: false, type: Number })
-  joinRequests(
-    @Param('id') id: string,
-    @Query('status') status?: string,
-    @Query('page') page?: number,
-    @Query('limit') limit?: number,
-  ) {
-    return this.getJoinRequestsUseCase.execute(id, status, page, limit);
-  }
-
-  @Patch('forums/:id/join-requests/:reqId/approve')
-  @ApiOperation({ summary: 'Phê duyệt yêu cầu tham gia' })
-  approve(
-    @Param('id') id: string,
-    @Param('reqId') reqId: string,
-    @Request() req: AuthReq,
-  ) {
-    return this.approveJoinRequestUseCase.execute(id, reqId, req.user.id);
-  }
-
-  @Patch('forums/:id/join-requests/:reqId/reject')
-  @ApiOperation({ summary: 'Từ chối yêu cầu tham gia' })
-  reject(
-    @Param('id') id: string,
-    @Param('reqId') reqId: string,
-    @Request() req: AuthReq,
-  ) {
-    return this.rejectJoinRequestUseCase.execute(id, reqId, req.user.id);
-  }
-
   @Post('forums/:id/invites')
   @ApiOperation({ summary: 'Tạo lời mời tham gia' })
   createInvite(
@@ -176,16 +134,21 @@ export class ForumMembershipController {
   @ApiQuery({ name: 'limit', required: false, type: Number })
   invites(
     @Param('id') id: string,
+    @Request() req: AuthReq,
     @Query('page') page?: number,
     @Query('limit') limit?: number,
   ) {
-    return this.getInvitesUseCase.execute(id, page, limit);
+    return this.getInvitesUseCase.execute(id, req.user.id, page, limit);
   }
 
   @Delete('forums/:id/invites/:inviteId')
   @ApiOperation({ summary: 'Thu hồi lời mời' })
-  revokeInvite(@Param('id') id: string, @Param('inviteId') inviteId: string) {
-    return this.revokeInviteUseCase.execute(id, inviteId);
+  revokeInvite(
+    @Param('id') id: string,
+    @Param('inviteId') inviteId: string,
+    @Request() req: AuthReq,
+  ) {
+    return this.revokeInviteUseCase.execute(id, inviteId, req.user.id);
   }
 
   @Post('invites/:token/accept')

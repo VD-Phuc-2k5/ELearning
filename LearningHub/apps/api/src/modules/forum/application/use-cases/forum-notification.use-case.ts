@@ -62,3 +62,15 @@ export class CountUnreadNotificationsUseCase {
     return this.notifRepo.countUnread(recipientId);
   }
 }
+
+@Injectable()
+export class DeleteReadNotificationsUseCase {
+  constructor(
+    @Inject(FORUM_NOTIFICATION_REPOSITORY)
+    private readonly notifRepo: IForumNotificationRepository,
+  ) {}
+
+  execute(recipientId: string): Promise<void> {
+    return this.notifRepo.deleteRead(recipientId);
+  }
+}
