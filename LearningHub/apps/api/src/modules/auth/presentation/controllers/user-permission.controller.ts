@@ -69,8 +69,11 @@ export class UserPermissionController {
       isGranted: dto.isGranted,
       grantedBy: currentUser.id,
     });
-    if (result.type === 'left') mapFailure(result.value as AuthFailures);
-    return toUserPermissionResponse(result.value!.userPermission);
+    if (result.type === 'left') {
+      mapFailure(result.value as AuthFailures);
+      return;
+    }
+    return toUserPermissionResponse(result.value.userPermission);
   }
 
   @Delete(':permissionId')

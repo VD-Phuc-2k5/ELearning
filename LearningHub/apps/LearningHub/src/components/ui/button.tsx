@@ -22,6 +22,7 @@ export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   isLoading?: boolean;
   size?: ButtonSize;
   variant?: ButtonVariant;
+  iconPosition?: 'Left' | 'Right';
 };
 
 export function Button({
@@ -33,12 +34,13 @@ export function Button({
   size = 'md',
   type = 'button',
   variant = 'primary',
+  iconPosition = 'Left',
   ...props
 }: ButtonProps) {
   return (
     <button
       className={[
-        'inline-flex items-center justify-center gap-2 rounded-md font-medium transition',
+        'inline-flex items-center justify-center md:gap-2 rounded-md font-medium transition',
         'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2',
         'disabled:cursor-not-allowed disabled:opacity-60',
         variantClasses[variant],
@@ -49,12 +51,17 @@ export function Button({
       type={type}
       {...props}
     >
-      {isLoading ? (
+      {isLoading && iconPosition === 'Left' ? (
         <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-r-transparent" />
       ) : (
-        icon
+        iconPosition === 'Left' && icon
       )}
       <span>{children}</span>
+      {isLoading && iconPosition === 'Right' ? (
+        <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-r-transparent" />
+      ) : (
+        iconPosition === 'Right' && icon
+      )}
     </button>
   );
 }

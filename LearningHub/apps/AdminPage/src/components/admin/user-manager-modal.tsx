@@ -42,8 +42,12 @@ export function UserManagerModal({ user, onClose }: UserManagerModalProps) {
     enabled: tab === 'permissions',
   });
 
-  const assignedRoleIds = new Set<number>((userRoles ?? []).map((r) => r.id));
-  const grantedPermIds = new Set<number>((userPerms ?? []).map((p) => p.id));
+  const assignedRoleIds = new Set<number>(
+    (userRoles ?? []).map((r: Role) => r.id),
+  );
+  const grantedPermIds = new Set<number>(
+    (userPerms ?? []).map((p: Permission) => p.id),
+  );
 
   const assignRole = useMutation({
     mutationFn: (roleId: number) => assignRoleToUser(user.id, roleId),
@@ -84,7 +88,7 @@ export function UserManagerModal({ user, onClose }: UserManagerModalProps) {
       </div>
       <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
         {tab === 'roles' &&
-          allRoles.map((role) => {
+          allRoles.map((role: Role) => {
             const on = assignedRoleIds.has(role.id);
             return (
               <div
@@ -116,7 +120,7 @@ export function UserManagerModal({ user, onClose }: UserManagerModalProps) {
             );
           })}
         {tab === 'permissions' &&
-          allPerms.map((perm) => {
+          allPerms.map((perm: Permission) => {
             const on = grantedPermIds.has(perm.id);
             return (
               <div

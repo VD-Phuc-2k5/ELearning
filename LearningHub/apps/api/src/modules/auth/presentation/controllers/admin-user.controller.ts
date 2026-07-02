@@ -83,8 +83,11 @@ export class AdminUserController {
   @ApiOperation({ summary: 'Update a user' })
   async update(@Param('id') id: string, @Body() dto: UpdateUserDto) {
     const result = await this.updateUser.execute({ id, ...dto });
-    if (result.type === 'left') mapFailure(result.value as AuthFailures);
-    return toUserResponse(result.value!.user);
+    if (result.type === 'left') {
+      mapFailure(result.value as AuthFailures);
+      return;
+    }
+    return toUserResponse(result.value.user);
   }
 
   @Delete(':id')

@@ -30,7 +30,7 @@ import {
   BarChart2,
 } from 'lucide-react';
 import { clsx } from 'clsx';
-import type { Tab } from './components/types';
+import type { BankDetailTab } from './components/types';
 import { QuestionsTab } from './components/questions-tab';
 import { UploadTab } from './components/upload-tab';
 import { HistoryTab } from './components/history-tab';
@@ -42,7 +42,7 @@ export default function BankDetailPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const pageRef = useRef<HTMLDivElement>(null);
-  const [tab, setTab] = useState<Tab>('questions');
+  const [tab, setTab] = useState<BankDetailTab>('questions');
   const [tagOpen, setTagOpen] = useState(false);
   const [deleteErr, setDeleteErr] = useState('');
   const { modal: confirmModal, openConfirm } = useConfirmModal();
@@ -97,7 +97,7 @@ export default function BankDetailPage() {
       setTitle(bank.title);
       setDescription(bank.description ?? '');
     }
-  }, [bank?.id]);
+  }, [bank]);
 
   const updateInfoMutation = useMutation({
     mutationFn: (data: { title?: string; description?: string }) =>
@@ -387,8 +387,8 @@ export default function BankDetailPage() {
             value: bank.statusId === 'published' ? 'Published' : 'Draft',
           },
           {
-            label: 'Updated',
-            value: new Date(bank.updatedAt).toLocaleDateString('en-US'),
+            label: 'Created',
+            value: new Date(bank.createdAt).toLocaleDateString('en-US'),
           },
         ].map(({ label, value }) => (
           <div
@@ -410,7 +410,7 @@ export default function BankDetailPage() {
               { key: 'upload', label: 'Import Excel', Icon: Upload },
               { key: 'history', label: 'Import History', Icon: History },
               { key: 'stats', label: 'Thống kê', Icon: BarChart2 },
-            ] as { key: Tab; label: string; Icon: ElementType }[]
+            ] as { key: BankDetailTab; label: string; Icon: ElementType }[]
           ).map(({ key, label, Icon }) => (
             <button
               key={key}

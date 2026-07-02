@@ -57,13 +57,13 @@ export function RoadmapMembershipSection({ bankId }: { bankId: string }) {
         </phantom-ui>
       ) : memberships.length === 0 ? (
         <EmptyState
-          icon={<Map className="h-8 w-8" />}
+          icon={<Map className="h-8 w-full" />}
           title="Not used in any roadmap"
           description="This question bank hasn't been added to a roadmap yet."
         />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
-          {memberships.map((m) => (
+          {memberships.map((m: RoadmapMembership) => (
             <Link
               key={m.roadmapId}
               href={`/roadmaps/${m.roadmapId}`}

@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { QuestionBankEntity } from '../entities/question-bank.entity';
 import { BankTagEntity } from '../entities/bank-tag.entity';
+import { QuestionBankUploadEntity } from '../entities/question-bank-upload.entity';
 import {
   IQuestionBankRepository,
   CreateQuestionBankInput,
@@ -53,7 +54,9 @@ export class QuestionBankRepository implements IQuestionBankRepository {
     const qb = this.repo
       .createQueryBuilder('bank')
       .leftJoinAndSelect('bank.tags', 'tag')
-      .leftJoinAndSelect('bank.status', 'status');
+      .leftJoinAndSelect('bank.status', 'status')
+      .leftJoinAndSelect('bank.uploader', 'uploader')
+      .orderBy('bank.createdAt', 'DESC');
 
     if (uploaderId) {
       qb.andWhere('bank.uploaderId = :uploaderId', { uploaderId });
@@ -73,7 +76,29 @@ export class QuestionBankRepository implements IQuestionBankRepository {
       .take(limit)
       .getManyAndCount();
 
-    return { data: entities.map(this.toDomain.bind(this)), total };
+    const bankIds = entities.map((e: QuestionBankEntity) => e.id);
+    const latestUploads = new Map<string, Date | null>();
+    if (bankIds.length > 0) {
+      const rows = await this.repo.manager
+        .createQueryBuilder(QuestionBankUploadEntity, 'up')
+        .select('up.question_bank_id', 'bankId')
+        .addSelect('MAX(up.uploaded_at)', 'latestTime')
+        .where('up.question_bank_id IN (:...bankIds)', { bankIds })
+        .groupBy('up.question_bank_id')
+        .getRawMany<{ bankId: string; latestTime: Date }>();
+      for (const row of rows) {
+        latestUploads.set(row.bankId, row.latestTime ?? null);
+      }
+    }
+
+    return {
+      data: entities.map((e: QuestionBankEntity) => ({
+        ...this.toDomain(e),
+        uploaderName: e.uploader?.username,
+        lastUploadedAt: latestUploads.get(e.id) ?? null,
+      })),
+      total,
+    };
   }
 
   async findById(id: string): Promise<QuestionBankDomain | null> {

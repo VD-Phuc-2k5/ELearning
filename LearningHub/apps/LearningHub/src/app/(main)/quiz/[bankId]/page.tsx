@@ -12,7 +12,7 @@ import {
   getQuestionsForQuiz,
 } from '../../../actions/quiz.actions';
 import type { QuizSubmitResult } from '@learning-hub/domain';
-import type { Mode } from './components/types';
+import type { QuizMode } from './components/types';
 import { ModeSelect } from './components/mode-select';
 import { PracticeMode } from './components/practice-mode';
 import { ExamMode } from './components/exam-mode';
@@ -24,16 +24,16 @@ export default function QuizPage() {
   const { bankId } = useParams<{ bankId: string }>();
   const searchParams = useSearchParams();
   const roadmapId = searchParams.get('roadmapId') ?? undefined;
-  const autoMode = searchParams.get('mode') as Mode | null;
+  const autoMode = searchParams.get('mode') as QuizMode | null;
   const router = useRouter();
   const pageRef = useRef<HTMLDivElement>(null);
-  const [mode, setMode] = useState<Mode>(
+  const [mode, setMode] = useState<QuizMode>(
     autoMode === 'practice' || autoMode === 'exam' || autoMode === 'timed-exam'
       ? autoMode
       : 'select',
   );
   const qc = useQueryClient();
-  const [lastQuizMode, setLastQuizMode] = useState<Mode>('exam');
+  const [lastQuizMode, setLastQuizMode] = useState<QuizMode>('exam');
   const [result, setResult] = useState<QuizSubmitResult | null>(null);
   const [reviewMode, setReviewMode] = useState(false);
   const [timeLimitSeconds, setTimeLimitSeconds] = useState<

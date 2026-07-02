@@ -12,6 +12,8 @@ export class BankTagEntity {
   @Column({ nullable: true })
   description!: string;
 
-  @ManyToMany(() => QuestionBankEntity, (bank) => bank.tags)
+  @ManyToMany(() => QuestionBankEntity, (bank) => bank.tags, {
+    onDelete: 'CASCADE',
+  })
   questionBanks!: QuestionBankEntity[];
 }

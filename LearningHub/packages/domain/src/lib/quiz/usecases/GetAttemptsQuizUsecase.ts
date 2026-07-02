@@ -7,6 +7,7 @@ export class GetAttemptsQuizParams {
     public page?: number,
     public limit?: number,
     public bankId?: string,
+    public uploaderId?: string,
   ) {}
 }
 
@@ -21,6 +22,7 @@ export class GetAttemptsQuizUsecase
       page: params.page,
       limit: params.limit,
       bankId: params.bankId,
+      uploaderId: params.uploaderId,
     });
   }
 }

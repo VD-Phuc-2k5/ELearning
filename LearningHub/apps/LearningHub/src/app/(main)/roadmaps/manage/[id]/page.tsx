@@ -57,7 +57,7 @@ export default function EditRoadmapPage() {
     setTitle(data.roadmap.title);
     setDescription(data.roadmap.description ?? '');
     setItems(
-      data.items.map((it) => ({
+      data.items.map((it: any) => ({
         id: it.id,
         bankId: it.questionBankId,
         title: it.bankTitle ?? it.questionBankId,

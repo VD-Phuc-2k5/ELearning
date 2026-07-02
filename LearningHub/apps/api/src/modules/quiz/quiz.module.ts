@@ -9,7 +9,6 @@ import { BankTagEntity } from './infrastructure/persistence/entities/bank-tag.en
 import { QuestionEntity } from './infrastructure/persistence/entities/question.entity';
 import { AnswerOptionEntity } from './infrastructure/persistence/entities/answer-option.entity';
 import { CorrectAnswerEntity } from './infrastructure/persistence/entities/correct-answer.entity';
-import { QuestionDifficultEntity } from './infrastructure/persistence/entities/question-difficult.entity';
 import { QuizAttemptEntity } from './infrastructure/persistence/entities/quiz-attempt.entity';
 import { QuizAttemptAnswerEntity } from './infrastructure/persistence/entities/quiz-attempt-answer.entity';
 import { UserBankProgressEntity } from './infrastructure/persistence/entities/user-bank-progress.entity';
@@ -74,7 +73,6 @@ const entities = [
   QuestionEntity,
   AnswerOptionEntity,
   CorrectAnswerEntity,
-  QuestionDifficultEntity,
   QuizAttemptEntity,
   QuizAttemptAnswerEntity,
   UserBankProgressEntity,

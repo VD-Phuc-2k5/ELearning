@@ -1,6 +1,6 @@
 'use server';
 
-import { Either, Failure } from '@learning-hub/core';
+import { unwrap } from '@learning-hub/core';
 import {
   RoadmapRemoteDataSourceImpl,
   RoadmapRepositoryImpl,
@@ -33,13 +33,10 @@ import {
 } from '@learning-hub/domain';
 import { cookies } from 'next/headers';
 
-function unwrap<T>(r: Either<Failure, T>): T {
-  if (r.type === 'left') throw new Error(r.value.message);
-  return r.value;
-}
-
 async function getRepo() {
-  const token = (await cookies()).get('accessToken')?.value ?? '';
+  const store = await cookies();
+  const token =
+    store.get('accessToken')?.value ?? store.get('adminToken')?.value ?? '';
   return new RoadmapRepositoryImpl(new RoadmapRemoteDataSourceImpl(), token);
 }
 
@@ -112,7 +109,9 @@ export async function enrollRoadmap(id: string): Promise<UserRoadmapProgress> {
 }
 
 export async function getMyRoadmapProgress(): Promise<UserRoadmapProgress[]> {
-  const token = (await cookies()).get('accessToken')?.value;
+  const store = await cookies();
+  const token =
+    store.get('accessToken')?.value ?? store.get('adminToken')?.value;
   if (!token) return [];
   const repo = new RoadmapRepositoryImpl(
     new RoadmapRemoteDataSourceImpl(),

@@ -1,20 +1,98 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { getBanks } from '../../actions/quiz.actions';
-import type { QuestionBank } from '@learning-hub/domain';
+import { useRouter } from 'next/navigation';
+import { getBanks, getTags, getBankRoadmaps } from '../../actions/quiz.actions';
+import { enrollRoadmap } from '../../actions/roadmap.actions';
+import { useCurrentUser } from '../../../components/hooks/use-current-user';
+import type { QuestionBank, Tag } from '@learning-hub/domain';
 import { Button } from '../../../components/ui';
-import { Search, BookOpen, Filter, Star, Clock } from 'lucide-react';
+import { Search, BookOpen, Clock, ChevronDown, X } from 'lucide-react';
+import Link from 'next/link';
+
+function getInitials(name: string): string {
+  return name
+    .split(' ')
+    .filter(Boolean)
+    .map((p) => p[0]?.toUpperCase() ?? '')
+    .slice(0, 2)
+    .join('');
+}
+
+function timeAgo(dateStr: string | null | undefined): string {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return '';
+  const diff = Date.now() - d.getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days}d ago`;
+  return d.toLocaleDateString();
+}
 
 export default function CommunityPage() {
+  const router = useRouter();
+  const { user } = useCurrentUser();
   const [page, setPage] = useState(1);
+  const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [selectedTagId, setSelectedTagId] = useState<number | undefined>();
+  const [showTagDropdown, setShowTagDropdown] = useState(false);
+  const [studyingId, setStudyingId] = useState<string | null>(null);
   const limit = 12;
-  const { data: banks, isLoading } = useQuery({
-    queryKey: ['community-banks', page],
-    queryFn: () => getBanks({ page, limit }),
+
+  const { data: allTags } = useQuery({
+    queryKey: ['community-tags'],
+    queryFn: () => getTags(),
   });
+
+  const { data: banks, isLoading } = useQuery({
+    queryKey: ['community-banks', debouncedSearch, selectedTagId, page],
+    queryFn: () =>
+      getBanks({
+        page,
+        limit,
+        statusId: 'published',
+        search: debouncedSearch || undefined,
+        tagId: selectedTagId,
+      }),
+  });
+
   const totalPages = Math.ceil((banks?.total ?? 0) / limit);
+
+  const handleSearch = useCallback(() => {
+    setDebouncedSearch(search);
+    setPage(1);
+  }, [search]);
+
+  const selectedTag = useMemo(
+    () => allTags?.find((t: Tag) => t.id === selectedTagId),
+    [allTags, selectedTagId],
+  );
+
+  const handleStudy = useCallback(
+    async (bank: QuestionBank) => {
+      setStudyingId(bank.id);
+      try {
+        const roadmaps = await getBankRoadmaps(bank.id);
+        const firstRoadmap = roadmaps?.[0];
+        if (firstRoadmap) {
+          await enrollRoadmap(firstRoadmap.roadmapId).catch(() => undefined);
+          router.push(`/quiz/${bank.id}?roadmapId=${firstRoadmap.roadmapId}`);
+        } else {
+          router.push(`/quiz/${bank.id}`);
+        }
+      } catch {
+        router.push(`/quiz/${bank.id}`);
+      }
+    },
+    [router],
+  );
 
   return (
     <div className="space-y-10">
@@ -33,38 +111,91 @@ export default function CommunityPage() {
             learners. Learn without limits.
           </p>
 
-          <div className="mt-10 flex max-w-md items-center gap-2 rounded-2xl bg-white/10 p-2 backdrop-blur-md border border-white/15">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSearch();
+            }}
+            className="mt-10 flex max-w-md items-center gap-2 rounded-2xl bg-white/10 p-2 backdrop-blur-md border border-white/15"
+          >
             <Search className="ml-3 h-5 w-5 text-slate-400 shrink-0" />
             <input
               type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
               placeholder="Search banks, topics..."
               className="w-full bg-transparent border-none text-white placeholder-slate-400 focus:ring-0 text-sm outline-none"
             />
-            <Button size="sm" className="shrink-0 rounded-xl">
+            <Button type="submit" size="sm" className="shrink-0 rounded-xl">
               Search
             </Button>
-          </div>
+          </form>
         </div>
       </div>
 
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Button
-            variant="secondary"
-            size="sm"
-            className="p-6 rounded-xl flex items-center gap-2"
-          >
-            <Filter className="h-4 w-full" /> Filter
-          </Button>
-          <div className="hidden sm:flex gap-4 text-sm font-semibold">
-            <span className="text-indigo-600 cursor-pointer">Latest</span>
-            <span className="text-slate-400 cursor-pointer hover:text-slate-900 transition">
-              Popular
-            </span>
-            <span className="text-slate-400 cursor-pointer hover:text-slate-900 transition">
-              Featured
-            </span>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="relative">
+            <Button
+              variant="secondary"
+              size="sm"
+              className="rounded-xl flex items-center gap-2"
+              onClick={() => setShowTagDropdown(!showTagDropdown)}
+              iconPosition="Right"
+              icon={<ChevronDown className="h-3 w-3" />}
+            >
+              {selectedTag ? selectedTag.name : 'All Tags'}
+            </Button>
+            {showTagDropdown && (
+              <>
+                <div
+                  className="fixed inset-0 z-10"
+                  onClick={() => setShowTagDropdown(false)}
+                />
+                <div className="absolute top-full left-0 mt-1 z-20 w-48 rounded-xl border border-slate-200 bg-white shadow-xl max-h-60 overflow-y-auto">
+                  <button
+                    onClick={() => {
+                      setSelectedTagId(undefined);
+                      setShowTagDropdown(false);
+                      setPage(1);
+                    }}
+                    className="w-full px-4 py-2.5 text-left text-sm hover:bg-slate-50 font-medium"
+                  >
+                    All Tags
+                  </button>
+                  {allTags?.map((tag: Tag) => (
+                    <button
+                      key={tag.id}
+                      onClick={() => {
+                        setSelectedTagId(tag.id);
+                        setShowTagDropdown(false);
+                        setPage(1);
+                      }}
+                      className={`w-full px-4 py-2.5 text-left text-sm hover:bg-slate-50 ${
+                        selectedTagId === tag.id
+                          ? 'text-indigo-600 font-semibold'
+                          : 'text-slate-700'
+                      }`}
+                    >
+                      {tag.name}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
+
+          {selectedTagId && (
+            <button
+              onClick={() => {
+                setSelectedTagId(undefined);
+                setPage(1);
+              }}
+              className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700"
+            >
+              <X className="h-3 w-3" /> Clear
+            </button>
+          )}
         </div>
         <p className="text-sm text-slate-400 font-medium">
           {banks?.total ?? 0} results
@@ -80,47 +211,88 @@ export default function CommunityPage() {
             />
           ))}
         </div>
-      ) : (
+      ) : banks?.data?.length ? (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {banks?.data?.map((bank: QuestionBank) => (
-            <div
-              key={bank.id}
-              className="group flex flex-col rounded-3xl border border-slate-100 bg-white p-2 shadow-sm transition hover:shadow-xl hover:-translate-y-1 overflow-hidden"
-            >
-              <div className="aspect-[16/10] bg-gradient-to-br from-slate-50 to-indigo-50 rounded-2xl flex items-center justify-center relative">
-                <BookOpen className="h-10 w-10 text-indigo-200" />
-                <div className="absolute top-3 right-3 bg-white/90 backdrop-blur rounded-full px-2.5 py-1 text-[10px] font-bold text-slate-900 flex items-center gap-1 shadow-sm">
-                  <Star className="h-3 w-3 text-amber-500 fill-amber-500" /> 4.9
+          {banks.data.map((bank: QuestionBank) => {
+            const isOwner = user?.id === bank.uploaderId;
+            const initials = bank.uploaderName
+              ? getInitials(bank.uploaderName)
+              : 'U';
+
+            return (
+              <div
+                key={bank.id}
+                className="group flex flex-col rounded-3xl border border-slate-100 bg-white p-2 shadow-sm transition hover:shadow-xl hover:-translate-y-1 overflow-hidden"
+              >
+                <div className="aspect-[16/10] bg-gradient-to-br from-slate-50 to-indigo-50 rounded-2xl flex items-center justify-center relative">
+                  <BookOpen className="h-10 w-10 text-indigo-200" />
                 </div>
-              </div>
-              <div className="p-4 flex-1 flex flex-col">
-                <h3 className="font-bold text-slate-900 text-base line-clamp-1">
-                  {bank.title}
-                </h3>
-                <div className="mt-2 flex items-center gap-4 text-xs text-slate-400 font-medium">
-                  <span className="flex items-center gap-1">
-                    <Clock className="h-3 w-3" /> 10 min
-                  </span>
-                  <span>{bank.totalQuestions} questions</span>
-                </div>
-                <p className="mt-3 text-sm text-slate-500 line-clamp-2 flex-1">
-                  {bank.description ||
-                    'Build your foundational and advanced knowledge through this question set.'}
-                </p>
-                <div className="mt-4 pt-4 border-t border-slate-50 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="h-6 w-6 rounded-full bg-indigo-100 flex items-center justify-center text-[10px] text-indigo-600 font-bold">
-                      U
-                    </div>
-                    <span className="text-xs font-semibold text-slate-600">
-                      User_{bank.uploaderId.substring(0, 4)}
+                <div className="p-4 flex-1 flex flex-col">
+                  <h3 className="font-bold text-slate-900 text-base line-clamp-1">
+                    {bank.title}
+                  </h3>
+                  <div className="mt-2 flex items-center gap-4 text-xs text-slate-400 font-medium">
+                    <span className="flex items-center gap-1">
+                      <Clock className="h-3 w-3" />
+                      {bank.lastUploadedAt
+                        ? timeAgo(bank.lastUploadedAt)
+                        : 'Recent'}
                     </span>
+                    <span>{bank.totalQuestions} questions</span>
                   </div>
-                  <Button size="sm">Study now</Button>
+                  <p className="mt-3 text-sm text-slate-500 line-clamp-2 flex-1">
+                    {bank.description ||
+                      'Build your foundational and advanced knowledge through this question set.'}
+                  </p>
+                  <div className="mt-4 pt-4 border-t border-slate-50 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="h-6 w-6 rounded-full bg-indigo-100 flex items-center justify-center text-[10px] text-indigo-600 font-bold">
+                        {initials}
+                      </div>
+                    </div>
+                    {isOwner ? (
+                      <Link href={`/my-banks/${bank.id}`}>
+                        <Button size="sm" variant="secondary">
+                          Manage
+                        </Button>
+                      </Link>
+                    ) : (
+                      <Button
+                        size="sm"
+                        isLoading={studyingId === bank.id}
+                        onClick={() => handleStudy(bank)}
+                      >
+                        Study
+                      </Button>
+                    )}
+                  </div>
+                  {bank.tags && bank.tags.length > 0 && (
+                    <div className="mt-3 flex flex-wrap gap-1.5">
+                      {bank.tags.map((tag) => (
+                        <span
+                          key={tag.id}
+                          className="px-2 py-0.5 text-[10px] font-medium text-indigo-600 bg-indigo-50 rounded-full"
+                        >
+                          {tag.name}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
+        </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-slate-200 bg-white p-16 text-center">
+          <BookOpen className="h-12 w-12 text-slate-300 mb-4" />
+          <h3 className="text-lg font-semibold text-slate-900">
+            No published question banks
+          </h3>
+          <p className="mt-2 text-slate-500 max-w-sm text-sm">
+            No public question banks match your search. Try adjusting your
+            filters or check back later.
+          </p>
         </div>
       )}
 

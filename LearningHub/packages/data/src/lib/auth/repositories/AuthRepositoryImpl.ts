@@ -9,6 +9,7 @@ import {
   NotFoundFailure,
   NetworkFailure,
   AuthenticationException,
+  BadRequestException,
   PermissionException,
   NotFoundException,
   NetworkException,
@@ -32,17 +33,20 @@ import { IAuthRemoteDataSource } from '../datasources/IAuthRemoteDataSource';
 function toFailure(e: unknown): Failure {
   if (e instanceof AuthenticationException)
     return new AuthenticationFailure(e.message);
-  if (e instanceof PermissionException) return new PermissionFailure();
-  if (e instanceof NotFoundException) return new NotFoundFailure();
+  if (e instanceof PermissionException) return new PermissionFailure(e.message);
+  if (e instanceof NotFoundException) return new NotFoundFailure(e.message);
+  if (e instanceof BadRequestException) return new UnknownFailure(e.message);
   if (e instanceof NetworkException) return new NetworkFailure();
-  return new UnknownFailure();
+  return new UnknownFailure(e instanceof Error ? e.message : undefined);
 }
 
 export class AuthRepositoryImpl implements IAuthRepository {
   constructor(
     private dataSource: IAuthRemoteDataSource,
-    private token?: string,
-  ) {}
+    token?: string,
+  ) {
+    if (token) this.dataSource.setToken(token);
+  }
 
   async register(data: RegisterParams): Promise<Either<Failure, User>> {
     try {
@@ -71,7 +75,7 @@ export class AuthRepositoryImpl implements IAuthRepository {
 
   async registerAdmin(data: RegisterParams): Promise<Either<Failure, User>> {
     try {
-      const res = await this.dataSource.registerAdmin(data, this.token);
+      const res = await this.dataSource.registerAdmin(data);
       return right(res.user);
     } catch (e) {
       return left(toFailure(e));
@@ -83,7 +87,7 @@ export class AuthRepositoryImpl implements IAuthRepository {
     data: UpdateAdminParams,
   ): Promise<Either<Failure, User>> {
     try {
-      return right(await this.dataSource.updateUser(id, data, this.token));
+      return right(await this.dataSource.updateUser(id, data));
     } catch (e) {
       return left(toFailure(e));
     }
@@ -91,7 +95,7 @@ export class AuthRepositoryImpl implements IAuthRepository {
 
   async deleteUser(id: string): Promise<Either<Failure, void>> {
     try {
-      await this.dataSource.deleteUser(id, this.token);
+      await this.dataSource.deleteUser(id);
       return right(undefined);
     } catch (e) {
       return left(toFailure(e));
@@ -100,7 +104,7 @@ export class AuthRepositoryImpl implements IAuthRepository {
 
   async searchUsersByEmail(email: string): Promise<Either<Failure, User[]>> {
     try {
-      return right(await this.dataSource.searchUsersByEmail(email, this.token));
+      return right(await this.dataSource.searchUsersByEmail(email));
     } catch (e) {
       return left(toFailure(e));
     }
@@ -108,15 +112,15 @@ export class AuthRepositoryImpl implements IAuthRepository {
 
   async refreshToken(token: string): Promise<Either<Failure, AuthTokens>> {
     try {
-      return right(await this.dataSource.refreshToken({ refreshToken: token }));
+      return right(await this.dataSource.refreshToken({ token }));
     } catch (e) {
       return left(toFailure(e));
     }
   }
 
-  async logout(): Promise<Either<Failure, void>> {
+  async logout(refreshToken: string): Promise<Either<Failure, void>> {
     try {
-      await this.dataSource.logout(this.token);
+      await this.dataSource.logout(refreshToken);
       return right(undefined);
     } catch (e) {
       return left(toFailure(e));
@@ -125,15 +129,15 @@ export class AuthRepositoryImpl implements IAuthRepository {
 
   async getProfile(): Promise<Either<Failure, User>> {
     try {
-      return right(await this.dataSource.getProfile(this.token));
+      return right(await this.dataSource.getProfile());
     } catch (e) {
       return left(toFailure(e));
     }
   }
 
-  async getUsers(): Promise<Either<Failure, User[]>> {
+  async getUsers(role?: string): Promise<Either<Failure, User[]>> {
     try {
-      return right(await this.dataSource.getUsers(this.token));
+      return right(await this.dataSource.getUsers(role));
     } catch (e) {
       return left(toFailure(e));
     }
@@ -141,7 +145,7 @@ export class AuthRepositoryImpl implements IAuthRepository {
 
   async getRoles(): Promise<Either<Failure, Role[]>> {
     try {
-      return right(await this.dataSource.getRoles(this.token));
+      return right(await this.dataSource.getRoles());
     } catch (e) {
       return left(toFailure(e));
     }
@@ -149,7 +153,7 @@ export class AuthRepositoryImpl implements IAuthRepository {
 
   async createRole(data: CreateRoleParams): Promise<Either<Failure, Role>> {
     try {
-      return right(await this.dataSource.createRole(data, this.token));
+      return right(await this.dataSource.createRole(data));
     } catch (e) {
       return left(toFailure(e));
     }
@@ -160,7 +164,7 @@ export class AuthRepositoryImpl implements IAuthRepository {
     data: UpdateRoleParams,
   ): Promise<Either<Failure, Role>> {
     try {
-      return right(await this.dataSource.updateRole(id, data, this.token));
+      return right(await this.dataSource.updateRole(id, data));
     } catch (e) {
       return left(toFailure(e));
     }
@@ -168,7 +172,7 @@ export class AuthRepositoryImpl implements IAuthRepository {
 
   async deleteRole(id: number): Promise<Either<Failure, void>> {
     try {
-      await this.dataSource.deleteRole(id, this.token);
+      await this.dataSource.deleteRole(id);
       return right(undefined);
     } catch (e) {
       return left(toFailure(e));
@@ -177,7 +181,7 @@ export class AuthRepositoryImpl implements IAuthRepository {
 
   async getPermissions(): Promise<Either<Failure, Permission[]>> {
     try {
-      return right(await this.dataSource.getPermissions(this.token));
+      return right(await this.dataSource.getPermissions());
     } catch (e) {
       return left(toFailure(e));
     }
@@ -185,7 +189,7 @@ export class AuthRepositoryImpl implements IAuthRepository {
 
   async getResources(): Promise<Either<Failure, string[]>> {
     try {
-      const data = await this.dataSource.getResources(this.token);
+      const data = await this.dataSource.getResources();
       return right(data.resources);
     } catch (e) {
       return left(toFailure(e));
@@ -196,7 +200,7 @@ export class AuthRepositoryImpl implements IAuthRepository {
     data: CreatePermissionParams,
   ): Promise<Either<Failure, Permission>> {
     try {
-      return right(await this.dataSource.createPermission(data, this.token));
+      return right(await this.dataSource.createPermission(data));
     } catch (e) {
       return left(toFailure(e));
     }
@@ -204,7 +208,7 @@ export class AuthRepositoryImpl implements IAuthRepository {
 
   async deletePermission(id: number): Promise<Either<Failure, void>> {
     try {
-      await this.dataSource.deletePermission(id, this.token);
+      await this.dataSource.deletePermission(id);
       return right(undefined);
     } catch (e) {
       return left(toFailure(e));
@@ -213,7 +217,7 @@ export class AuthRepositoryImpl implements IAuthRepository {
 
   async getRolePermissions(roleId: number): Promise<Either<Failure, number[]>> {
     try {
-      const data = await this.dataSource.getRolePermissions(roleId, this.token);
+      const data = await this.dataSource.getRolePermissions(roleId);
       return right(data.map((p) => p.id));
     } catch (e) {
       return left(toFailure(e));
@@ -225,7 +229,7 @@ export class AuthRepositoryImpl implements IAuthRepository {
     permissionId: number,
   ): Promise<Either<Failure, void>> {
     try {
-      await this.dataSource.assignPermission(roleId, permissionId, this.token);
+      await this.dataSource.assignPermission(roleId, permissionId);
       return right(undefined);
     } catch (e) {
       return left(toFailure(e));
@@ -237,7 +241,7 @@ export class AuthRepositoryImpl implements IAuthRepository {
     permissionId: number,
   ): Promise<Either<Failure, void>> {
     try {
-      await this.dataSource.removePermission(roleId, permissionId, this.token);
+      await this.dataSource.removePermission(roleId, permissionId);
       return right(undefined);
     } catch (e) {
       return left(toFailure(e));
@@ -246,7 +250,7 @@ export class AuthRepositoryImpl implements IAuthRepository {
 
   async getUserRoles(userId: string): Promise<Either<Failure, Role[]>> {
     try {
-      return right(await this.dataSource.getUserRoles(userId, this.token));
+      return right(await this.dataSource.getUserRoles(userId));
     } catch (e) {
       return left(toFailure(e));
     }
@@ -257,7 +261,7 @@ export class AuthRepositoryImpl implements IAuthRepository {
     roleId: number,
   ): Promise<Either<Failure, void>> {
     try {
-      await this.dataSource.assignRoleToUser(userId, roleId, this.token);
+      await this.dataSource.assignRoleToUser(userId, roleId);
       return right(undefined);
     } catch (e) {
       return left(toFailure(e));
@@ -269,7 +273,7 @@ export class AuthRepositoryImpl implements IAuthRepository {
     roleId: number,
   ): Promise<Either<Failure, void>> {
     try {
-      await this.dataSource.removeRoleFromUser(userId, roleId, this.token);
+      await this.dataSource.removeRoleFromUser(userId, roleId);
       return right(undefined);
     } catch (e) {
       return left(toFailure(e));
@@ -280,9 +284,7 @@ export class AuthRepositoryImpl implements IAuthRepository {
     userId: string,
   ): Promise<Either<Failure, Permission[]>> {
     try {
-      return right(
-        await this.dataSource.getUserPermissions(userId, this.token),
-      );
+      return right(await this.dataSource.getUserPermissions(userId));
     } catch (e) {
       return left(toFailure(e));
     }
@@ -293,7 +295,7 @@ export class AuthRepositoryImpl implements IAuthRepository {
     data: GrantPermissionParams,
   ): Promise<Either<Failure, void>> {
     try {
-      await this.dataSource.grantUserPermission(userId, data, this.token);
+      await this.dataSource.grantUserPermission(userId, data);
       return right(undefined);
     } catch (e) {
       return left(toFailure(e));
@@ -305,11 +307,7 @@ export class AuthRepositoryImpl implements IAuthRepository {
     permissionId: number,
   ): Promise<Either<Failure, void>> {
     try {
-      await this.dataSource.revokeUserPermission(
-        userId,
-        permissionId,
-        this.token,
-      );
+      await this.dataSource.revokeUserPermission(userId, permissionId);
       return right(undefined);
     } catch (e) {
       return left(toFailure(e));

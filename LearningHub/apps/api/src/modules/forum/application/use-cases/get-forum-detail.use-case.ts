@@ -1,0 +1,103 @@
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import {
+  FORUM_MEMBER_REPOSITORY,
+  IForumMemberRepository,
+} from '../../domain/repositories/forum-member.repository.interface';
+import {
+  FORUM_REPOSITORY,
+  IForumRepository,
+} from '../../domain/repositories/forum.repository.interface';
+import { FORUM_RULE_REPOSITORY } from '../../domain/repositories/forum-rule.repository.interface';
+import type { IForumRuleRepository } from '../../domain/repositories/forum-rule.repository.interface';
+import type { IUserRoleRepository } from '../../../auth/domain/repositories/i-user-role.repository';
+import type { ForumDomain } from '../../domain/entities/forum.domain';
+import type { ForumMemberRole } from '../../domain/entities/forum.domain';
+import type { ForumRuleDomain } from '../../domain/entities/forum-rule.domain';
+
+const ADMIN_ROLES = new Set(['ADMIN', 'OWNER']);
+
+export interface ForumDetailResult {
+  forum: ForumDomain;
+  memberRole: ForumMemberRole | null;
+  rules: ForumRuleDomain[];
+}
+
+@Injectable()
+export class GetForumDetailUseCase {
+  constructor(
+    @Inject(FORUM_REPOSITORY)
+    private readonly forumRepo: IForumRepository,
+    @Inject(FORUM_MEMBER_REPOSITORY)
+    private readonly memberRepo: IForumMemberRepository,
+    @Inject(FORUM_RULE_REPOSITORY)
+    private readonly ruleRepo: IForumRuleRepository,
+    @Inject('IUserRoleRepository')
+    private readonly userRoleRepo: IUserRoleRepository,
+    private readonly jwtService: JwtService,
+  ) {}
+
+  private async isAdmin(userId?: string): Promise<boolean> {
+    if (!userId) return false;
+    const roles = await this.userRoleRepo.findByUserId(userId);
+    return roles.some((r) => ADMIN_ROLES.has(r.role.code));
+  }
+
+  private extractUserIdFromHeader(authHeader?: string): string | undefined {
+    if (!authHeader?.startsWith('Bearer ')) return undefined;
+    try {
+      const token = authHeader.slice(7);
+      const payload = this.jwtService.decode(token) as {
+        sub?: string;
+      } | null;
+      return payload?.sub;
+    } catch {
+      return undefined;
+    }
+  }
+
+  async execute(
+    slug: string,
+    userId?: string,
+    authHeader?: string,
+  ): Promise<ForumDetailResult> {
+    const effectiveUserId = userId ?? this.extractUserIdFromHeader(authHeader);
+    const forum = await this.forumRepo.findBySlug(slug);
+    if (!forum) throw new NotFoundException('Forum not found');
+
+    const isAdminUser = await this.isAdmin(effectiveUserId);
+
+    const member = effectiveUserId
+      ? await this.memberRepo.findByForumAndUser(forum.id, effectiveUserId)
+      : null;
+
+    if (forum.visibility === 'hidden' && !member && !isAdminUser) {
+      throw new NotFoundException('Forum not found');
+    }
+
+    if (forum.visibility === 'private' && !member && !isAdminUser) {
+      const actualPostCount = await this.forumRepo.recalculatePostCount(
+        forum.id,
+      );
+      forum.postCount = actualPostCount;
+      return {
+        forum,
+        memberRole: null,
+        rules: [],
+      };
+    }
+
+    const actualPostCount = await this.forumRepo.recalculatePostCount(forum.id);
+    forum.postCount = actualPostCount;
+
+    const rules = await this.ruleRepo.findByForum(forum.id);
+
+    const effectiveRole = member?.role ?? (isAdminUser ? 'member' : null);
+
+    return {
+      forum,
+      memberRole: effectiveRole,
+      rules,
+    };
+  }
+}

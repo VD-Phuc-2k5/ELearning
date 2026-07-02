@@ -1,13 +1,6 @@
 import axios from 'axios';
+import { handleAxiosError } from '@learning-hub/core';
 import {
-  AuthenticationException,
-  NetworkException,
-  NotFoundException,
-  PermissionException,
-  UnknownException,
-} from '@learning-hub/core';
-import {
-  BankRoadmapItem,
   CreateBankQuizParams,
   GetAttemptsParams,
   GetBanksQuizParams,
@@ -20,76 +13,64 @@ import { IQuizRemoteDataSource } from './IQuizRemoteDataSource';
 const NEST_API = process.env.NEST_API_URL || 'http://localhost:8080';
 
 export class QuizRemoteDataSourceImpl implements IQuizRemoteDataSource {
+  private token?: string;
+
   private api = axios.create({ baseURL: NEST_API });
 
-  private auth(token: string) {
-    return { Authorization: `Bearer ${token}` };
+  constructor() {
+    this.api.interceptors.request.use((config) => {
+      if (this.token) {
+        config.headers.Authorization = `Bearer ${this.token}`;
+      }
+      return config;
+    });
   }
 
-  private handleError(e: unknown): never {
-    if (axios.isAxiosError(e)) {
-      const status = e.response?.status;
-      const message: string = e.response?.data?.message || e.message;
-      if (status === 401) throw new AuthenticationException(message);
-      if (status === 403) throw new PermissionException(message);
-      if (status === 404) throw new NotFoundException(message);
-      throw new UnknownException();
-    }
-    throw new NetworkException();
+  setToken(token: string): void {
+    this.token = token;
   }
 
-  async getBanks(params: GetBanksQuizParams, token: string) {
+  async getBanks(params: GetBanksQuizParams) {
     try {
-      const res = await this.api.get('/quiz/banks', {
-        params,
-        headers: this.auth(token),
-      });
+      const res = await this.api.get('/quiz/banks', { params });
       return res.data;
     } catch (e) {
-      return this.handleError(e);
+      return handleAxiosError(e);
     }
   }
 
-  async getBankDetail(id: string, token: string) {
+  async getBankDetail(id: string) {
     try {
-      const res = await this.api.get(`/quiz/banks/${id}`, {
-        headers: this.auth(token),
-      });
+      const res = await this.api.get(`/quiz/banks/${id}`);
       return res.data;
     } catch (e) {
-      return this.handleError(e);
+      return handleAxiosError(e);
     }
   }
 
-  async createBank(params: CreateBankQuizParams, token: string) {
+  async createBank(params: CreateBankQuizParams) {
     try {
-      const res = await this.api.post('/quiz/banks', params, {
-        headers: this.auth(token),
-      });
+      const res = await this.api.post('/quiz/banks', params);
       return res.data;
     } catch (e) {
-      return this.handleError(e);
+      return handleAxiosError(e);
     }
   }
 
-  async updateBank(id: string, params: UpdateBankQuizParams, token: string) {
+  async updateBank(id: string, params: UpdateBankQuizParams) {
     try {
-      const res = await this.api.patch(`/quiz/banks/${id}`, params, {
-        headers: this.auth(token),
-      });
+      const res = await this.api.patch(`/quiz/banks/${id}`, params);
       return res.data;
     } catch (e) {
-      return this.handleError(e);
+      return handleAxiosError(e);
     }
   }
 
-  async deleteBank(id: string, token: string) {
+  async deleteBank(id: string) {
     try {
-      await this.api.delete(`/quiz/banks/${id}`, {
-        headers: this.auth(token),
-      });
+      await this.api.delete(`/quiz/banks/${id}`);
     } catch (e) {
-      return this.handleError(e);
+      return handleAxiosError(e);
     }
   }
 
@@ -97,233 +78,179 @@ export class QuizRemoteDataSourceImpl implements IQuizRemoteDataSource {
     bankId: string,
     file: Buffer,
     fileName: string,
-    token: string,
     fileHash?: string,
   ) {
     try {
       const form = new FormData();
-      form.append('file', new Blob([file]), fileName);
+      form.append('file', new Blob([file as any]), fileName);
       if (fileHash) form.append('fileHash', fileHash);
       const res = await this.api.post(
         `/quiz/banks/${bankId}/upload-excel`,
         form,
-        { headers: { ...this.auth(token) } },
       );
       return res.data;
     } catch (e) {
-      return this.handleError(e);
+      return handleAxiosError(e);
     }
   }
 
-  async parseExcel(
-    bankId: string,
-    file: Buffer,
-    fileName: string,
-    token: string,
-  ) {
+  async parseExcel(bankId: string, file: Buffer, fileName: string) {
     try {
       const form = new FormData();
-      form.append('file', new Blob([file]), fileName);
+      form.append('file', new Blob([file as any]), fileName);
       const res = await this.api.post(
         `/quiz/banks/${bankId}/parse-excel`,
         form,
-        { headers: { ...this.auth(token) } },
       );
       return res.data;
     } catch (e) {
-      return this.handleError(e);
+      return handleAxiosError(e);
     }
   }
 
-  async getUploadHistory(bankId: string, token: string) {
+  async getUploadHistory(bankId: string) {
     try {
-      const res = await this.api.get(`/quiz/banks/${bankId}/upload-history`, {
-        headers: this.auth(token),
-      });
+      const res = await this.api.get(`/quiz/banks/${bankId}/upload-history`);
       return res.data;
     } catch (e) {
-      return this.handleError(e);
+      return handleAxiosError(e);
     }
   }
 
-  async getQuestionsForQuiz(
-    bankId: string,
-    token: string,
-    showAnswers = false,
-  ) {
+  async getQuestionsForQuiz(bankId: string, showAnswers = false) {
     try {
       const res = await this.api.get(`/quiz/banks/${bankId}/questions`, {
-        headers: this.auth(token),
         params: showAnswers ? { showAnswers: 'true' } : undefined,
       });
       return res.data;
     } catch (e) {
-      return this.handleError(e);
+      return handleAxiosError(e);
     }
   }
 
-  async verifyAnswer(
-    questionId: string,
-    selectedOptionId: string,
-    token: string,
-  ) {
+  async verifyAnswer(questionId: string, selectedOptionId: string) {
     try {
-      const res = await this.api.post(
-        `/quiz/questions/${questionId}/verify`,
-        { selectedOptionId },
-        { headers: this.auth(token) },
-      );
+      const res = await this.api.post(`/quiz/questions/${questionId}/verify`, {
+        selectedOptionId,
+      });
       return res.data;
     } catch (e) {
-      return this.handleError(e);
+      return handleAxiosError(e);
     }
   }
 
   async submitQuiz(
     bankId: string,
     answers: QuizAnswer[],
-    token: string,
     roadmapId?: string | null,
     durationSeconds?: number,
   ) {
     try {
-      const res = await this.api.post(
-        `/quiz/banks/${bankId}/submit`,
-        { answers, roadmapId, durationSeconds },
-        { headers: this.auth(token) },
-      );
-      return res.data;
-    } catch (e) {
-      return this.handleError(e);
-    }
-  }
-
-  async getAttempts(params: GetAttemptsParams, token: string) {
-    try {
-      const res = await this.api.get('/quiz/attempts', {
-        params,
-        headers: this.auth(token),
+      const res = await this.api.post(`/quiz/banks/${bankId}/submit`, {
+        answers,
+        roadmapId,
+        durationSeconds,
       });
       return res.data;
     } catch (e) {
-      return this.handleError(e);
+      return handleAxiosError(e);
     }
   }
 
-  async getAttemptDetail(id: string, token: string) {
+  async getAttempts(params: GetAttemptsParams) {
     try {
-      const res = await this.api.get(`/quiz/attempts/${id}`, {
-        headers: this.auth(token),
-      });
+      const res = await this.api.get('/quiz/attempts', { params });
       return res.data;
     } catch (e) {
-      return this.handleError(e);
+      return handleAxiosError(e);
     }
   }
 
-  async getBankProgress(bankId: string, token: string) {
+  async getAttemptDetail(id: string) {
     try {
-      const res = await this.api.get(`/quiz/banks/${bankId}/my-progress`, {
-        headers: this.auth(token),
-      });
+      const res = await this.api.get(`/quiz/attempts/${id}`);
       return res.data;
     } catch (e) {
-      return this.handleError(e);
+      return handleAxiosError(e);
     }
   }
 
-  async updateQuestion(
-    id: string,
-    params: UpdateQuestionQuizParams,
-    token: string,
-  ) {
+  async getBankProgress(bankId: string) {
     try {
-      const res = await this.api.patch(`/quiz/questions/${id}`, params, {
-        headers: this.auth(token),
-      });
+      const res = await this.api.get(`/quiz/banks/${bankId}/my-progress`);
       return res.data;
     } catch (e) {
-      return this.handleError(e);
+      return handleAxiosError(e);
     }
   }
 
-  async deleteQuestion(id: string, token: string) {
+  async updateQuestion(id: string, params: UpdateQuestionQuizParams) {
     try {
-      await this.api.delete(`/quiz/questions/${id}`, {
-        headers: this.auth(token),
-      });
-    } catch (e) {
-      return this.handleError(e);
-    }
-  }
-
-  async getTags(token: string) {
-    try {
-      const res = await this.api.get('/quiz/tags', {
-        headers: this.auth(token),
-      });
+      const res = await this.api.patch(`/quiz/questions/${id}`, params);
       return res.data;
     } catch (e) {
-      return this.handleError(e);
+      return handleAxiosError(e);
     }
   }
 
-  async createTag(name: string, token: string) {
+  async deleteQuestion(id: string) {
     try {
-      const res = await this.api.post(
-        '/quiz/tags',
-        { name },
-        { headers: this.auth(token) },
-      );
+      await this.api.delete(`/quiz/questions/${id}`);
+    } catch (e) {
+      return handleAxiosError(e);
+    }
+  }
+
+  async getTags() {
+    try {
+      const res = await this.api.get('/quiz/tags');
       return res.data;
     } catch (e) {
-      return this.handleError(e);
+      return handleAxiosError(e);
     }
   }
 
-  async deleteTag(id: number, token: string) {
+  async createTag(name: string) {
     try {
-      await this.api.delete(`/quiz/tags/${id}`, {
-        headers: this.auth(token),
-      });
-    } catch (e) {
-      return this.handleError(e);
-    }
-  }
-
-  async checkBankHash(hash: string, token: string) {
-    try {
-      const res = await this.api.get(`/quiz/banks/check-hash/${hash}`, {
-        headers: this.auth(token),
-      });
+      const res = await this.api.post('/quiz/tags', { name });
       return res.data;
     } catch (e) {
-      return this.handleError(e);
+      return handleAxiosError(e);
     }
   }
 
-  async getDerivedBanks(bankId: string, token: string) {
+  async deleteTag(id: number) {
     try {
-      const res = await this.api.get(`/quiz/banks/${bankId}/derived-banks`, {
-        headers: this.auth(token),
-      });
+      await this.api.delete(`/quiz/tags/${id}`);
+    } catch (e) {
+      return handleAxiosError(e);
+    }
+  }
+
+  async checkBankHash(hash: string) {
+    try {
+      const res = await this.api.get(`/quiz/banks/check-hash/${hash}`);
+      return res.data;
+    } catch (e) {
+      return handleAxiosError(e);
+    }
+  }
+
+  async getDerivedBanks(bankId: string) {
+    try {
+      const res = await this.api.get(`/quiz/banks/${bankId}/derived-banks`);
       return res.data.data ?? [];
     } catch (e) {
-      return this.handleError(e);
+      return handleAxiosError(e);
     }
   }
 
-  async getBankRoadmaps(
-    bankId: string,
-    token: string,
-  ): Promise<BankRoadmapItem[]> {
+  async getBankRoadmaps(bankId: string) {
     try {
-      const res = await this.api.get(`/quiz/banks/${bankId}/roadmaps`, {
-        headers: this.auth(token),
-      });
+      const res = await this.api.get(`/quiz/banks/${bankId}/roadmaps`);
       return res.data;
     } catch (e) {
-      return this.handleError(e);
+      return handleAxiosError(e);
     }
   }
 }

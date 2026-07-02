@@ -5,7 +5,7 @@ import { Role } from '../../domain/entities/role.entity';
 import { AuthFailures } from '../../domain/errors/auth.failures';
 import { CreateRoleDto } from '../dto/role.dto';
 
-export interface CreateRoleParams extends CreateRoleDto {}
+export type CreateRoleParams = CreateRoleDto;
 export interface CreateRoleResult {
   role: Role;
 }

@@ -10,7 +10,12 @@ import { listAttempts } from '../../../actions/quiz-attempt.actions';
 import { getBankDetail } from '../../../actions/quiz.actions';
 import '@aejkatappaja/phantom-ui';
 
-const STATUS_BADGE: Record<string, { label: string; cls: string }> = {
+interface StatusBadge {
+  label: string;
+  cls: string;
+}
+
+const STATUS_BADGE: Record<string, StatusBadge> = {
   pass: { label: 'Pass', cls: 'bg-emerald-100 text-emerald-700' },
   fail: { label: 'Fail', cls: 'bg-red-100 text-red-700' },
   in_progress: { label: 'In Progress', cls: 'bg-amber-100 text-amber-700' },
@@ -25,17 +30,17 @@ export default function QuizHistoryPage() {
     queryFn: () => listAttempts({ page, limit }),
   });
 
-  const attempts = data?.data ?? [];
+  const attempts = useMemo(() => data?.data ?? [], [data]);
   const total = data?.total ?? 0;
 
   const uniqueBankIds = useMemo(
-    () => [...new Set(attempts.map((a) => a.questionBankId))],
+    () => [...new Set(attempts.map((a: any) => a.questionBankId as string))],
     [attempts],
   );
   const bankQueries = useQueries({
-    queries: uniqueBankIds.map((id) => ({
+    queries: uniqueBankIds.map((id: any) => ({
       queryKey: ['bank', id],
-      queryFn: () => getBankDetail(id),
+      queryFn: () => getBankDetail(id as string),
       enabled: uniqueBankIds.length > 0,
     })),
   });
@@ -109,7 +114,7 @@ export default function QuizHistoryPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {attempts.map((a) => {
+                {attempts.map((a: any) => {
                   const badge = STATUS_BADGE[a.status] ?? STATUS_BADGE.fail;
                   const pct =
                     a.scorePercent !== null ? Math.round(a.scorePercent) : null;

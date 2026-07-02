@@ -109,7 +109,7 @@ export default function CreateBankPage() {
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <div className="bg-white rounded-3xl border border-slate-200 p-8 shadow-sm space-y-8">
           <div className="space-y-6">
-            <h3 className="text-base font-semibold text-slate-900 uppercase tracking-wide text-xs text-slate-400">
+            <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wide">
               Basic Information
             </h3>
             <Input

@@ -2,10 +2,13 @@ import { BadRequestException, Logger, ValidationPipe } from '@nestjs/common';
 import type { ValidationError } from 'class-validator';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { NestFactory } from '@nestjs/core';
+import { IoAdapter } from '@nestjs/platform-socket.io';
 import { AppModule } from './app.module';
+import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  app.useWebSocketAdapter(new IoAdapter(app));
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -26,6 +29,7 @@ async function bootstrap() {
     credentials: true,
   });
   const globalPrefix = 'api';
+  app.useGlobalFilters(new HttpExceptionFilter());
   app.setGlobalPrefix(globalPrefix);
   const port = process.env.PORT || 3000;
   // Swagger

@@ -98,6 +98,7 @@ export class QuizBankController {
   @ApiQuery({ name: 'search', required: false, type: String })
   @ApiQuery({ name: 'tagId', required: false, type: Number })
   @ApiQuery({ name: 'statusId', required: false, type: String })
+  @ApiQuery({ name: 'uploaderId', required: false, type: String })
   async getBankList(
     @Request() req: AuthenticatedRequest,
     @Query('page') page?: number,
@@ -105,6 +106,7 @@ export class QuizBankController {
     @Query('search') search?: string,
     @Query('tagId') tagId?: number,
     @Query('statusId') statusId?: string,
+    @Query('uploaderId') uploaderId?: string,
   ) {
     return this.getQuestionBankListUseCase.execute({
       page,
@@ -112,7 +114,7 @@ export class QuizBankController {
       search,
       tagId,
       statusId,
-      uploaderId: req.user.id,
+      uploaderId,
     });
   }
 

@@ -1,1 +1,1 @@
-export type Mode = 'select' | 'practice' | 'exam' | 'timed-exam' | 'result';
+export type QuizMode = 'select' | 'practice' | 'exam' | 'timed-exam' | 'result';

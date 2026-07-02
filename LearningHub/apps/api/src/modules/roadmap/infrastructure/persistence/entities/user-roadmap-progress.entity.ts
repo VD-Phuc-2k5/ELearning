@@ -49,12 +49,16 @@ export class UserRoadmapProgressEntity {
   @Column({ name: 'current_bank_id', type: 'varchar', nullable: true })
   currentBankId!: string | null;
 
-  @ManyToOne(() => QuestionBankEntity, { nullable: true, onDelete: 'SET NULL' })
+  @ManyToOne(() => QuestionBankEntity, { onDelete: 'CASCADE', nullable: true })
   @JoinColumn({ name: 'current_bank_id' })
   currentBank!: QuestionBankEntity | null;
 
   @Column({ name: 'last_accessed_bank_id', type: 'varchar', nullable: true })
   lastAccessedBankId!: string | null;
+
+  @ManyToOne(() => QuestionBankEntity, { onDelete: 'CASCADE', nullable: true })
+  @JoinColumn({ name: 'last_accessed_bank_id' })
+  lastAccessedBank!: QuestionBankEntity | null;
 
   @Column({ name: 'started_at', nullable: true, type: 'timestamp' })
   startedAt!: Date | null;

@@ -5,12 +5,22 @@ import { useMutation } from '@tanstack/react-query';
 import { Upload, FileText, AlertCircle, CheckCircle2, X } from 'lucide-react';
 import { clsx } from 'clsx';
 import { Button } from '../../../../../components/ui';
+import type { ParsedQuestion } from '@learning-hub/domain';
 import {
   checkBankHash,
   parseExcel,
   uploadExcel,
-  type ParsedQuestion,
 } from '../../../../actions/quiz.actions';
+import { PreviewTable } from './PreviewTable';
+import { buildExcelFileFromPreview } from '../../../../../lib/buildExcelFileFromPreview';
+
+async function computeFileHash(f: File) {
+  const buf = await f.arrayBuffer();
+  const hashBuf = await crypto.subtle.digest('SHA-256', buf);
+  return Array.from(new Uint8Array(hashBuf))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+}
 
 interface UploadTabProps {
   bankId: string;
@@ -24,26 +34,29 @@ export function UploadTab({ bankId, onSuccess }: UploadTabProps) {
   const [preview, setPreview] = useState<ParsedQuestion[] | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const calculateHash = async (f: File) => {
-    const buf = await f.arrayBuffer();
-    const hashBuf = await crypto.subtle.digest('SHA-256', buf);
-    return Array.from(new Uint8Array(hashBuf))
-      .map((b) => b.toString(16).padStart(2, '0'))
-      .join('');
-  };
-
   const checkHashMutation = useMutation({
     mutationFn: (hash: string) => checkBankHash(hash),
     onSuccess: (data) => setIsDuplicate(data.exists),
   });
 
   const parseMutation = useMutation({
-    mutationFn: () => parseExcel(bankId, file!),
+    mutationFn: () => {
+      if (!file) throw new Error('No file selected');
+      return parseExcel(bankId, file);
+    },
     onSuccess: (data) => setPreview(data.questions),
   });
 
   const uploadMutation = useMutation({
-    mutationFn: () => uploadExcel(bankId, file!, fileHash ?? undefined),
+    mutationFn: () => {
+      const excelFile: File | null = preview
+        ? buildExcelFileFromPreview(preview)
+        : file;
+      if (!excelFile) {
+        throw new Error('No file to upload');
+      }
+      return uploadExcel(bankId, excelFile, fileHash ?? undefined);
+    },
     onSuccess: () => {
       setFile(null);
       setFileHash(null);
@@ -54,11 +67,11 @@ export function UploadTab({ bankId, onSuccess }: UploadTabProps) {
   });
 
   const onFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0];
-    if (!f) return;
-    setFile(f);
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setFile(file);
     setPreview(null);
-    const hash = await calculateHash(f);
+    const hash = await computeFileHash(file);
     setFileHash(hash);
     checkHashMutation.mutate(hash);
   };
@@ -68,146 +81,26 @@ export function UploadTab({ bankId, onSuccess }: UploadTabProps) {
     setFileHash(null);
     setIsDuplicate(false);
     setPreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   if (preview) {
     return (
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-semibold text-slate-800">
-              Xem trước — {preview.length} câu hỏi
-            </p>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Chỉnh sửa nội dung nếu cần, sau đó bấm "Lưu vào ngân hàng".
-            </p>
-          </div>
-          <button
-            onClick={reset}
-            className="text-xs text-slate-500 hover:text-slate-700 underline"
-          >
-            Chọn file khác
-          </button>
-        </div>
-
-        <div className="border border-slate-200 rounded-2xl overflow-hidden max-h-[480px] overflow-y-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-slate-50 border-b border-slate-200 sticky top-0 z-10">
-              <tr>
-                <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 w-10">
-                  #
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-bold text-slate-500">
-                  Nội dung câu hỏi
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 w-28">
-                  Đáp án đúng
-                </th>
-                <th className="px-4 py-3 w-10" />
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {preview.map((q, i) => (
-                <tr key={i} className="hover:bg-slate-50/50">
-                  <td className="px-4 py-3 text-slate-400 font-medium align-top pt-4">
-                    {i + 1}
-                  </td>
-                  <td className="px-4 py-3">
-                    <textarea
-                      className="w-full text-sm text-slate-800 bg-transparent resize-none outline-none focus:bg-white focus:ring-2 focus:ring-indigo-100 rounded-lg px-2 py-1 -mx-2 -my-1 min-h-[3rem]"
-                      rows={2}
-                      value={q.content}
-                      onChange={(e) =>
-                        setPreview((prev) =>
-                          prev!.map((item, idx) =>
-                            idx === i
-                              ? { ...item, content: e.target.value }
-                              : item,
-                          ),
-                        )
-                      }
-                    />
-                  </td>
-                  <td className="px-4 py-3 space-y-1.5">
-                    {q.answerOptions.map((opt) => (
-                      <label
-                        key={opt.optionLabel}
-                        className="flex items-center gap-1.5 cursor-pointer"
-                      >
-                        <input
-                          type="radio"
-                          name={`preview-correct-${i}`}
-                          checked={q.correctOptionLabels.includes(
-                            opt.optionLabel,
-                          )}
-                          onChange={() =>
-                            setPreview((prev) =>
-                              prev!.map((item, idx) =>
-                                idx === i
-                                  ? {
-                                      ...item,
-                                      correctOptionLabels: [opt.optionLabel],
-                                    }
-                                  : item,
-                              ),
-                            )
-                          }
-                          className="accent-emerald-600 shrink-0"
-                        />
-                        <span
-                          className={clsx(
-                            'text-xs font-bold',
-                            q.correctOptionLabels.includes(opt.optionLabel)
-                              ? 'text-emerald-700'
-                              : 'text-slate-500',
-                          )}
-                        >
-                          {opt.optionLabel}
-                        </span>
-                      </label>
-                    ))}
-                  </td>
-                  <td className="px-4 py-3 align-top pt-3">
-                    <button
-                      onClick={() =>
-                        setPreview((prev) =>
-                          prev!.filter((_, idx) => idx !== i),
-                        )
-                      }
-                      className="p-1 text-slate-300 hover:text-red-500 transition rounded"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {uploadMutation.isError && (
-          <div className="flex gap-3 rounded-2xl bg-red-50 border border-red-200 p-4">
-            <AlertCircle className="h-5 w-5 text-red-600 shrink-0 mt-0.5" />
-            <p className="text-sm text-red-700">
-              Import thất bại. Vui lòng kiểm tra lại file.
-            </p>
-          </div>
-        )}
-
-        <Button
-          onClick={() => uploadMutation.mutate()}
-          isLoading={uploadMutation.isPending}
-          disabled={preview.length === 0}
-          icon={<Upload className="h-4 w-4" />}
-        >
-          Lưu {preview.length} câu hỏi vào ngân hàng
-        </Button>
-      </div>
+      <PreviewTable
+        preview={preview}
+        onChange={setPreview}
+        onReset={reset}
+        onSave={() => uploadMutation.mutate()}
+        isSaving={uploadMutation.isPending}
+        isSaveError={uploadMutation.isError}
+      />
     );
   }
 
   return (
-    <div className="space-y-6 max-w-xl">
+    <div className="space-y-6 w-full">
       <div className="flex items-center justify-between">
         <p className="text-sm text-slate-500">
           Chọn file Excel để import câu hỏi vào ngân hàng này.

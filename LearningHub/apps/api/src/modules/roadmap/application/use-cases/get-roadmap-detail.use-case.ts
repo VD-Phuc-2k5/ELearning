@@ -38,11 +38,58 @@ export class GetRoadmapDetailUseCase {
       this.progressRepo.findByUserAndRoadmap(userId, roadmapId),
     ]);
 
+    const totalBanks = items.length;
     const bankIds = items.map((i) => i.questionBankId);
     const completedBankIds =
       bankIds.length > 0
         ? await this.bankProgressRepo.findCompletedBankIds(userId, bankIds)
         : [];
+
+    const actualCompleted = completedBankIds.length;
+    const hasStaleProgress =
+      !!userProgress &&
+      (userProgress.completedBanks !== actualCompleted ||
+        userProgress.totalBanks !== totalBanks);
+    const shouldAutoEnroll = !userProgress && actualCompleted > 0;
+    const needsRepair = hasStaleProgress || shouldAutoEnroll;
+
+    if (needsRepair) {
+      const progressPercent =
+        totalBanks > 0 ? Math.round((actualCompleted / totalBanks) * 100) : 0;
+      const status =
+        actualCompleted >= totalBanks && totalBanks > 0
+          ? 'completed'
+          : actualCompleted > 0
+            ? 'in_progress'
+            : (userProgress?.status ?? 'not_started');
+
+      const repaired = await this.progressRepo.upsert({
+        userId,
+        roadmapId,
+        totalBanks,
+        completedBanks: actualCompleted,
+        progressPercent,
+        status,
+        ...(userProgress?.currentBankId !== undefined && {
+          currentBankId: userProgress.currentBankId,
+        }),
+        ...(userProgress?.lastAccessedBankId !== undefined && {
+          lastAccessedBankId: userProgress.lastAccessedBankId,
+        }),
+        ...(userProgress?.startedAt !== undefined && {
+          startedAt: userProgress.startedAt,
+        }),
+        ...(userProgress?.completedAt !== undefined && {
+          completedAt: userProgress.completedAt,
+        }),
+        ...(status === 'completed' &&
+          totalBanks > 0 && {
+            completedAt: userProgress?.completedAt ?? new Date(),
+          }),
+      });
+
+      return { roadmap, items, userProgress: repaired, completedBankIds };
+    }
 
     return { roadmap, items, userProgress, completedBankIds };
   }

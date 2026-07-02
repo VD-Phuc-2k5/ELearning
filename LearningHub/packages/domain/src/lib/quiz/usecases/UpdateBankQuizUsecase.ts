@@ -5,7 +5,7 @@ import type {
 } from '../repositories/IQuizRepository';
 import { QuestionBank } from '../entities/entities';
 
-export class UpdateBankQuizParams2 {
+export class UpdateBankCommand {
   constructor(
     public id: string,
     public data: UpdateBankQuizParams,
@@ -13,12 +13,10 @@ export class UpdateBankQuizParams2 {
 }
 
 export class UpdateBankQuizUsecase
-  implements Usecase<QuestionBank, UpdateBankQuizParams2>
+  implements Usecase<QuestionBank, UpdateBankCommand>
 {
   constructor(private repository: IQuizRepository) {}
-  execute(
-    params: UpdateBankQuizParams2,
-  ): Promise<Either<Failure, QuestionBank>> {
+  execute(params: UpdateBankCommand): Promise<Either<Failure, QuestionBank>> {
     return this.repository.updateBank(params.id, params.data);
   }
 }

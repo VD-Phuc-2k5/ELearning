@@ -7,6 +7,13 @@ import { Button } from '../../../components/ui';
 import { listRoadmaps, enrollRoadmap } from '../../actions/roadmap.actions';
 import '@aejkatappaja/phantom-ui';
 
+interface Roadmap {
+  id: string;
+  title: string;
+  description: string | null;
+  status: string;
+}
+
 export default function RoadmapsPage() {
   const qc = useQueryClient();
   const { data, isLoading } = useQuery({
@@ -61,7 +68,7 @@ export default function RoadmapsPage() {
         </div>
       ) : (
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {roadmaps.map((r) => (
+          {roadmaps.map((r: Roadmap) => (
             <div
               key={r.id}
               className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 space-y-4 hover:shadow-md transition"

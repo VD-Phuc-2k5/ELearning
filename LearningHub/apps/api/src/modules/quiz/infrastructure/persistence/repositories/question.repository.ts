@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { QuestionEntity } from '../entities/question.entity';
@@ -16,6 +16,8 @@ import {
 
 @Injectable()
 export class QuestionRepository implements IQuestionRepository {
+  private readonly logger = new Logger(QuestionRepository.name);
+
   constructor(
     @InjectRepository(QuestionEntity)
     private readonly repo: Repository<QuestionEntity>,
@@ -87,6 +89,7 @@ export class QuestionRepository implements IQuestionRepository {
     const entities = await this.repo.find({
       where: { questionBankId: bankId },
       relations: { answerOptions: true, correctAnswers: true },
+      order: { createdAt: 'ASC', id: 'ASC' },
     });
     return entities.map((e) => this.toDomain(e, hideAnswers));
   }
@@ -104,66 +107,72 @@ export class QuestionRepository implements IQuestionRepository {
     id: string,
     input: UpdateQuestionInput,
   ): Promise<QuestionDomain> {
-    await this.dataSource.transaction(async (manager) => {
-      const question = await manager.findOne(QuestionEntity, {
-        where: { id },
-        relations: { answerOptions: true, correctAnswers: true },
-      });
-      if (!question) {
-        throw new Error(`Không tìm thấy câu hỏi với ID: ${id}`);
-      }
-
-      if (input.content !== undefined) question.content = input.content;
-      if (input.explanation !== undefined)
-        question.explanation = input.explanation;
-      await manager.save(question);
-
-      let currentOptions = question.answerOptions;
-      if (input.answerOptions !== undefined) {
-        // Delete correct answers first since they reference the options
-        await manager.delete(CorrectAnswerEntity, { questionId: id });
-        await manager.delete(AnswerOptionEntity, { questionId: id });
-
-        const optionEntities = input.answerOptions.map((opt) =>
-          manager.create(AnswerOptionEntity, {
-            questionId: id,
-            optionLabel: opt.optionLabel,
-            content: opt.content,
-          }),
-        );
-        currentOptions = await manager.save(optionEntities);
-      }
-
-      let targetCorrectLabels = input.correctOptionLabels;
-      if (
-        targetCorrectLabels === undefined &&
-        input.answerOptions !== undefined
-      ) {
-        const oldCorrectOptionIds =
-          question.correctAnswers?.map((ca) => ca.optionId) ?? [];
-        targetCorrectLabels =
-          question.answerOptions
-            ?.filter((opt) => oldCorrectOptionIds.includes(opt.id))
-            .map((opt) => opt.optionLabel) ?? [];
-      }
-
-      if (targetCorrectLabels !== undefined) {
-        if (input.answerOptions === undefined) {
-          await manager.delete(CorrectAnswerEntity, { questionId: id });
+    try {
+      await this.dataSource.transaction(async (manager) => {
+        const question = await manager.findOne(QuestionEntity, {
+          where: { id },
+          relations: { answerOptions: true, correctAnswers: true },
+        });
+        if (!question) {
+          throw new Error(`Không tìm thấy câu hỏi với ID: ${id}`);
         }
 
-        const correctOptions = currentOptions.filter((opt) =>
-          targetCorrectLabels.includes(opt.optionLabel),
-        );
-        const correctAnswerEntities = correctOptions.map((opt) =>
-          manager.create(CorrectAnswerEntity, {
-            questionId: id,
-            optionId: opt.id,
-          }),
-        );
-        await manager.save(correctAnswerEntities);
-      }
-    });
+        if (input.content !== undefined) question.content = input.content;
+        if (input.explanation !== undefined)
+          question.explanation = input.explanation;
+        await manager.save(question);
+
+        let currentOptions = question.answerOptions;
+        if (input.answerOptions !== undefined) {
+          // Delete correct answers first since they reference the options
+          await manager.delete(CorrectAnswerEntity, { questionId: id });
+          await manager.delete(AnswerOptionEntity, { questionId: id });
+
+          const optionEntities = input.answerOptions.map((opt) =>
+            manager.create(AnswerOptionEntity, {
+              questionId: id,
+              optionLabel: opt.optionLabel,
+              content: opt.content,
+            }),
+          );
+          currentOptions = await manager.save(optionEntities);
+        }
+
+        const targetCorrectLabels =
+          input.correctOptionLabels ??
+          (input.answerOptions !== undefined
+            ? (question.answerOptions
+                ?.filter((opt) =>
+                  (
+                    question.correctAnswers?.map((ca) => ca.optionId) ?? []
+                  ).includes(opt.id),
+                )
+                .map((opt) => opt.optionLabel) ?? [])
+            : undefined);
+        if (targetCorrectLabels !== undefined) {
+          if (input.answerOptions === undefined) {
+            await manager.delete(CorrectAnswerEntity, { questionId: id });
+          }
+
+          const correctOptions = currentOptions.filter((opt) =>
+            targetCorrectLabels.includes(opt.optionLabel),
+          );
+          const correctAnswerEntities = correctOptions.map((opt) =>
+            manager.create(CorrectAnswerEntity, {
+              questionId: id,
+              optionId: opt.id,
+            }),
+          );
+          await manager.save(correctAnswerEntities);
+        }
+      });
+    } catch (error) {
+      this.logger.error(
+        `Failed to update question ${id}: ${(error as Error).message}`,
+        (error as Error).stack,
+      );
+      throw error;
+    }
 
     const updated = await this.findById(id);
     if (!updated) {

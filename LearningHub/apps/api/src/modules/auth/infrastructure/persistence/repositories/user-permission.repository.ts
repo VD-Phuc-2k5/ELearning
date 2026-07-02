@@ -49,7 +49,8 @@ export class UserPermissionRepository implements IUserPermissionRepository {
       where: { id: saved.id },
       relations: { user: true, permission: true, grantedBy: true },
     });
-    return this.toDomain(loaded!);
+    if (!loaded) throw new Error('UserPermission not found after save');
+    return this.toDomain(loaded);
   }
 
   async remove(userId: string, permissionId: number): Promise<void> {

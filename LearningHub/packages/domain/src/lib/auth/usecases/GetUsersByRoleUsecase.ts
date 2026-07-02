@@ -3,12 +3,16 @@ import { User } from '../entities/entities';
 import { IAuthRepository } from '../repositories/IAuthRepository';
 
 export interface GetUsersByRoleParams {
-  roleId: number;
+  role: string;
 }
 
-export class GetUsersByRoleUsecase implements Usecase<User[], GetUsersByRoleParams> {
+export class GetUsersByRoleUsecase
+  implements Usecase<User[], GetUsersByRoleParams>
+{
   constructor(private repository: IAuthRepository) {}
-  async execute(params: GetUsersByRoleParams): Promise<Either<Failure, User[]>> {
-    return this.repository.getUsers();
+  async execute(
+    params: GetUsersByRoleParams,
+  ): Promise<Either<Failure, User[]>> {
+    return this.repository.getUsers(params.role);
   }
 }

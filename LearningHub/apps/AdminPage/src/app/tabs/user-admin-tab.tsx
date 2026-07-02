@@ -94,7 +94,7 @@ export function UserAdminTab() {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {users.map((u) => {
+            {users.map((u: User) => {
               const locked = !u.isActive;
               return (
                 <tr key={u.id} className="hover:bg-slate-50 transition">
@@ -119,7 +119,7 @@ export function UserAdminTab() {
                       onClick={() =>
                         toggleMut.mutate({
                           id: u.id,
-                          isActive: !!u.isActive ? false : true,
+                          isActive: u.isActive ? false : true,
                         })
                       }
                       disabled={
