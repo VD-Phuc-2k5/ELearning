@@ -258,3 +258,87 @@ export interface SetForumRulesParams {
   id: string;
   rules: ForumRuleInput[];
 }
+
+export interface ForumInvite {
+  readonly id: string;
+  readonly forumId: string;
+  readonly inviterId: string;
+  readonly inviteeId: string | null;
+  readonly token: string;
+  readonly status: 'pending' | 'accepted' | 'declined' | 'expired' | 'closed';
+  readonly expiresAt: string;
+  readonly acceptedCount: number;
+}
+
+export interface CreateInviteParams {
+  forumId: string;
+  inviteeId?: string;
+}
+
+export interface AcceptInviteParams {
+  token: string;
+}
+
+export type ReportStatus = 'pending' | 'resolved' | 'dismissed';
+export type ReportTargetType = 'forum' | 'post' | 'comment';
+export const MODERATION_REASONS = [
+  'SPAM',
+  'INAPPROPRIATE_CONTENT',
+  'HARASSMENT',
+  'COPYRIGHT',
+  'MISLEADING',
+  'OTHER',
+] as const;
+export type ModerationReason = (typeof MODERATION_REASONS)[number];
+
+export interface ForumReport {
+  readonly id: string;
+  readonly reporterId: string;
+  readonly reporterName?: string;
+  readonly targetType: ReportTargetType;
+  readonly targetId: string;
+  readonly reason: string;
+  readonly description: string | null;
+  readonly status: ReportStatus;
+  readonly resolvedBy: string | null;
+  readonly resolutionNote: string | null;
+  readonly resolvedAt: string | null;
+  readonly createdAt: string;
+}
+
+export interface AdminReportDetail extends ForumReport {
+  readonly reporterName: string;
+  readonly postTitle: string | null;
+  readonly postContent: Record<string, unknown> | null;
+  readonly postStatus: string | null;
+  readonly forumId: string | null;
+  readonly forumSlug: string | null;
+  readonly forumName: string | null;
+}
+
+export interface CreateReportParams {
+  targetType: ReportTargetType;
+  targetId: string;
+  reason: string;
+  description?: string;
+}
+
+export interface ListForumReportsParams {
+  forumId: string;
+  status?: string;
+  targetType?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface ListPostReportsParams {
+  forumId: string;
+  postId: string;
+}
+
+export interface ListAdminReportsParams {
+  status?: string;
+  targetType?: string;
+  page?: number;
+  limit?: number;
+}

@@ -1,17 +1,24 @@
 import axios from 'axios';
 import FormDataNode from 'form-data';
 import {
+  AdminReportDetail,
   CommentItem,
   CreateCommentParams,
   CreateForumParams,
   CreatePostParams,
+  CreateReportParams,
   CreateTagParams,
   ForumDetailResponse,
+  ForumInvite,
   ForumListItem,
+  ForumReport,
   ForumTag,
   GetReactionsResult,
+  ListAdminReportsParams,
   ListCommentsParams,
   ListForumPostsParams,
+  ListForumReportsParams,
+  ListPostReportsParams,
   ListForumsParams,
   MemberSuggestion,
   PaginatedResponse,
@@ -115,6 +122,14 @@ export class ForumRemoteDataSourceImpl implements IForumRemoteDataSource {
     }
   }
 
+  async deleteForum(forumId: string): Promise<void> {
+    try {
+      await this.api.delete(`/forums/${forumId}`);
+    } catch (e) {
+      return handleAxiosError(e);
+    }
+  }
+
   async setForumRules(params: SetForumRulesParams): Promise<void> {
     try {
       await this.api.put(`/forums/${params.id}/rules`, {
@@ -161,10 +176,6 @@ export class ForumRemoteDataSourceImpl implements IForumRemoteDataSource {
 
   async createPost(data: CreatePostParams): Promise<PostListItem> {
     try {
-      console.log(
-        '[createPost DS] sending content:',
-        JSON.stringify(data.content).substring(0, 500),
-      );
       const res = await this.api.post(`/forums/${data.forumId}/posts`, data);
       return res.data;
     } catch (e) {
@@ -423,5 +434,221 @@ export class ForumRemoteDataSourceImpl implements IForumRemoteDataSource {
       { params: { q: params.query, limit: params.limit } },
     );
     return res.data;
+  }
+
+  async createInvite(
+    forumId: string,
+    inviteeId?: string,
+  ): Promise<ForumInvite> {
+    try {
+      const res = await this.api.post(`/forums/${forumId}/invites`, {
+        inviteeId,
+      });
+      return res.data;
+    } catch (e) {
+      return handleAxiosError(e);
+    }
+  }
+
+  async getInvites(
+    forumId: string,
+    page?: number,
+    limit?: number,
+  ): Promise<PaginatedResponse<ForumInvite>> {
+    try {
+      const query = new URLSearchParams();
+      if (page) query.set('page', String(page));
+      if (limit) query.set('limit', String(limit));
+      const res = await this.api.get(
+        `/forums/${forumId}/invites?${query.toString()}`,
+      );
+      return res.data;
+    } catch (e) {
+      return handleAxiosError(e);
+    }
+  }
+
+  async revokeInvite(forumId: string, inviteId: string): Promise<void> {
+    try {
+      await this.api.delete(`/forums/${forumId}/invites/${inviteId}`);
+    } catch (e) {
+      return handleAxiosError(e);
+    }
+  }
+
+  async acceptInvite(
+    token: string,
+  ): Promise<{
+    member: { forumId: string };
+    forumId: string;
+    forumSlug: string;
+  }> {
+    try {
+      const res = await this.api.post(`/invites/${token}/accept`);
+      return res.data;
+    } catch (e) {
+      return handleAxiosError(e);
+    }
+  }
+
+  async createReport(params: CreateReportParams): Promise<ForumReport> {
+    try {
+      const res = await this.api.post('/reports', params);
+      return res.data;
+    } catch (e) {
+      return handleAxiosError(e);
+    }
+  }
+
+  async getReports(
+    params: ListForumReportsParams,
+  ): Promise<PaginatedResponse<ForumReport>> {
+    try {
+      const query = new URLSearchParams();
+      if (params.status) query.set('status', params.status);
+      if (params.targetType) query.set('targetType', params.targetType);
+      if (params.page) query.set('page', String(params.page));
+      if (params.limit) query.set('limit', String(params.limit));
+      const res = await this.api.get(
+        `/forums/${params.forumId}/reports?${query.toString()}`,
+      );
+      return res.data;
+    } catch (e) {
+      return handleAxiosError(e);
+    }
+  }
+
+  async getPostReports(params: ListPostReportsParams): Promise<ForumReport[]> {
+    try {
+      const res = await this.api.get(
+        `/forums/${params.forumId}/posts/${params.postId}/reports`,
+      );
+      return res.data;
+    } catch (e) {
+      return handleAxiosError(e);
+    }
+  }
+
+  async resolveReport(
+    forumId: string,
+    reportId: string,
+    resolutionNote: string,
+  ): Promise<ForumReport> {
+    try {
+      const res = await this.api.patch(
+        `/forums/${forumId}/reports/${reportId}/resolve`,
+        { resolutionNote },
+      );
+      return res.data;
+    } catch (e) {
+      return handleAxiosError(e);
+    }
+  }
+
+  async dismissReport(
+    forumId: string,
+    reportId: string,
+    note?: string,
+  ): Promise<ForumReport> {
+    try {
+      const res = await this.api.patch(
+        `/forums/${forumId}/reports/${reportId}/dismiss`,
+        { note },
+      );
+      return res.data;
+    } catch (e) {
+      return handleAxiosError(e);
+    }
+  }
+
+  async hidePost(
+    forumId: string,
+    postId: string,
+    reasonCode: string,
+    reasonText?: string,
+  ): Promise<void> {
+    try {
+      await this.api.patch(`/forums/${forumId}/posts/${postId}/hide`, {
+        reasonCode,
+        reasonText,
+      });
+    } catch (e) {
+      return handleAxiosError(e);
+    }
+  }
+
+  async restorePost(forumId: string, postId: string): Promise<void> {
+    try {
+      await this.api.patch(`/forums/${forumId}/posts/${postId}/restore`);
+    } catch (e) {
+      return handleAxiosError(e);
+    }
+  }
+
+  async getAdminReports(
+    params: ListAdminReportsParams,
+  ): Promise<PaginatedResponse<AdminReportDetail>> {
+    try {
+      const query = new URLSearchParams();
+      if (params.status) query.set('status', params.status);
+      if (params.targetType) query.set('targetType', params.targetType);
+      if (params.page) query.set('page', String(params.page));
+      if (params.limit) query.set('limit', String(params.limit));
+      const res = await this.api.get(`/admin/reports?${query.toString()}`);
+      return res.data;
+    } catch (e) {
+      return handleAxiosError(e);
+    }
+  }
+
+  async adminResolveReport(
+    reportId: string,
+    resolutionNote: string,
+  ): Promise<ForumReport> {
+    try {
+      const res = await this.api.patch(`/admin/reports/${reportId}/resolve`, {
+        resolutionNote,
+      });
+      return res.data;
+    } catch (e) {
+      return handleAxiosError(e);
+    }
+  }
+
+  async adminDismissReport(
+    reportId: string,
+    note?: string,
+  ): Promise<ForumReport> {
+    try {
+      const res = await this.api.patch(`/admin/reports/${reportId}/dismiss`, {
+        note,
+      });
+      return res.data;
+    } catch (e) {
+      return handleAxiosError(e);
+    }
+  }
+
+  async adminHidePost(
+    postId: string,
+    reasonCode: string,
+    reasonText?: string,
+  ): Promise<void> {
+    try {
+      await this.api.patch(`/admin/posts/${postId}/hide`, {
+        reasonCode,
+        reasonText,
+      });
+    } catch (e) {
+      return handleAxiosError(e);
+    }
+  }
+
+  async adminRestorePost(postId: string): Promise<void> {
+    try {
+      await this.api.patch(`/admin/posts/${postId}/restore`);
+    } catch (e) {
+      return handleAxiosError(e);
+    }
   }
 }

@@ -1,16 +1,23 @@
 import {
+  AdminReportDetail,
   CommentItem,
   CreateCommentParams,
   CreateForumParams,
   CreatePostParams,
+  CreateReportParams,
   ForumDetailResponse,
+  ForumInvite,
   ForumListItem,
+  ForumReport,
   ForumTag,
   CreateTagParams,
   UpdateTagParams,
   GetReactionsResult,
+  ListAdminReportsParams,
   ListCommentsParams,
   ListForumPostsParams,
+  ListForumReportsParams,
+  ListPostReportsParams,
   ListForumsParams,
   MemberSuggestion,
   PaginatedResponse,
@@ -35,6 +42,7 @@ export interface IForumRemoteDataSource {
   getForumDetail(slug: string): Promise<ForumDetailResponse>;
   createForum(data: CreateForumParams): Promise<ForumListItem>;
   updateForum(params: UpdateForumParams): Promise<ForumListItem>;
+  deleteForum(forumId: string): Promise<void>;
   setForumRules(params: SetForumRulesParams): Promise<void>;
   joinForum(forumId: string, message: string | undefined): Promise<void>;
   leaveForum(forumId: string): Promise<void>;
@@ -73,4 +81,54 @@ export interface IForumRemoteDataSource {
   togglePostBookmark(params: TogglePostBookmarkParams): Promise<void>;
   uploadImage(formData: FormData): Promise<UploadImageResult>;
   searchMembers(params: SearchMembersParams): Promise<MemberSuggestion[]>;
+  createInvite(forumId: string, inviteeId?: string): Promise<ForumInvite>;
+  getInvites(
+    forumId: string,
+    page?: number,
+    limit?: number,
+  ): Promise<PaginatedResponse<ForumInvite>>;
+  revokeInvite(forumId: string, inviteId: string): Promise<void>;
+  acceptInvite(
+    token: string,
+  ): Promise<{
+    member: { forumId: string };
+    forumId: string;
+    forumSlug: string;
+  }>;
+  createReport(params: CreateReportParams): Promise<ForumReport>;
+  getReports(
+    params: ListForumReportsParams,
+  ): Promise<PaginatedResponse<ForumReport>>;
+  getPostReports(params: ListPostReportsParams): Promise<ForumReport[]>;
+  resolveReport(
+    forumId: string,
+    reportId: string,
+    resolutionNote: string,
+  ): Promise<ForumReport>;
+  dismissReport(
+    forumId: string,
+    reportId: string,
+    note?: string,
+  ): Promise<ForumReport>;
+  hidePost(
+    forumId: string,
+    postId: string,
+    reasonCode: string,
+    reasonText?: string,
+  ): Promise<void>;
+  restorePost(forumId: string, postId: string): Promise<void>;
+  getAdminReports(
+    params: ListAdminReportsParams,
+  ): Promise<PaginatedResponse<AdminReportDetail>>;
+  adminResolveReport(
+    reportId: string,
+    resolutionNote: string,
+  ): Promise<ForumReport>;
+  adminDismissReport(reportId: string, note?: string): Promise<ForumReport>;
+  adminHidePost(
+    postId: string,
+    reasonCode: string,
+    reasonText?: string,
+  ): Promise<void>;
+  adminRestorePost(postId: string): Promise<void>;
 }

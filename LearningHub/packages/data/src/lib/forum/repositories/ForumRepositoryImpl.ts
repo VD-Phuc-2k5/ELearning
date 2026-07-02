@@ -15,13 +15,17 @@ import {
   NetworkException,
 } from '@learning-hub/core';
 import {
+  AdminReportDetail,
   CommentItem,
   CreateCommentParams,
   CreateForumParams,
   CreatePostParams,
+  CreateReportParams,
   CreateTagParams,
   ForumDetailResponse,
+  ForumInvite,
   ForumListItem,
+  ForumReport,
   ForumTag,
   GetReactionsResult,
   GetTargetReactionsParams,
@@ -29,6 +33,8 @@ import {
   JoinForumParams,
   ListCommentsParams,
   ListForumPostsParams,
+  ListForumReportsParams,
+  ListPostReportsParams,
   ListForumsParams,
   MemberSuggestion,
   PaginatedResponse,
@@ -100,6 +106,15 @@ export class ForumRepositoryImpl implements IForumRepository {
   ): Promise<Either<Failure, ForumListItem>> {
     try {
       return right(await this.dataSource.updateForum(params));
+    } catch (e) {
+      return left(toFailure(e));
+    }
+  }
+
+  async deleteForum(forumId: string): Promise<Either<Failure, void>> {
+    try {
+      await this.dataSource.deleteForum(forumId);
+      return right(undefined);
     } catch (e) {
       return left(toFailure(e));
     }
@@ -332,6 +347,199 @@ export class ForumRepositoryImpl implements IForumRepository {
   ): Promise<Either<Failure, MemberSuggestion[]>> {
     try {
       return right(await this.dataSource.searchMembers(params));
+    } catch (e) {
+      return left(toFailure(e));
+    }
+  }
+
+  async createInvite(
+    forumId: string,
+    inviteeId?: string,
+  ): Promise<Either<Failure, ForumInvite>> {
+    try {
+      return right(await this.dataSource.createInvite(forumId, inviteeId));
+    } catch (e) {
+      return left(toFailure(e));
+    }
+  }
+
+  async getInvites(
+    forumId: string,
+    page?: number,
+    limit?: number,
+  ): Promise<Either<Failure, PaginatedResponse<ForumInvite>>> {
+    try {
+      return right(await this.dataSource.getInvites(forumId, page, limit));
+    } catch (e) {
+      return left(toFailure(e));
+    }
+  }
+
+  async revokeInvite(
+    forumId: string,
+    inviteId: string,
+  ): Promise<Either<Failure, void>> {
+    try {
+      await this.dataSource.revokeInvite(forumId, inviteId);
+      return right(undefined);
+    } catch (e) {
+      return left(toFailure(e));
+    }
+  }
+
+  async acceptInvite(
+    token: string,
+  ): Promise<
+    Either<
+      Failure,
+      { member: { forumId: string }; forumId: string; forumSlug: string }
+    >
+  > {
+    try {
+      return right(await this.dataSource.acceptInvite(token));
+    } catch (e) {
+      return left(toFailure(e));
+    }
+  }
+
+  async createReport(
+    params: CreateReportParams,
+  ): Promise<Either<Failure, ForumReport>> {
+    try {
+      return right(await this.dataSource.createReport(params));
+    } catch (e) {
+      return left(toFailure(e));
+    }
+  }
+
+  async getReports(
+    params: ListForumReportsParams,
+  ): Promise<Either<Failure, PaginatedResponse<ForumReport>>> {
+    try {
+      return right(await this.dataSource.getReports(params));
+    } catch (e) {
+      return left(toFailure(e));
+    }
+  }
+
+  async getPostReports(
+    params: ListPostReportsParams,
+  ): Promise<Either<Failure, ForumReport[]>> {
+    try {
+      return right(await this.dataSource.getPostReports(params));
+    } catch (e) {
+      return left(toFailure(e));
+    }
+  }
+
+  async resolveReport(
+    forumId: string,
+    reportId: string,
+    resolutionNote: string,
+  ): Promise<Either<Failure, ForumReport>> {
+    try {
+      return right(
+        await this.dataSource.resolveReport(forumId, reportId, resolutionNote),
+      );
+    } catch (e) {
+      return left(toFailure(e));
+    }
+  }
+
+  async dismissReport(
+    forumId: string,
+    reportId: string,
+    note?: string,
+  ): Promise<Either<Failure, ForumReport>> {
+    try {
+      return right(
+        await this.dataSource.dismissReport(forumId, reportId, note),
+      );
+    } catch (e) {
+      return left(toFailure(e));
+    }
+  }
+
+  async hidePost(
+    forumId: string,
+    postId: string,
+    reasonCode: string,
+    reasonText?: string,
+  ): Promise<Either<Failure, void>> {
+    try {
+      await this.dataSource.hidePost(forumId, postId, reasonCode, reasonText);
+      return right(undefined);
+    } catch (e) {
+      return left(toFailure(e));
+    }
+  }
+
+  async restorePost(
+    forumId: string,
+    postId: string,
+  ): Promise<Either<Failure, void>> {
+    try {
+      await this.dataSource.restorePost(forumId, postId);
+      return right(undefined);
+    } catch (e) {
+      return left(toFailure(e));
+    }
+  }
+
+  async getAdminReports(params: {
+    status?: string;
+    targetType?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<Either<Failure, PaginatedResponse<AdminReportDetail>>> {
+    try {
+      return right(await this.dataSource.getAdminReports(params));
+    } catch (e) {
+      return left(toFailure(e));
+    }
+  }
+
+  async adminResolveReport(
+    reportId: string,
+    resolutionNote: string,
+  ): Promise<Either<Failure, ForumReport>> {
+    try {
+      return right(
+        await this.dataSource.adminResolveReport(reportId, resolutionNote),
+      );
+    } catch (e) {
+      return left(toFailure(e));
+    }
+  }
+
+  async adminDismissReport(
+    reportId: string,
+    note?: string,
+  ): Promise<Either<Failure, ForumReport>> {
+    try {
+      return right(await this.dataSource.adminDismissReport(reportId, note));
+    } catch (e) {
+      return left(toFailure(e));
+    }
+  }
+
+  async adminHidePost(
+    postId: string,
+    reasonCode: string,
+    reasonText?: string,
+  ): Promise<Either<Failure, void>> {
+    try {
+      await this.dataSource.adminHidePost(postId, reasonCode, reasonText);
+      return right(undefined);
+    } catch (e) {
+      return left(toFailure(e));
+    }
+  }
+
+  async adminRestorePost(postId: string): Promise<Either<Failure, void>> {
+    try {
+      await this.dataSource.adminRestorePost(postId);
+      return right(undefined);
     } catch (e) {
       return left(toFailure(e));
     }

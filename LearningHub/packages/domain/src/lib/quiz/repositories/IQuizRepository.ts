@@ -52,6 +52,7 @@ export interface GetAttemptsParams {
   page?: number;
   limit?: number;
   bankId?: string;
+  uploaderId?: string;
 }
 
 export interface IQuizRepository {

@@ -1,18 +1,25 @@
 import { Either, Failure } from '@learning-hub/core';
 import {
+  AdminReportDetail,
   CommentItem,
   CreateCommentParams,
   CreateForumParams,
   CreatePostParams,
+  CreateReportParams,
   CreateTagParams,
   ForumDetailResponse,
+  ForumInvite,
   ForumListItem,
+  ForumReport,
   ForumTag,
   GetReactionsResult,
   GetTargetReactionsParams,
   JoinForumParams,
+  ListAdminReportsParams,
   ListCommentsParams,
   ListForumPostsParams,
+  ListForumReportsParams,
+  ListPostReportsParams,
   ListForumsParams,
   MemberSuggestion,
   PaginatedResponse,
@@ -39,6 +46,7 @@ export interface IForumRepository {
   updateForum(
     params: UpdateForumParams,
   ): Promise<Either<Failure, ForumListItem>>;
+  deleteForum(forumId: string): Promise<Either<Failure, void>>;
   setForumRules(params: SetForumRulesParams): Promise<Either<Failure, void>>;
   joinForum(params: JoinForumParams): Promise<Either<Failure, void>>;
   leaveForum(forumId: string): Promise<Either<Failure, void>>;
@@ -86,4 +94,68 @@ export interface IForumRepository {
   searchMembers(
     params: SearchMembersParams,
   ): Promise<Either<Failure, MemberSuggestion[]>>;
+  createInvite(
+    forumId: string,
+    inviteeId?: string,
+  ): Promise<Either<Failure, ForumInvite>>;
+  getInvites(
+    forumId: string,
+    page?: number,
+    limit?: number,
+  ): Promise<Either<Failure, PaginatedResponse<ForumInvite>>>;
+  revokeInvite(
+    forumId: string,
+    inviteId: string,
+  ): Promise<Either<Failure, void>>;
+  acceptInvite(
+    token: string,
+  ): Promise<
+    Either<
+      Failure,
+      { member: { forumId: string }; forumId: string; forumSlug: string }
+    >
+  >;
+  createReport(
+    params: CreateReportParams,
+  ): Promise<Either<Failure, ForumReport>>;
+  getReports(
+    params: ListForumReportsParams,
+  ): Promise<Either<Failure, PaginatedResponse<ForumReport>>>;
+  getPostReports(
+    params: ListPostReportsParams,
+  ): Promise<Either<Failure, ForumReport[]>>;
+  resolveReport(
+    forumId: string,
+    reportId: string,
+    resolutionNote: string,
+  ): Promise<Either<Failure, ForumReport>>;
+  dismissReport(
+    forumId: string,
+    reportId: string,
+    note?: string,
+  ): Promise<Either<Failure, ForumReport>>;
+  hidePost(
+    forumId: string,
+    postId: string,
+    reasonCode: string,
+    reasonText?: string,
+  ): Promise<Either<Failure, void>>;
+  restorePost(forumId: string, postId: string): Promise<Either<Failure, void>>;
+  getAdminReports(
+    params: ListAdminReportsParams,
+  ): Promise<Either<Failure, PaginatedResponse<AdminReportDetail>>>;
+  adminResolveReport(
+    reportId: string,
+    resolutionNote: string,
+  ): Promise<Either<Failure, ForumReport>>;
+  adminDismissReport(
+    reportId: string,
+    note?: string,
+  ): Promise<Either<Failure, ForumReport>>;
+  adminHidePost(
+    postId: string,
+    reasonCode: string,
+    reasonText?: string,
+  ): Promise<Either<Failure, void>>;
+  adminRestorePost(postId: string): Promise<Either<Failure, void>>;
 }
