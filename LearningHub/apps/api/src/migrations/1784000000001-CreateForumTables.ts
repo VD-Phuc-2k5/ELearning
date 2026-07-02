@@ -83,25 +83,6 @@ export class CreateForumTables1784000000001 implements MigrationInterface {
     `);
 
     await queryRunner.query(`
-      CREATE TABLE "forum_join_requests" (
-        "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
-        "forum_id" uuid NOT NULL,
-        "user_id" uuid NOT NULL,
-        "status" character varying NOT NULL DEFAULT 'pending',
-        "message" text,
-        "reviewed_by" uuid,
-        "reviewed_at" TIMESTAMP,
-        "created_at" TIMESTAMP NOT NULL DEFAULT now(),
-        "updated_at" TIMESTAMP NOT NULL DEFAULT now(),
-        CONSTRAINT "PK_forum_join_requests" PRIMARY KEY ("id"),
-        CONSTRAINT "UQ_forum_join_requests_forum_user" UNIQUE ("forum_id", "user_id"),
-        CONSTRAINT "FK_forum_join_requests_forum" FOREIGN KEY ("forum_id") REFERENCES "forums"("id") ON DELETE CASCADE,
-        CONSTRAINT "FK_forum_join_requests_user" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE,
-        CONSTRAINT "FK_forum_join_requests_reviewer" FOREIGN KEY ("reviewed_by") REFERENCES "users"("id") ON DELETE SET NULL
-      )
-    `);
-
-    await queryRunner.query(`
       CREATE TABLE "forum_posts" (
         "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
         "forum_id" uuid NOT NULL,
@@ -280,7 +261,7 @@ export class CreateForumTables1784000000001 implements MigrationInterface {
       CREATE INDEX "IDX_forum_members_forum" ON "forum_members" ("forum_id");
       CREATE INDEX "IDX_forum_members_user" ON "forum_members" ("user_id");
       CREATE INDEX "IDX_forum_invites_forum" ON "forum_invites" ("forum_id");
-      CREATE INDEX "IDX_forum_join_requests_forum" ON "forum_join_requests" ("forum_id", "status");
+
       CREATE INDEX "IDX_forum_posts_forum_status_created" ON "forum_posts" ("forum_id", "status", "created_at" DESC);
       CREATE INDEX "IDX_forum_posts_author" ON "forum_posts" ("author_id");
       CREATE INDEX "IDX_forum_poll_options_poll" ON "forum_poll_options" ("poll_id", "display_order");
@@ -355,7 +336,7 @@ export class CreateForumTables1784000000001 implements MigrationInterface {
     await queryRunner.query(
       `DROP INDEX "IDX_forum_posts_forum_status_created";`,
     );
-    await queryRunner.query(`DROP INDEX "IDX_forum_join_requests_forum";`);
+
     await queryRunner.query(`DROP INDEX "IDX_forum_invites_forum";`);
     await queryRunner.query(`DROP INDEX "IDX_forum_members_user";`);
     await queryRunner.query(`DROP INDEX "IDX_forum_members_forum";`);
@@ -385,7 +366,7 @@ export class CreateForumTables1784000000001 implements MigrationInterface {
     await queryRunner.query(`DROP TABLE "forum_poll_options";`);
     await queryRunner.query(`DROP TABLE "forum_polls";`);
     await queryRunner.query(`DROP TABLE "forum_posts";`);
-    await queryRunner.query(`DROP TABLE "forum_join_requests";`);
+
     await queryRunner.query(`DROP TABLE "forum_invites";`);
     await queryRunner.query(`DROP TABLE "forum_members";`);
     await queryRunner.query(`DROP TABLE "forum_rules";`);

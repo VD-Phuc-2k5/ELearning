@@ -20,6 +20,7 @@ export class SeedForumPermissions1784000000002 implements MigrationInterface {
         ('posts:delete',   'Bỏ lưu bài viết',     'Bỏ bookmark bài viết',                 'posts',        'delete'),
         ('me:get',         'Xem thông tin cá nhân','Xem notification và bookmark cá nhân','me',           'get'),
         ('me:update',      'Cập nhật cá nhân',     'Đánh dấu đã đọc notification',        'me',           'update'),
+        ('me:delete',      'Xóa thông báo đã đọc', 'Xóa các thông báo đã đọc',            'me',           'delete'),
         ('reports:create', 'Tạo báo cáo',          'Báo cáo nội dung vi phạm',             'reports',      'create'),
         ('invites:create', 'Chấp nhận lời mời',    'Chấp nhận lời mời tham gia diễn đàn',  'invites',      'create')
       ON CONFLICT ("code") DO NOTHING
@@ -34,7 +35,7 @@ export class SeedForumPermissions1784000000002 implements MigrationInterface {
           'forums:get', 'forums:create',
           'forum_tags:get',
           'posts:get', 'posts:create', 'posts:delete',
-          'me:get', 'me:update',
+          'me:get', 'me:update', 'me:delete',
           'reports:create',
           'invites:create'
         )
@@ -63,7 +64,7 @@ export class SeedForumPermissions1784000000002 implements MigrationInterface {
           'forums:get', 'forums:create',
           'forum_tags:get',
           'posts:get', 'posts:create', 'posts:delete',
-          'me:get', 'me:update',
+          'me:get', 'me:update', 'me:delete',
           'reports:create',
           'invites:create'
         )
@@ -80,7 +81,7 @@ export class SeedForumPermissions1784000000002 implements MigrationInterface {
         'forums:get','forums:create','forums:update','forums:delete',
         'forum_tags:get','forum_tags:create','forum_tags:update','forum_tags:delete',
         'posts:get','posts:create','posts:delete',
-        'me:get','me:update',
+        'me:get','me:update','me:delete',
         'reports:create',
         'invites:create'
       )
