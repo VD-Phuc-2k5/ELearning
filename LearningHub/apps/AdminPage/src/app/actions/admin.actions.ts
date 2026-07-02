@@ -5,6 +5,7 @@ import {
   unwrap,
   Failure,
   AuthenticationFailure,
+  NetworkFailure,
 } from '@learning-hub/core';
 import {
   AuthRemoteDataSourceImpl,
@@ -87,6 +88,11 @@ async function executeWithRefresh<T>(
         // refresh failed, fall through to throw original auth error
       }
     }
+  }
+  if (result.type === 'left' && result.value instanceof NetworkFailure) {
+    throw new Error(
+      `Không thể kết nối đến máy chủ API (${process.env.NEST_API_URL || 'http://localhost:8080'}). Vui lòng kiểm tra máy chủ backend đã chạy chưa.`,
+    );
   }
   return unwrap(result);
 }

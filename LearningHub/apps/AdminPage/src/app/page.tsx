@@ -9,6 +9,7 @@ import {
   Plus,
   Settings,
   UserCog,
+  ShieldAlert,
 } from 'lucide-react';
 import '@aejkatappaja/phantom-ui';
 import type { Role, User } from '@learning-hub/domain';
@@ -27,8 +28,15 @@ import { RolesTab } from './tabs/roles-tab';
 import { PermissionsTab } from './tabs/permissions-tab';
 import { MonitoringTab } from './tabs/monitoring-tab';
 import { UserAdminTab } from './tabs/user-admin-tab';
+import { ForumModerationTab } from './tabs/forum-moderation-tab';
 
-type TabKey = 'monitoring' | 'users' | 'roles' | 'permissions' | 'user-admin';
+type TabKey =
+  | 'monitoring'
+  | 'users'
+  | 'roles'
+  | 'permissions'
+  | 'user-admin'
+  | 'forum-moderation';
 
 const tabTitle: Record<TabKey, string> = {
   users: 'Quản lý Thành viên',
@@ -36,6 +44,7 @@ const tabTitle: Record<TabKey, string> = {
   permissions: 'Danh mục Quyền hạn',
   monitoring: 'Giám sát Hệ thống',
   'user-admin': 'Quản trị User',
+  'forum-moderation': 'Kiểm duyệt Forum',
 };
 
 export default function AdminDashboard() {
@@ -98,6 +107,12 @@ export default function AdminDashboard() {
             onClick={() => setActiveTab('user-admin')}
             icon={<UserCog className="h-5 w-5" />}
             label="Quản trị User"
+          />
+          <TabButton
+            active={activeTab === 'forum-moderation'}
+            onClick={() => setActiveTab('forum-moderation')}
+            icon={<ShieldAlert className="h-5 w-5" />}
+            label="Kiểm duyệt Forum"
           />
         </nav>
         <div className="p-4 border-t border-white/10">
@@ -191,6 +206,7 @@ export default function AdminDashboard() {
         )}
         {activeTab === 'monitoring' && <MonitoringTab />}
         {activeTab === 'user-admin' && <UserAdminTab />}
+        {activeTab === 'forum-moderation' && <ForumModerationTab />}
       </main>
       {confirmModal}
     </div>
