@@ -189,7 +189,6 @@ export function CommentThreadItem({
               react.mutate({ emoji, add: !existing?.reacted });
             }}
             disabled={react.isPending}
-            compact
           />
           {canReply && comment.replyCount > 0 && depth >= MAX_DEPTH && (
             <button

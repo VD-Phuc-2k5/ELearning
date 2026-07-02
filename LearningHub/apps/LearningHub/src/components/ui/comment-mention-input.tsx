@@ -282,7 +282,7 @@ export function CommentMentionInput({
     <div className={className}>
       <div className="relative">
         {isEmpty && (
-          <div className="pointer-events-none absolute inset-0 px-3 py-1.5 text-xs text-slate-400 select-none z-10">
+          <div className="pointer-events-none absolute inset-0 px-3 py-2.5 text-xs text-slate-400 select-none z-10">
             {placeholder}
           </div>
         )}
@@ -292,7 +292,7 @@ export function CommentMentionInput({
           suppressContentEditableWarning
           role="textbox"
           aria-placeholder={placeholder}
-          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-700 focus:outline-none focus:border-indigo-400 focus:bg-white transition min-h-[1.75rem] max-h-[8rem] overflow-y-auto whitespace-pre-wrap relative"
+          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs text-slate-700 focus:outline-none focus:border-indigo-400 focus:bg-white transition min-h-[1.75rem] max-h-[8rem] overflow-y-auto whitespace-pre-wrap relative"
           onInput={handleInput}
           onKeyDown={handleKeyDown}
           onBlur={handleBlur}

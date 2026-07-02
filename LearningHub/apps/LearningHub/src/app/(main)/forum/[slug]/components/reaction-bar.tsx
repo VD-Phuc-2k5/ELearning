@@ -9,14 +9,12 @@ interface ReactionBarProps {
   reactions: ReactionGroup[];
   onReact: (emoji: string) => void;
   disabled?: boolean;
-  compact?: boolean;
 }
 
 export function ReactionBar({
   reactions,
   onReact,
   disabled,
-  compact,
 }: ReactionBarProps) {
   const [pickerOpen, setPickerOpen] = useState(false);
 

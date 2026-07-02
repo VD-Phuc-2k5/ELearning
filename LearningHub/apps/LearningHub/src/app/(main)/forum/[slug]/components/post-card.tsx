@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { PostListItem } from '@learning-hub/domain';
 import { MessageSquare, Clock, Edit3, Trash2 } from 'lucide-react';
@@ -30,11 +29,10 @@ export function PostCard({
   onDelete,
 }: PostCardProps) {
   const qc = useQueryClient();
-  const [showComments, setShowComments] = useState(false);
   const isAuthor = currentUserId ? post.authorId === currentUserId : false;
-  const isAdmin = memberRole === 'owner' || memberRole === 'moderator';
+  const isOwner = memberRole === 'owner' || memberRole === 'moderator';
   const canEdit = isAuthor;
-  const canDelete = isAuthor || isAdmin;
+  const canDelete = isAuthor || isOwner;
 
   const { data: reactions } = useQuery({
     queryKey: ['forum-post-reactions', forumId, post.id],
@@ -60,12 +58,7 @@ export function PostCard({
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 flex-wrap">
-              {post.isPinned && (
-                <span className="rounded bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700">
-                  PINNED
-                </span>
-              )}
-              <h3 className="text-lg font-semibold text-slate-900">
+              <h3 className="text-xl font-semibold text-slate-900">
                 {post.title}
               </h3>
             </div>
@@ -73,13 +66,10 @@ export function PostCard({
               <span>{post.authorName}</span>
               <span>
                 <Clock className="inline h-3 w-3 mr-0.5" />
-                {new Date(post.createdAt).toLocaleDateString()}
+                {new Date(post.createdAt).toLocaleDateString('vi-VN')}
               </span>
             </div>
           </div>
-          <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] text-slate-500 uppercase shrink-0">
-            {post.postType}
-          </span>
         </div>
 
         {post.tags?.length ? (
@@ -90,7 +80,7 @@ export function PostCard({
                 className="rounded-full px-2 py-0.5 text-[10px] font-medium"
                 style={{
                   backgroundColor: t.color ? `${t.color}20` : '#f1f5f9',
-                  color: t.color ?? '#64748b',
+                  color: '#111111',
                 }}
               >
                 {t.name}
@@ -109,12 +99,7 @@ export function PostCard({
       <div className="flex items-center gap-3 border-t border-slate-50 px-5 py-2.5 overflow-visible">
         <button
           type="button"
-          onClick={() => setShowComments(!showComments)}
-          className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium transition ${
-            showComments
-              ? 'text-indigo-600 bg-indigo-50'
-              : 'text-slate-400 hover:text-indigo-600 hover:bg-indigo-50'
-          }`}
+          className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium transition text-slate-400 hover:text-indigo-600 hover:bg-indigo-50"
         >
           <MessageSquare className="h-3.5 w-3.5" />
           {post.commentCount} comments
@@ -150,13 +135,11 @@ export function PostCard({
           </button>
         )}
       </div>
-      {showComments && (
-        <CommentSection
-          postId={post.id}
-          forumId={forumId}
-          currentUserId={currentUserId}
-        />
-      )}
+      <CommentSection
+        postId={post.id}
+        forumId={forumId}
+        currentUserId={currentUserId}
+      />
     </article>
   );
 }
