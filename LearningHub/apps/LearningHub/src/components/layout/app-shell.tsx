@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { logoutAction } from '../../app/actions/auth.actions';
@@ -26,6 +27,12 @@ export function AppShell({ children }: AppShellProps) {
   if (pathname?.startsWith('/auth')) {
     return <>{children}</>;
   }
+
+  useEffect(() => {
+    if (!isLoading && !user) {
+      router.replace('/auth');
+    }
+  }, [isLoading, user, router]);
 
   if (isLoading || !user) {
     return null;

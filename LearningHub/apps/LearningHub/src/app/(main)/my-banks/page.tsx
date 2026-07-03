@@ -33,7 +33,7 @@ export default function MyBanksPage() {
           </p>
         </div>
         <Link href="/my-banks/create">
-          <Button icon={<Plus className="h-4 w-full" />}>New Bank</Button>
+          <Button icon={<Plus className="h-4 w-4" />}>New Bank</Button>
         </Link>
       </div>
 
