@@ -102,7 +102,7 @@ export class QuizRemoteDataSourceImpl implements IQuizRemoteDataSource {
   ) {
     try {
       const form = new FormData();
-      form.append('file', new Blob([file]), fileName);
+      form.append('file', new Blob([file as any]), fileName);
       if (fileHash) form.append('fileHash', fileHash);
       const res = await this.api.post(
         `/quiz/banks/${bankId}/upload-excel`,
@@ -123,7 +123,7 @@ export class QuizRemoteDataSourceImpl implements IQuizRemoteDataSource {
   ) {
     try {
       const form = new FormData();
-      form.append('file', new Blob([file]), fileName);
+      form.append('file', new Blob([file as any]), fileName);
       const res = await this.api.post(
         `/quiz/banks/${bankId}/parse-excel`,
         form,

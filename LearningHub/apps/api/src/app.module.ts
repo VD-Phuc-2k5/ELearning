@@ -4,6 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './modules/auth/auth.module';
 import { QuizModule } from './modules/quiz/quiz.module';
 import { RoadmapModule } from './modules/roadmap/roadmap.module';
+import { SandboxModule } from './modules/sandbox/sandbox.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { RoadmapModule } from './modules/roadmap/roadmap.module';
     AuthModule,
     QuizModule,
     RoadmapModule,
+    SandboxModule,
   ],
   controllers: [],
   providers: [],

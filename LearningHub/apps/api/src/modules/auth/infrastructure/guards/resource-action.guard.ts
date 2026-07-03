@@ -34,6 +34,14 @@ export class ResourceActionGuard implements CanActivate {
     ]);
     if (isPublic) return true;
 
+    const request = ctx.switchToHttp().getRequest();
+    if (
+      request.path.startsWith('/api/sandbox') ||
+      request.path.startsWith('/sandbox')
+    ) {
+      return true;
+    }
+
     // Routes using @RequirePermissions are handled by PermissionGuard
     const requiredPerms = this.reflector.getAllAndOverride<string[]>(
       PERMISSIONS_KEY,
@@ -41,7 +49,6 @@ export class ResourceActionGuard implements CanActivate {
     );
     if (requiredPerms?.length) return true;
 
-    const request = ctx.switchToHttp().getRequest();
     const user: User | undefined = request.user;
     if (!user) throw new UnauthorizedException();
 
