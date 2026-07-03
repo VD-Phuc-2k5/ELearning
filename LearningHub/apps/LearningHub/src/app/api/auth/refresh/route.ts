@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
   const dataSource = new AuthRemoteDataSourceImpl();
   const repository = new AuthRepositoryImpl(dataSource);
   const usecase = new RefreshTokenUsecase(repository);
-  const result = await usecase.execute(body.refreshToken);
+  const result = await usecase.execute({ token: body.refreshToken });
   if (result.type === 'right') {
     const res = NextResponse.json(result.value);
     res.cookies.set('accessToken', result.value.accessToken, {
