@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import type { Socket } from 'socket.io-client';
 import { io } from 'socket.io-client';
 import { refreshAccessToken } from '../../lib/api';
+import { cookie } from '@learning-hub/core';
 
 interface ForumSocketHandlers {
   onCommentNew?: (payload: unknown) => void;
@@ -40,11 +41,7 @@ export function useForumSocket({
     ).replace(/\/api\/?$/, '');
     const socket = io(`${socketUrl}/forum`, {
       auth: (cb: (data: { token: string }) => void) => {
-        const t =
-          typeof window !== 'undefined'
-            ? (localStorage.getItem('accessToken') ?? '')
-            : '';
-        cb({ token: t });
+        cb({ token: cookie.read('accessToken') ?? '' });
       },
       transports: ['websocket'],
       autoConnect: false,

@@ -18,9 +18,7 @@ export function AppShell({ children }: AppShellProps) {
 
   const handleLogout = async () => {
     await logoutAction();
-    localStorage.removeItem('refreshToken');
     localStorage.removeItem('user');
-    localStorage.removeItem('accessToken');
     router.push('/auth');
   };
 

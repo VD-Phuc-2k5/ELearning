@@ -1,5 +1,6 @@
 import type { ApiErrorShape } from '@learning-hub/core';
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
+import { cookie } from '@learning-hub/core';
 
 interface RetryConfig extends InternalAxiosRequestConfig {
   _retry?: boolean;
@@ -9,43 +10,20 @@ type ApiError = AxiosError<{ error?: string }> & ApiErrorShape;
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_NEST_API_URL || 'http://localhost:8080',
   headers: { 'Content-Type': 'application/json' },
+  withCredentials: true,
 });
 
-// ponytail: in-memory + localStorage so token survives page refresh
-let accessToken: string | null =
-  typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
-
-export const setAccessToken = (token: string | null) => {
-  accessToken = token;
-  if (typeof window !== 'undefined') {
-    if (token) localStorage.setItem('accessToken', token);
-    else localStorage.removeItem('accessToken');
-  }
-};
-
-// ponytail: shared promise prevents parallel refresh calls (token rotation race condition)
 let refreshPromise: Promise<string> | null = null;
 
 const doRefresh = (): Promise<string> => {
   if (refreshPromise) return refreshPromise;
-  const refreshToken =
-    typeof window !== 'undefined' ? localStorage.getItem('refreshToken') : null;
-  if (!refreshToken) {
-    if (typeof window !== 'undefined') window.location.href = '/auth';
-    return Promise.reject(new Error('No refresh token'));
-  }
-  refreshPromise = axios
-    .post('/api/auth/refresh', { refreshToken })
-    .then((res) => {
-      const { accessToken: newToken, refreshToken: newRefresh } = res.data;
-      setAccessToken(newToken);
-      localStorage.setItem('refreshToken', newRefresh);
-      return newToken as string;
+  refreshPromise = fetch('/api/auth/refresh', { method: 'POST' })
+    .then(async (res) => {
+      if (!res.ok) throw new Error('Refresh failed');
+      const data = await res.json();
+      return data.accessToken as string;
     })
     .catch((err) => {
-      setAccessToken(null);
-      localStorage.removeItem('refreshToken');
-      localStorage.removeItem('user');
       if (typeof window !== 'undefined') window.location.href = '/auth';
       throw err;
     })
@@ -65,8 +43,7 @@ const makeErrorHandler = (instance: typeof api) => async (error: ApiError) => {
   if (is401 && originalRequest && !originalRequest._retry) {
     originalRequest._retry = true;
     try {
-      const newToken = await doRefresh();
-      originalRequest.headers.Authorization = `Bearer ${newToken}`;
+      await doRefresh();
       return instance(originalRequest);
     } catch {
       // doRefresh already redirects
@@ -75,15 +52,14 @@ const makeErrorHandler = (instance: typeof api) => async (error: ApiError) => {
   return Promise.reject(error);
 };
 
-const attachInterceptors = (instance: typeof api) => {
-  instance.interceptors.request.use((config) => {
-    if (accessToken && config.headers)
-      config.headers.Authorization = `Bearer ${accessToken}`;
-    return config;
-  });
-  instance.interceptors.response.use((r) => r, makeErrorHandler(instance));
-};
+api.interceptors.request.use((config) => {
+  const token = cookie.read('accessToken');
+  if (token && config.headers) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
 
-attachInterceptors(api);
+api.interceptors.response.use((r) => r, makeErrorHandler(api));
 
 export default api;

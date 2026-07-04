@@ -35,8 +35,7 @@ import { cookies } from 'next/headers';
 
 async function getRepo() {
   const store = await cookies();
-  const token =
-    store.get('accessToken')?.value ?? store.get('adminToken')?.value ?? '';
+  const token = store.get('accessToken')?.value ?? '';
   return new RoadmapRepositoryImpl(new RoadmapRemoteDataSourceImpl(), token);
 }
 
@@ -110,8 +109,7 @@ export async function enrollRoadmap(id: string): Promise<UserRoadmapProgress> {
 
 export async function getMyRoadmapProgress(): Promise<UserRoadmapProgress[]> {
   const store = await cookies();
-  const token =
-    store.get('accessToken')?.value ?? store.get('adminToken')?.value;
+  const token = store.get('accessToken')?.value ?? '';
   if (!token) return [];
   const repo = new RoadmapRepositoryImpl(
     new RoadmapRemoteDataSourceImpl(),

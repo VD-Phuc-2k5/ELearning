@@ -22,8 +22,7 @@ import { cookies } from 'next/headers';
 
 async function getRepo() {
   const store = await cookies();
-  const token =
-    store.get('accessToken')?.value ?? store.get('adminToken')?.value ?? '';
+  const token = store.get('accessToken')?.value ?? '';
   return new QuizRepositoryImpl(new QuizRemoteDataSourceImpl(), token);
 }
 

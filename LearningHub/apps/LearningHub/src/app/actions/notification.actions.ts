@@ -19,7 +19,7 @@ const noParams = {} as NoParams;
 
 async function getToken(): Promise<string | undefined> {
   const store = await cookies();
-  return store.get('accessToken')?.value ?? store.get('adminToken')?.value;
+  return store.get('accessToken')?.value;
 }
 
 export async function listNotifications(

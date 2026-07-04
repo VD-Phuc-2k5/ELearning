@@ -12,6 +12,7 @@ import {
   getUnreadNotificationCount,
 } from '../../app/actions/notification.actions';
 import type { NotificationItem } from '@learning-hub/domain';
+import { cookie } from '@learning-hub/core';
 
 function timeAgo(dateStr: string): string {
   const seconds = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
@@ -82,8 +83,7 @@ export function NotificationBell() {
       ).replace(/\/api\/?$/, '');
       const socket = io(`${socketUrl}/forum`, {
         auth: (cb: (data: { token: string }) => void) => {
-          const t = localStorage.getItem('accessToken') ?? '';
-          cb({ token: t });
+          cb({ token: cookie.read('accessToken') ?? '' });
         },
         transports: ['websocket'],
       });

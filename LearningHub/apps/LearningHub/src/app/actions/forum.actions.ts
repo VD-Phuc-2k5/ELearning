@@ -36,7 +36,7 @@ import { cookies } from 'next/headers';
 
 async function getToken(): Promise<string | undefined> {
   const store = await cookies();
-  return store.get('adminToken')?.value ?? store.get('accessToken')?.value;
+  return store.get('accessToken')?.value;
 }
 
 export async function listForums(params?: {
@@ -154,7 +154,7 @@ export async function createPost(
     roadmapId?: string;
     questionBankId?: string;
   },
-): Promise<PostListItem | undefined> {
+): Promise<PostListItem> {
   const token = await getToken();
   const repo = new ForumRepositoryImpl(new ForumRemoteDataSourceImpl(), token);
   const result = await new CreatePostUsecase(repo).execute({
@@ -162,7 +162,7 @@ export async function createPost(
     ...input,
   });
   if (result.type === 'right') return result.value;
-  return undefined;
+  throw new Error(result.value.message || 'Failed to create post');
 }
 
 export async function listComments(

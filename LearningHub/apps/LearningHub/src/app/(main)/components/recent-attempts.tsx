@@ -35,7 +35,7 @@ interface Props {
 export function RecentAttempts({ userId }: Props) {
   const { data, isLoading } = useQuery({
     queryKey: ['quiz-attempts-recent', userId],
-    queryFn: () => listAttempts({ limit: 5, uploaderId: userId }),
+    queryFn: () => listAttempts({ limit: 5 }),
   });
 
   const attempts = data?.data ?? [];

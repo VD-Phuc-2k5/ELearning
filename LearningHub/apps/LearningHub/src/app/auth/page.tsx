@@ -7,7 +7,6 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { loginSchema, type LoginInput } from '../../lib/schemas';
 import { loginAction } from '../actions/auth.actions';
-import { setAccessToken } from '../../lib/api';
 import { Button, Input } from '../../components/ui';
 import { useState } from 'react';
 import { AlertCircle } from 'lucide-react';
@@ -32,8 +31,6 @@ export default function LoginPage() {
         setError(result.error);
         return;
       }
-      setAccessToken(result.accessToken);
-      localStorage.setItem('refreshToken', result.refreshToken);
       try {
         const payload = jwtDecode<{ sub: string; email: string }>(
           result.accessToken,
