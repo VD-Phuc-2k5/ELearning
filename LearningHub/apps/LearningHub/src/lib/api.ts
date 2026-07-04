@@ -15,21 +15,39 @@ const api = axios.create({
 
 let refreshPromise: Promise<string> | null = null;
 
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+const MAX_REFRESH_RETRIES = 2;
+const BASE_RETRY_DELAY = 500;
+
 const doRefresh = (): Promise<string> => {
   if (refreshPromise) return refreshPromise;
-  refreshPromise = fetch('/api/auth/refresh', { method: 'POST' })
-    .then(async (res) => {
+
+  let attempts = 0;
+
+  const attempt = async (): Promise<string> => {
+    try {
+      const res = await fetch('/api/auth/refresh', { method: 'POST' });
       if (!res.ok) throw new Error('Refresh failed');
       const data = await res.json();
       return data.accessToken as string;
-    })
-    .catch((err) => {
+    } catch (err) {
+      if (attempts < MAX_REFRESH_RETRIES) {
+        attempts++;
+        await sleep(BASE_RETRY_DELAY * Math.pow(2, attempts - 1));
+        return attempt();
+      }
       if (typeof window !== 'undefined') window.location.href = '/auth';
       throw err;
-    })
-    .finally(() => {
-      refreshPromise = null;
-    });
+    }
+  };
+
+  refreshPromise = attempt().finally(() => {
+    refreshPromise = null;
+  });
+
   return refreshPromise;
 };
 
