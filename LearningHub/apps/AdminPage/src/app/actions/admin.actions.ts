@@ -1,16 +1,11 @@
 'use server';
 
-import {
-  Either,
-  unwrap,
-  Failure,
-  AuthenticationFailure,
-  NetworkFailure,
-} from '@learning-hub/core';
+import { withTokenRefresh } from '@learning-hub/core';
 import {
   AuthRemoteDataSourceImpl,
   AuthRepositoryImpl,
 } from '@learning-hub/data';
+import { createTokenStore } from '@learning-hub/data/server';
 import type {
   CreatePermissionParams,
   CreateRoleParams,
@@ -45,7 +40,6 @@ import {
   UpdateAdminUsecase,
   UpdateRoleUsecase,
 } from '@learning-hub/domain';
-import { cookies } from 'next/headers';
 
 export interface RolePermissionMatrix {
   roles: Role[];
@@ -53,48 +47,24 @@ export interface RolePermissionMatrix {
   matrix: Record<number, number[]>;
 }
 
-async function getRepo() {
-  const token = (await cookies()).get('adminToken')?.value ?? '';
-  return new AuthRepositoryImpl(new AuthRemoteDataSourceImpl(), token);
-}
+const tokenStore = createTokenStore();
 
 async function executeWithRefresh<T>(
-  fn: (repo: AuthRepositoryImpl) => Promise<Either<Failure, T>>,
+  fn: (
+    repo: AuthRepositoryImpl,
+  ) => Promise<
+    import('@learning-hub/core').Either<import('@learning-hub/core').Failure, T>
+  >,
 ): Promise<T> {
-  const repo = await getRepo();
-  const result = await fn(repo);
-  if (result.type === 'left' && result.value instanceof AuthenticationFailure) {
-    const refreshToken = (await cookies()).get('adminRefreshToken')?.value;
-    if (refreshToken) {
-      try {
-        const refreshDs = new AuthRemoteDataSourceImpl();
-        const { accessToken, refreshToken: newRefresh } =
-          await refreshDs.refreshToken({ token: refreshToken });
-        const cookieStore = await cookies();
-        cookieStore.set('adminToken', accessToken, {
-          maxAge: 900,
-          path: '/',
-          sameSite: 'lax',
-        });
-        cookieStore.set('adminRefreshToken', newRefresh, {
-          maxAge: 7 * 24 * 60 * 60,
-          path: '/',
-          sameSite: 'lax',
-        });
-        const newRepo = await getRepo();
-        const retryResult = await fn(newRepo);
-        return unwrap(retryResult);
-      } catch {
-        // refresh failed, fall through to throw original auth error
-      }
-    }
-  }
-  if (result.type === 'left' && result.value instanceof NetworkFailure) {
-    throw new Error(
-      `Không thể kết nối đến máy chủ API (${process.env.NEST_API_URL || 'http://localhost:8080'}). Vui lòng kiểm tra máy chủ backend đã chạy chưa.`,
-    );
-  }
-  return unwrap(result);
+  return withTokenRefresh(
+    tokenStore,
+    async (refreshToken) => {
+      const refreshDs = new AuthRemoteDataSourceImpl();
+      return refreshDs.refreshToken({ token: refreshToken });
+    },
+    (token) =>
+      fn(new AuthRepositoryImpl(new AuthRemoteDataSourceImpl(), token)),
+  );
 }
 
 export async function getUsers(role?: string): Promise<User[]> {

@@ -23,8 +23,6 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
     try {
       const res = await adminLoginAction({ email, password });
       if (res.success) {
-        localStorage.setItem('adminToken', res.accessToken);
-        localStorage.setItem('adminRefreshToken', res.refreshToken);
         onLogin();
       } else {
         setErr(res.error);

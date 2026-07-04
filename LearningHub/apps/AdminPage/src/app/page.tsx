@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import '@aejkatappaja/phantom-ui';
 import type { Role, User } from '@learning-hub/domain';
+import { cookie } from '@learning-hub/core';
 import { useConfirmModal } from '../components/admin/modal';
 import { LoginScreen } from '../components/admin/login-screen';
 import { adminLogoutAction } from './actions/auth.actions';
@@ -63,15 +64,11 @@ export default function AdminDashboard() {
   const { modal: confirmModal, openConfirm } = useConfirmModal();
 
   useEffect(() => {
-    setToken(localStorage.getItem('adminToken'));
+    setToken(cookie.read('accessToken'));
   }, []);
 
   if (token === null)
-    return (
-      <LoginScreen
-        onLogin={() => setToken(localStorage.getItem('adminToken'))}
-      />
-    );
+    return <LoginScreen onLogin={() => setToken(cookie.read('accessToken'))} />;
 
   return (
     <div className="flex h-screen bg-[#F8FAFC]">
@@ -128,8 +125,7 @@ export default function AdminDashboard() {
         <div className="p-4 border-t border-white/10">
           <button
             onClick={async () => {
-              localStorage.removeItem('adminToken');
-              localStorage.removeItem('adminRefreshToken');
+              cookie.remove('accessToken');
               await adminLogoutAction();
               setToken(null);
             }}

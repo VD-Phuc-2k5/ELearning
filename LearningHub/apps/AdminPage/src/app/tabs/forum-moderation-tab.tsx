@@ -24,6 +24,7 @@ import {
   getPostDetail,
 } from '../actions/forum-moderation.actions';
 import { getAxiosMessage } from '../../lib/admin-api';
+import { cookie } from '@learning-hub/core';
 
 const LEARNINGHUB_URL =
   process.env.NEXT_PUBLIC_LEARNINGHUB_URL ?? 'http://localhost:3002';
@@ -196,7 +197,7 @@ export function ForumModerationTab() {
       ).replace(/\/api\/?$/, '');
       const socket = io(`${socketUrl}/forum`, {
         auth: (cb: (data: { token: string }) => void) => {
-          const t = localStorage.getItem('adminToken') ?? '';
+          const t = cookie.read('accessToken') ?? '';
           cb({ token: t });
         },
         transports: ['websocket'],
@@ -427,7 +428,7 @@ function ReportGroupCard({
                   <button
                     type="button"
                     onClick={() => {
-                      const token = localStorage.getItem('adminToken');
+                      const token = cookie.read('accessToken');
                       const url = new URL(
                         `${LEARNINGHUB_URL}/forum/${post.forumSlug}`,
                       );
