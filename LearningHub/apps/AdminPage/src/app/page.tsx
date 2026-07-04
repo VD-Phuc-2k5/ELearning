@@ -9,6 +9,7 @@ import {
   Plus,
   Settings,
   UserCog,
+  Terminal,
 } from 'lucide-react';
 import '@aejkatappaja/phantom-ui';
 import type { Role, User } from '@learning-hub/domain';
@@ -26,8 +27,16 @@ import { RolesTab } from './tabs/roles-tab';
 import { PermissionsTab } from './tabs/permissions-tab';
 import { MonitoringTab } from './tabs/monitoring-tab';
 import { UserAdminTab } from './tabs/user-admin-tab';
+import { ProblemsTab } from './tabs/problems-tab';
+import { CreateProblemModal } from '../components/admin/create-problem-modal';
 
-type TabKey = 'monitoring' | 'users' | 'roles' | 'permissions' | 'user-admin';
+type TabKey =
+  | 'monitoring'
+  | 'users'
+  | 'roles'
+  | 'permissions'
+  | 'user-admin'
+  | 'problems';
 
 const tabTitle: Record<TabKey, string> = {
   users: 'Quản lý Thành viên',
@@ -35,6 +44,7 @@ const tabTitle: Record<TabKey, string> = {
   permissions: 'Danh mục Quyền hạn',
   monitoring: 'Giám sát Hệ thống',
   'user-admin': 'Quản trị User',
+  problems: 'Quản lý Đề bài Lập trình',
 };
 
 export default function AdminDashboard() {
@@ -46,6 +56,7 @@ export default function AdminDashboard() {
   const [showCreatePerm, setShowCreatePerm] = useState(false);
   const [showCreateRole, setShowCreateRole] = useState(false);
   const [editingRole, setEditingRole] = useState<Role | null>(null);
+  const [showCreateProblem, setShowCreateProblem] = useState(false);
   const { modal: confirmModal, openConfirm } = useConfirmModal();
 
   useEffect(() => {
@@ -98,6 +109,12 @@ export default function AdminDashboard() {
             icon={<UserCog className="h-5 w-5" />}
             label="Quản trị User"
           />
+          <TabButton
+            active={activeTab === 'problems'}
+            onClick={() => setActiveTab('problems')}
+            icon={<Terminal className="h-5 w-5" />}
+            label="Đề bài Coding"
+          />
         </nav>
         <div className="p-4 border-t border-white/10">
           <button
@@ -142,6 +159,14 @@ export default function AdminDashboard() {
                 <Plus className="h-5 w-5" /> Thêm vai trò
               </button>
             )}
+            {activeTab === 'problems' && (
+              <button
+                onClick={() => setShowCreateProblem(true)}
+                className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-xl font-bold hover:bg-indigo-700 transition"
+              >
+                <Plus className="h-5 w-5" /> Thêm đề bài
+              </button>
+            )}
           </div>
         </header>
 
@@ -172,6 +197,9 @@ export default function AdminDashboard() {
             onClose={() => setEditingRole(null)}
           />
         )}
+        {showCreateProblem && (
+          <CreateProblemModal onClose={() => setShowCreateProblem(false)} />
+        )}
 
         {activeTab === 'users' && (
           <UsersTab
@@ -188,6 +216,7 @@ export default function AdminDashboard() {
         )}
         {activeTab === 'monitoring' && <MonitoringTab />}
         {activeTab === 'user-admin' && <UserAdminTab />}
+        {activeTab === 'problems' && <ProblemsTab />}
       </main>
       {confirmModal}
     </div>

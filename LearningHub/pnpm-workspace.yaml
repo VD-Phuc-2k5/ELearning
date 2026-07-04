@@ -4,9 +4,13 @@ allowBuilds:
   '@scarf/scarf': true
   '@swc/core': true
   bcrypt: true
+  cpu-features: true
   less: true
+  msgpackr-extract: true
   nx: true
+  protobufjs: true
   sharp: true
+  ssh2: true
   unrs-resolver: true
 minimumReleaseAgeExclude:
   - yaml@2.9.0

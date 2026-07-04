@@ -12,6 +12,8 @@ import {
   LogOut,
   Plus,
   HelpCircle,
+  Terminal,
+  Code2,
 } from 'lucide-react';
 import type { User } from '@learning-hub/domain';
 import { Button } from '../ui';
@@ -22,6 +24,8 @@ const navigation = [
   { href: '/community', label: 'Community', Icon: Users },
   { href: '/my-banks', label: 'Workshop', Icon: BookOpen },
   { href: '/roadmaps/manage', label: 'Roadmaps', Icon: Map },
+  { href: '/playground', label: 'Playground', Icon: Terminal },
+  { href: '/problems', label: 'Coding Problems', Icon: Code2 },
 ];
 
 type AppShellProps = { children: ReactNode };

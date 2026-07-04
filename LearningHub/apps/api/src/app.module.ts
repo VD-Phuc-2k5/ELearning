@@ -1,9 +1,12 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { BullModule } from '@nestjs/bullmq';
 import { AuthModule } from './modules/auth/auth.module';
 import { QuizModule } from './modules/quiz/quiz.module';
 import { RoadmapModule } from './modules/roadmap/roadmap.module';
+import { SandboxModule } from './modules/sandbox/sandbox.module';
+import { JudgeModule } from './modules/judge/judge.module';
 
 @Module({
   imports: [
@@ -25,9 +28,21 @@ import { RoadmapModule } from './modules/roadmap/roadmap.module';
       }),
       inject: [ConfigService],
     }),
+    BullModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => ({
+        connection: {
+          host: configService.get<string>('REDIS_HOST', 'localhost'),
+          port: configService.get<number>('REDIS_PORT', 6379),
+        },
+      }),
+      inject: [ConfigService],
+    }),
     AuthModule,
     QuizModule,
     RoadmapModule,
+    SandboxModule,
+    JudgeModule,
   ],
   controllers: [],
   providers: [],
