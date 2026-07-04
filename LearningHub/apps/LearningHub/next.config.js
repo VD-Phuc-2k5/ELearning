@@ -17,8 +17,11 @@ const nextConfig = {
     resolveAlias: {
       '@/*': './src/*',
       '@learning-hub/core': '../../packages/core/src/index.ts',
+      '@learning-hub/core/server': '../../packages/core/src/server.ts',
       '@learning-hub/domain': '../../packages/domain/src/index.ts',
+      '@learning-hub/domain/server': '../../packages/domain/src/server.ts',
       '@learning-hub/data': '../../packages/data/src/index.ts',
+      '@learning-hub/data/server': '../../packages/data/src/server.ts',
     },
   },
 };
