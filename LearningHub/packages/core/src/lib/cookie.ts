@@ -1,8 +1,13 @@
-const isBrowser = typeof window !== 'undefined';
+const isBrowser =
+  typeof (globalThis as Record<string, unknown>).document !== 'undefined';
+
+function getDoc(): { cookie: string } {
+  return (globalThis as Record<string, unknown>).document as { cookie: string };
+}
 
 function read(name: string): string | null {
   if (!isBrowser) return null;
-  const match = document.cookie.match(
+  const match = getDoc().cookie.match(
     new RegExp(
       '(?:^|;\\s*)' +
         name.replace(/([.*+?^=!:${}()|[\]/\\])/g, '\\$1') +
@@ -26,12 +31,12 @@ function write(
   if (opts?.maxAge !== undefined) cookie += `; max-age=${opts.maxAge}`;
   cookie += `; path=${opts?.path ?? '/'}`;
   cookie += `; sameSite=${opts?.sameSite ?? 'lax'}`;
-  document.cookie = cookie;
+  getDoc().cookie = cookie;
 }
 
 function remove(name: string): void {
   if (!isBrowser) return;
-  document.cookie = `${name}=; max-age=0; path=/; sameSite=lax`;
+  getDoc().cookie = `${name}=; max-age=0; path=/; sameSite=lax`;
 }
 
 export const cookie = { read, write, remove };
