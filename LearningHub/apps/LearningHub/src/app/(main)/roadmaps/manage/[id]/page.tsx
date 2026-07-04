@@ -18,6 +18,7 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { Button, Input, useConfirmModal } from '../../../../../components/ui';
+import { useCurrentUser } from '../../../../../components/hooks/use-current-user';
 import {
   getRoadmapDetail,
   updateRoadmap,
@@ -37,9 +38,12 @@ export default function EditRoadmapPage() {
     queryFn: () => getRoadmapDetail(id),
   });
 
+  const { user } = useCurrentUser();
+
   const { data: allBanks } = useQuery({
-    queryKey: ['banks-picker'],
-    queryFn: () => getBanks({ limit: 100, statusId: 'published' }),
+    queryKey: ['banks-picker', user?.id],
+    queryFn: () => getBanks({ limit: 100, uploaderId: user?.id }),
+    enabled: !!user,
   });
 
   const [title, setTitle] = useState('');
