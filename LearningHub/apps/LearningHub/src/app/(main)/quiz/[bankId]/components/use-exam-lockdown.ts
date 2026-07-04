@@ -1,21 +1,34 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 export function useExamLockdown(onSubmit: () => void) {
-  const safeSubmitRef = useRef<() => void>(() => undefined);
+  const [pendingSubmit, setPendingSubmit] = useState(false);
+  const submitRef = useRef(onSubmit);
+  submitRef.current = onSubmit;
 
-  safeSubmitRef.current = onSubmit;
+  const onConfirmSubmit = useCallback(() => {
+    submitRef.current();
+    setPendingSubmit(false);
+  }, []);
+
+  const onCancelSubmit = useCallback(() => {
+    setPendingSubmit(false);
+  }, []);
 
   useEffect(() => {
     history.pushState(null, '', location.href);
 
+    const trigger = () => {
+      setPendingSubmit(true);
+    };
+
     const handlePopState = () => {
       history.pushState(null, '', location.href);
-      safeSubmitRef.current();
+      trigger();
     };
     const handleVisibilityChange = () => {
-      if (document.hidden) safeSubmitRef.current();
+      if (document.hidden) trigger();
     };
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       e.preventDefault();
@@ -28,7 +41,7 @@ export function useExamLockdown(onSubmit: () => void) {
         return;
       e.preventDefault();
       e.stopImmediatePropagation();
-      safeSubmitRef.current();
+      trigger();
     };
 
     window.addEventListener('popstate', handlePopState);
@@ -43,4 +56,6 @@ export function useExamLockdown(onSubmit: () => void) {
       document.removeEventListener('click', handleClick, true);
     };
   }, []);
+
+  return { pendingSubmit, onConfirmSubmit, onCancelSubmit };
 }

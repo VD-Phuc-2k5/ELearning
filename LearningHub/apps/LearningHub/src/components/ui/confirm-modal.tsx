@@ -4,17 +4,35 @@ import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Button } from './button';
 
-type ConfirmState = { message: string; onConfirm: () => void } | null;
+type ConfirmState = {
+  message: string;
+  onConfirm: () => void;
+  onCancel?: () => void;
+  confirmLabel?: string;
+  cancelLabel?: string;
+  variant?: 'danger' | 'primary';
+} | null;
 
 function ConfirmModal({
   message,
   onConfirm,
   onCancel,
+  confirmLabel = 'Xóa',
+  cancelLabel = 'Hủy',
+  variant = 'danger',
 }: {
   message: string;
   onConfirm: () => void;
   onCancel: () => void;
+  confirmLabel?: string;
+  cancelLabel?: string;
+  variant?: 'danger' | 'primary';
 }) {
+  const confirmClass =
+    variant === 'primary'
+      ? 'bg-indigo-600 text-white hover:bg-indigo-700'
+      : 'bg-red-600 text-white hover:bg-red-700';
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
@@ -27,13 +45,13 @@ function ConfirmModal({
         <p className="text-slate-800 text-sm leading-relaxed mb-6">{message}</p>
         <div className="flex justify-end gap-3">
           <Button variant="secondary" size="sm" onClick={onCancel}>
-            Hủy
+            {cancelLabel}
           </Button>
           <button
             onClick={onConfirm}
-            className="inline-flex items-center h-9 px-3 text-sm rounded-md font-medium bg-red-600 text-white hover:bg-red-700 transition"
+            className={`inline-flex items-center h-9 px-3 text-sm rounded-md font-medium transition ${confirmClass}`}
           >
-            Xóa
+            {confirmLabel}
           </button>
         </div>
       </div>
@@ -44,8 +62,17 @@ function ConfirmModal({
 export function useConfirmModal() {
   const [state, setState] = useState<ConfirmState>(null);
 
-  const openConfirm = (message: string, onConfirm: () => void) => {
-    setState({ message, onConfirm });
+  const openConfirm = (
+    message: string,
+    onConfirm: () => void,
+    opts?: {
+      confirmLabel?: string;
+      cancelLabel?: string;
+      variant?: 'danger' | 'primary';
+      onCancel?: () => void;
+    },
+  ) => {
+    setState({ message, onConfirm, ...opts });
   };
 
   const modal = state
@@ -56,7 +83,13 @@ export function useConfirmModal() {
             state.onConfirm();
             setState(null);
           }}
-          onCancel={() => setState(null)}
+          onCancel={() => {
+            state.onCancel?.();
+            setState(null);
+          }}
+          confirmLabel={state.confirmLabel}
+          cancelLabel={state.cancelLabel}
+          variant={state.variant}
         />,
         document.body,
       )

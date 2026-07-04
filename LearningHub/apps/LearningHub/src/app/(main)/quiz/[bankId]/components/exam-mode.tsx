@@ -6,6 +6,7 @@ import gsap from 'gsap';
 import { ArrowLeft, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
 import { clsx } from 'clsx';
 import { Button } from '../../../../../components/ui';
+import { useConfirmModal } from '../../../../../components/ui/confirm-modal';
 import { submitQuiz } from '../../../../actions/quiz.actions';
 import { useExamLockdown } from './use-exam-lockdown';
 import { ExamQuestionCard } from './exam-question-card';
@@ -50,11 +51,30 @@ export function ExamMode({
     onSuccess: onFinish,
   });
 
-  useExamLockdown(() => {
-    if (!submitMutation.isPending && !submitMutation.isSuccess) {
-      submitMutation.mutate();
+  const { modal, openConfirm } = useConfirmModal();
+
+  const { pendingSubmit, onConfirmSubmit, onCancelSubmit } = useExamLockdown(
+    () => {
+      if (!submitMutation.isPending && !submitMutation.isSuccess) {
+        submitMutation.mutate();
+      }
+    },
+  );
+
+  useEffect(() => {
+    if (pendingSubmit) {
+      openConfirm(
+        'Bạn đã rời khỏi trang làm bài. Bạn có muốn nộp bài không?',
+        onConfirmSubmit,
+        {
+          confirmLabel: 'Nộp bài',
+          cancelLabel: 'Hủy',
+          variant: 'primary',
+          onCancel: onCancelSubmit,
+        },
+      );
     }
-  });
+  }, [pendingSubmit, openConfirm, onConfirmSubmit, onCancelSubmit]);
 
   useEffect(() => {
     if (!timeLimitSeconds) return;
@@ -189,6 +209,7 @@ export function ExamMode({
           </Button>
         )}
       </div>
+      {modal}
     </div>
   );
 }

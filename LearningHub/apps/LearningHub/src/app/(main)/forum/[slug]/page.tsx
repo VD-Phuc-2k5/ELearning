@@ -13,6 +13,7 @@ import { BookOpen, ChevronDown, Filter, Search } from 'lucide-react';
 import type { TiptapEditorHandle } from '../../../../components/ui/tiptap-editor';
 import { useCurrentUser } from '../../../../components/hooks/use-current-user';
 import { useForumSocket } from '../../../../components/hooks/use-forum-socket';
+import { useConfirmModal } from '../../../../components/ui/confirm-modal';
 import {
   getForumDetail,
   listForumPosts,
@@ -65,6 +66,7 @@ export default function ForumDetailPage({ params }: ForumDetailPageProps) {
   const iconInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const { user: currentUser } = useCurrentUser();
+  const { modal: deleteForumModal, openConfirm } = useConfirmModal();
 
   const {
     data: detail,
@@ -258,16 +260,15 @@ export default function ForumDetailPage({ params }: ForumDetailPageProps) {
   };
 
   const handleDeleteForum = () => {
-    if (
-      !window.confirm(
-        'Are you sure you want to delete this forum? This action cannot be undone.',
-      )
-    )
-      return;
-    mutations.deleteForumMutation.mutate(undefined, {
-      onSuccess: () => router.push('/'),
-      onError: (e: Error) => setError(e.message),
-    });
+    openConfirm(
+      'Are you sure you want to delete this forum? This action cannot be undone.',
+      () => {
+        mutations.deleteForumMutation.mutate(undefined, {
+          onSuccess: () => router.push('/'),
+          onError: (e: Error) => setError(e.message),
+        });
+      },
+    );
   };
 
   if (detailLoading) {
@@ -595,6 +596,7 @@ export default function ForumDetailPage({ params }: ForumDetailPageProps) {
           )}
         </div>
       </div>
+      {deleteForumModal}
     </div>
   );
 }

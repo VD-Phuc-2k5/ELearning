@@ -2,7 +2,9 @@
 
 import { use, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { ArrowLeft } from 'lucide-react';
 import { Button, Input, TiptapEditor } from '../../../../../components/ui';
 import type { TiptapEditorHandle } from '../../../../../components/ui/tiptap-editor';
 import {
@@ -26,7 +28,11 @@ export default function NewPostPage({ params }: NewPostPageProps) {
   const [error, setError] = useState<string | null>(null);
   const [selectedTagIds, setSelectedTagIds] = useState<Set<number>>(new Set());
 
-  const { data } = useQuery({
+  const {
+    data,
+    isLoading: forumLoading,
+    isError: forumError,
+  } = useQuery({
     queryKey: ['forum', slug],
     queryFn: () => getForumDetail(slug),
   });
@@ -87,6 +93,30 @@ export default function NewPostPage({ params }: NewPostPageProps) {
     }
   }, [data]);
 
+  if (forumError || (!forumLoading && !data)) {
+    return (
+      <div className="max-w-2xl mx-auto mt-20 rounded-2xl border border-red-200 bg-red-50 p-8 text-center">
+        <p className="font-semibold text-red-700 mb-2">Forum not found</p>
+        <p className="text-sm text-red-500 mb-4">
+          The forum may have been deleted or you do not have access.
+        </p>
+        <Link href="/forum" className="text-sm text-indigo-600 hover:underline">
+          Back to forums
+        </Link>
+      </div>
+    );
+  }
+
+  if (forumLoading) {
+    return (
+      <div className="max-w-3xl mx-auto space-y-4">
+        <div className="h-8 w-48 rounded bg-slate-100 animate-pulse" />
+        <div className="h-12 rounded-xl bg-slate-100 animate-pulse" />
+        <div className="h-64 rounded-xl bg-slate-100 animate-pulse" />
+      </div>
+    );
+  }
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -109,7 +139,16 @@ export default function NewPostPage({ params }: NewPostPageProps) {
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
-      <h1 className="text-2xl font-bold text-slate-900">New Post</h1>
+      <div>
+        <Link
+          href={`/forum/${slug}`}
+          className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-indigo-600 transition mb-2"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" />
+          {data?.forum.name ?? slug}
+        </Link>
+        <h1 className="text-2xl font-bold text-slate-900">New Post</h1>
+      </div>
 
       {error && (
         <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
