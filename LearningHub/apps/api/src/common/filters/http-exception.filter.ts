@@ -4,17 +4,20 @@ import {
   ExceptionFilter,
   HttpException,
   HttpStatus,
-  Logger,
 } from '@nestjs/common';
+import type { Request } from 'express';
+import type { LoggerService } from '@nestjs/common';
 import { AuthFailures } from '../../modules/auth/domain/errors/auth.failures';
 
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
-  private readonly logger = new Logger(HttpExceptionFilter.name);
+  constructor(private readonly logger: LoggerService) {}
 
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse();
+    const request = ctx.getRequest<Request>();
+    const { method, url } = request;
 
     if (exception instanceof HttpException) {
       const status = exception.getStatus();
@@ -23,22 +26,21 @@ export class HttpExceptionFilter implements ExceptionFilter {
         typeof res === 'string'
           ? res
           : (res as { message?: string }).message || exception.message;
+      this.logger.error(`${method} ${url}`, `${status} ${message}`);
       response.status(status).json({ statusCode: status, message });
       return;
     }
 
     if (exception instanceof AuthFailures) {
       const status = this.mapFailureCode(exception.code);
+      this.logger.error(`${method} ${url}`, `${status} ${exception.message}`);
       response
         .status(status)
         .json({ statusCode: status, message: exception.message });
       return;
     }
 
-    this.logger.error(
-      `Unhandled exception: ${(exception as Error).message}`,
-      (exception as Error).stack,
-    );
+    this.logger.error(`${method} ${url} 500`, (exception as Error).stack);
 
     response.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
       statusCode: HttpStatus.INTERNAL_SERVER_ERROR,

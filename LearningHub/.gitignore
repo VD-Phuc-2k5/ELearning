@@ -47,6 +47,9 @@ Thumbs.db
 .next
 out
 
+# API logs
+logs/
+
 test-output
 
 .env
