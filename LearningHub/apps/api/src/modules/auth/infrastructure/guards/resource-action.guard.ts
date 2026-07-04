@@ -60,8 +60,12 @@ export class ResourceActionGuard implements CanActivate {
 
   private extractResource(path: string): string | null {
     const SKIP = new Set(['api', 'admin']);
+    // ponytail: any authenticated user may manage these resources; JwtAuthGuard still enforces auth
+    const OPEN_RESOURCES = new Set(['forum_tags']);
     const segments = path.split('/').filter(Boolean);
     const resource = segments.find((s) => !SKIP.has(s));
-    return resource ? resource.replace(/-/g, '_') : null;
+    if (!resource) return null;
+    const normalized = resource.replace(/-/g, '_');
+    return OPEN_RESOURCES.has(normalized) ? null : normalized;
   }
 }

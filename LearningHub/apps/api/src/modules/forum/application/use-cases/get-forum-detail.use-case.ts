@@ -84,7 +84,7 @@ export class GetForumDetailUseCase {
 
     const rules = await this.ruleRepo.findByForum(forum.id);
 
-    const effectiveRole = member?.role ?? null;
+    const effectiveRole = member?.role ?? (isAdminUser ? 'moderator' : null);
 
     return {
       forum,

@@ -79,7 +79,7 @@ import { UserPermissionController } from './presentation/controllers/user-permis
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
         secret: configService.get<string>('JWT_SECRET'),
-        signOptions: { expiresIn: '15m' },
+        signOptions: { expiresIn: '1d' },
       }),
       inject: [ConfigService],
     }),

@@ -14,7 +14,7 @@ export class TokenService implements ITokenService {
         email: user.email,
       },
       {
-        expiresIn: '15m',
+        expiresIn: '1d',
       },
     );
   }

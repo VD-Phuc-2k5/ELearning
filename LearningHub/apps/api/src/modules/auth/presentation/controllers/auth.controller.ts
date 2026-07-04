@@ -1,5 +1,6 @@
 import {
   Controller,
+  Get,
   Post,
   Body,
   BadRequestException,
@@ -32,9 +33,11 @@ function setAuthCookies(
   refreshToken: string,
 ) {
   res.cookie('accessToken', accessToken, {
-    maxAge: 900000,
+    maxAge: 86400000,
     path: '/',
     sameSite: 'lax',
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
   });
   res.cookie('refreshToken', refreshToken, {
     maxAge: 7 * 24 * 60 * 60 * 1000,
@@ -178,6 +181,13 @@ export class AuthController {
     }
     setAuthCookies(res, result.value.accessToken, result.value.refreshToken);
     return result.value;
+  }
+
+  @Public()
+  @Get('me')
+  async me(@CurrentUser() currentUser: User) {
+    if (!currentUser) throw new UnauthorizedException();
+    return { user: toUserResponse(currentUser) };
   }
 
   @Public()
