@@ -143,5 +143,6 @@ import { UserPermissionController } from './presentation/controllers/user-permis
     UpdateUserUseCase,
     DeleteUserUseCase,
   ],
+  exports: ['IUserRoleRepository', 'IUserRepository'],
 })
 export class AuthModule {}

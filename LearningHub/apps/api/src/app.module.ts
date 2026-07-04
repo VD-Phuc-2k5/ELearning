@@ -9,6 +9,8 @@ import { AuthModule } from './modules/auth/auth.module';
 import { QuizModule } from './modules/quiz/quiz.module';
 import { RoadmapModule } from './modules/roadmap/roadmap.module';
 import { ForumModule } from './modules/forum/forum.module';
+import { SandboxModule } from './modules/sandbox/sandbox.module';
+import { JudgeModule } from './modules/judge/judge.module';
 
 @Module({
   imports: [
@@ -58,6 +60,8 @@ import { ForumModule } from './modules/forum/forum.module';
     QuizModule,
     RoadmapModule,
     ForumModule,
+    SandboxModule,
+    JudgeModule,
   ],
   controllers: [],
   providers: [],

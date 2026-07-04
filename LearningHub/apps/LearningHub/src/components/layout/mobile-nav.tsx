@@ -9,6 +9,8 @@ const navigation = [
   { href: '/my-banks', label: 'Workshop' },
   { href: '/roadmaps/manage', label: 'Roadmaps' },
   { href: '/forum', label: 'Forum' },
+  { href: '/playground', label: 'Playground' },
+  { href: '/problems', label: 'Coding Problems' },
 ];
 
 export function MobileNav() {
