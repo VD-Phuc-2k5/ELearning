@@ -8,7 +8,7 @@ import TaskListExtension from '@tiptap/extension-task-list';
 import TaskItemExtension from '@tiptap/extension-task-item';
 import MentionExtension from '@tiptap/extension-mention';
 import { common, createLowlight } from 'lowlight';
-import 'highlight.js/styles/github.css';
+import 'highlight.js/styles/github-dark.css';
 
 const lowlight = createLowlight(common);
 
@@ -38,7 +38,9 @@ export function TiptapViewer({ content }: TiptapViewerProps) {
     editorProps: {
       attributes: {
         class:
-          'prose prose-sm max-w-none [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-lg [&_img]:my-4',
+          'prose prose-sm max-w-none [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-lg [&_img]:my-4 ' +
+          '[&_pre]:bg-[#282a36] [&_pre]:text-[#f8f8f2] [&_pre]:rounded-lg [&_pre]:overflow-x-auto ' +
+          '[&_pre_code]:bg-transparent [&_pre_code]:text-inherit [&_pre_code]:p-0',
       },
     },
   });

@@ -9,6 +9,7 @@ import TaskItemExtension from '@tiptap/extension-task-item';
 import PlaceholderExtension from '@tiptap/extension-placeholder';
 import MentionExtension from '@tiptap/extension-mention';
 import { common, createLowlight } from 'lowlight';
+import 'highlight.js/styles/github-dark.css';
 import { createMentionSuggestion } from './mention-list';
 import {
   useCallback,
