@@ -154,7 +154,6 @@ export class QuestionBankRepository implements IQuestionBankRepository {
     const entity = await this.repo.findOne({
       where: {
         fileHash: hash,
-        statusId: 'approved',
         ...(uploaderId ? { uploaderId } : {}),
       },
       relations: { tags: true, status: true },

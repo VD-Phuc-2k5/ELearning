@@ -6,9 +6,21 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { z } from 'zod';
 import { Button, Input } from '../../../../components/ui';
-import { createBank, uploadExcel } from '../../../actions/quiz.actions';
+import {
+  createBank,
+  uploadExcel,
+  checkBankHash,
+} from '../../../actions/quiz.actions';
+import type { BankHashResult, QuestionBank } from '@learning-hub/domain';
 import { useState, useRef } from 'react';
-import { Upload, FileText, Trash2, ShieldCheck } from 'lucide-react';
+import {
+  Upload,
+  FileText,
+  CheckCircle2,
+  AlertCircle,
+  Trash2,
+  ShieldCheck,
+} from 'lucide-react';
 import { clsx } from 'clsx';
 
 const createBankSchema = z.object({
@@ -23,6 +35,8 @@ export default function CreateBankPage() {
   const queryClient = useQueryClient();
   const [file, setFile] = useState<File | null>(null);
   const [fileHash, setFileHash] = useState<string | null>(null);
+  const [isDuplicate, setIsDuplicate] = useState(false);
+  const [duplicateBank, setDuplicateBank] = useState<QuestionBank | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const {
@@ -39,6 +53,19 @@ export default function CreateBankPage() {
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
   };
+
+  const checkHashMutation = useMutation({
+    mutationFn: (hash: string) => checkBankHash(hash),
+    onSuccess: (data: BankHashResult) => {
+      if (data.exists) {
+        setIsDuplicate(true);
+        setDuplicateBank(data.bank ?? null);
+      } else {
+        setIsDuplicate(false);
+        setDuplicateBank(null);
+      }
+    },
+  });
 
   const createMutation = useMutation({
     mutationFn: async (data: CreateBankInput) => {
@@ -60,6 +87,7 @@ export default function CreateBankPage() {
       setFile(selectedFile);
       const hash = await calculateHash(selectedFile);
       setFileHash(hash);
+      checkHashMutation.mutate(hash);
     }
   };
 
@@ -164,6 +192,7 @@ export default function CreateBankPage() {
                       e.stopPropagation();
                       setFile(null);
                       setFileHash(null);
+                      setIsDuplicate(false);
                     }}
                     className="h-9 w-9 flex items-center justify-center rounded-xl bg-white border border-red-100 text-red-400 hover:bg-red-50 transition"
                   >
@@ -172,6 +201,49 @@ export default function CreateBankPage() {
                 </div>
               )}
             </div>
+
+            {checkHashMutation.isPending && (
+              <div className="flex items-center gap-2 text-sm text-slate-400">
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-indigo-600 border-r-transparent" />
+                Checking file integrity...
+              </div>
+            )}
+
+            {isDuplicate && (
+              <div className="rounded-2xl bg-amber-50 border border-amber-200 p-4 flex gap-3">
+                <AlertCircle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-bold text-amber-800">
+                    Warning: Duplicate file detected
+                  </p>
+                  <p className="text-sm text-amber-700 mt-0.5">
+                    This file was already uploaded in bank:{' '}
+                    <span className="font-semibold">
+                      &ldquo;{duplicateBank?.title}&rdquo;
+                    </span>
+                    . You can still continue creating a new bank.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {file && !isDuplicate && !checkHashMutation.isPending && (
+              <div className="rounded-2xl bg-emerald-50 border border-emerald-200 p-4 flex gap-3">
+                <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-bold text-emerald-800">
+                    File verified
+                  </p>
+                  <p className="text-sm text-emerald-700 mt-0.5">
+                    Hash:{' '}
+                    <code className="bg-emerald-100 px-1.5 py-0.5 rounded text-xs">
+                      {fileHash?.substring(0, 16)}...
+                    </code>{' '}
+                    · Ready to import.
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="pt-6 border-t border-slate-100 flex gap-3">

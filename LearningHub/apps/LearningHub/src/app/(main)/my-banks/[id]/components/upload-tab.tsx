@@ -35,6 +35,7 @@ export function UploadTab({ bankId, onSuccess }: UploadTabProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [parseError, setParseError] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   const checkHashMutation = useMutation({
     mutationFn: (hash: string) => checkBankHash(hash),
@@ -74,7 +75,13 @@ export function UploadTab({ bankId, onSuccess }: UploadTabProps) {
       setFileHash(null);
       setIsDuplicate(false);
       setPreview(null);
+      setUploadError(null);
       onSuccess();
+    },
+    onError: (e: unknown) => {
+      setUploadError(
+        e instanceof Error ? e.message : 'Import thất bại. Vui lòng thử lại.',
+      );
     },
   });
 
@@ -95,6 +102,7 @@ export function UploadTab({ bankId, onSuccess }: UploadTabProps) {
     setIsDuplicate(false);
     setPreview(null);
     setParseError(null);
+    setUploadError(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -109,6 +117,7 @@ export function UploadTab({ bankId, onSuccess }: UploadTabProps) {
         onSave={() => uploadMutation.mutate()}
         isSaving={uploadMutation.isPending}
         isSaveError={uploadMutation.isError}
+        saveError={uploadError}
       />
     );
   }

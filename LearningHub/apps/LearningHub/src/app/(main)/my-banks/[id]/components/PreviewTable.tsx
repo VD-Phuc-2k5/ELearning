@@ -12,6 +12,7 @@ interface PreviewTableProps {
   onSave: () => void;
   isSaving: boolean;
   isSaveError: boolean;
+  saveError?: string | null;
 }
 
 export function PreviewTable({
@@ -21,6 +22,7 @@ export function PreviewTable({
   onSave,
   isSaving,
   isSaveError,
+  saveError,
 }: PreviewTableProps) {
   const updateQuestion = (index: number, patch: Partial<ParsedQuestion>) => {
     onChange(
@@ -154,7 +156,7 @@ export function PreviewTable({
         <div className="flex gap-3 rounded-2xl bg-red-50 border border-red-200 p-4">
           <AlertCircle className="h-5 w-5 text-red-600 shrink-0 mt-0.5" />
           <p className="text-sm text-red-700">
-            Import thất bại. Vui lòng kiểm tra lại file.
+            {saveError || 'Import thất bại. Vui lòng kiểm tra lại file.'}
           </p>
         </div>
       )}
