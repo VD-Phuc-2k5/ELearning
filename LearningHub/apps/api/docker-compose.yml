@@ -48,7 +48,7 @@ services:
     image: grafana/promtail:latest
     container_name: promtail
     volumes:
-      - ./logs:/var/log/api
+      - ../../logs:/var/log/api
     configs:
       - source: promtail_config
         target: /etc/promtail/config.yml
