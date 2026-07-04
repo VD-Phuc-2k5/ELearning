@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Button } from './button';
 
@@ -62,18 +62,21 @@ function ConfirmModal({
 export function useConfirmModal() {
   const [state, setState] = useState<ConfirmState>(null);
 
-  const openConfirm = (
-    message: string,
-    onConfirm: () => void,
-    opts?: {
-      confirmLabel?: string;
-      cancelLabel?: string;
-      variant?: 'danger' | 'primary';
-      onCancel?: () => void;
+  const openConfirm = useCallback(
+    (
+      message: string,
+      onConfirm: () => void,
+      opts?: {
+        confirmLabel?: string;
+        cancelLabel?: string;
+        variant?: 'danger' | 'primary';
+        onCancel?: () => void;
+      },
+    ) => {
+      setState({ message, onConfirm, ...opts });
     },
-  ) => {
-    setState({ message, onConfirm, ...opts });
-  };
+    [],
+  );
 
   const modal = state
     ? createPortal(
