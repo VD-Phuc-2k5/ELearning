@@ -6,7 +6,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import gsap from 'gsap';
 import { io } from 'socket.io-client';
-import { cookie } from '@learning-hub/core';
+import { getSocketToken } from '../../../actions/auth.actions';
 import {
   getBankDetail,
   getQuestionsForQuiz,
@@ -135,22 +135,29 @@ export default function BankDetailPage() {
   }, []);
 
   useEffect(() => {
-    const socketUrl = (
-      process.env.NEXT_PUBLIC_NEST_API_URL ?? 'http://localhost:8080'
-    ).replace(/\/api\/?$/, '');
-    const socket = io(`${socketUrl}/forum`, {
-      auth: (cb: (data: { token: string }) => void) => {
-        cb({ token: cookie.read('accessToken') ?? '' });
-      },
-    });
-    socket.on('bank:reviewed', (payload: { bankId: string }) => {
-      if (payload.bankId === id) {
-        queryClient.invalidateQueries({ queryKey: ['bank', id] });
-        queryClient.invalidateQueries({ queryKey: ['bank-derived', id] });
-      }
-    });
+    let cancelled = false;
+    (async () => {
+      const token = await getSocketToken();
+      if (cancelled) return;
+      const socketUrl = (
+        process.env.NEXT_PUBLIC_NEST_API_URL ?? 'http://localhost:8080'
+      ).replace(/\/api\/?$/, '');
+      const socket = io(`${socketUrl}/forum`, {
+        auth: { token },
+        transports: ['websocket'],
+      });
+      socket.on('bank:reviewed', (payload: { bankId: string }) => {
+        if (payload.bankId === id) {
+          queryClient.invalidateQueries({ queryKey: ['bank', id] });
+          queryClient.invalidateQueries({ queryKey: ['bank-derived', id] });
+        }
+      });
+      return () => {
+        socket.disconnect();
+      };
+    })();
     return () => {
-      socket.disconnect();
+      cancelled = true;
     };
   }, [id, queryClient]);
 

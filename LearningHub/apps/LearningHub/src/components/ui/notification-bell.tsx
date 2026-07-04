@@ -12,7 +12,8 @@ import {
   getUnreadNotificationCount,
 } from '../../app/actions/notification.actions';
 import type { NotificationItem } from '@learning-hub/domain';
-import { cookie } from '@learning-hub/core';
+
+import { getSocketToken } from '../../app/actions/auth.actions';
 
 function timeAgo(dateStr: string): string {
   const seconds = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
@@ -80,26 +81,29 @@ export function NotificationBell() {
   }, [fetchCount]);
 
   useEffect(() => {
-    const socketUrl = (
-      process.env.NEXT_PUBLIC_NEST_API_URL ?? 'http://localhost:8080'
-    ).replace(/\/api\/?$/, '');
-    const socket = io(`${socketUrl}/forum`, {
-      auth: (cb: (data: { token: string }) => void) => {
-        cb({ token: cookie.read('accessToken') ?? '' });
-      },
-      autoConnect: true,
-    });
-    socketRef.current = socket;
-    socket.on('connect_error', (err: Error) => {
-      if (process.env.NODE_ENV !== 'production') {
-        console.warn('[NotificationBell] socket connect_error:', err.message);
+    let cancelled = false;
+    (async () => {
+      const token = await getSocketToken();
+      if (cancelled) return;
+      const socketUrl = (
+        process.env.NEXT_PUBLIC_NEST_API_URL ?? 'http://localhost:8080'
+      ).replace(/\/api\/?$/, '');
+      const socket = io(`${socketUrl}/forum`, {
+        auth: { token },
+        autoConnect: true,
+      });
+      if (cancelled) {
+        socket.disconnect();
+        return;
       }
-    });
-    socket.on('notification', () => {
-      fetchCount();
-    });
+      socketRef.current = socket;
+      socket.on('notification', () => {
+        fetchCount();
+      });
+    })();
     return () => {
-      socket.disconnect();
+      cancelled = true;
+      socketRef.current?.disconnect();
       socketRef.current = null;
     };
   }, [fetchCount]);

@@ -60,22 +60,18 @@ import {
   VerifyAnswerQuizParams,
   VerifyAnswerQuizUsecase,
 } from '@learning-hub/domain';
-import { cookies } from 'next/headers';
-
-async function getRepo() {
-  const store = await cookies();
-  const token = store.get('accessToken')?.value ?? '';
-  return new QuizRepositoryImpl(new QuizRemoteDataSourceImpl(), token);
+function getRepo() {
+  return new QuizRepositoryImpl(new QuizRemoteDataSourceImpl());
 }
 
 export async function getBanks(params?: GetBanksQuizParams): Promise<BankList> {
-  const repo = await getRepo();
+  const repo = getRepo();
   const result = await new GetBanksQuizUsecase(repo).execute(params ?? {});
   return result.type === 'right' ? result.value : { data: [], total: 0 };
 }
 
 export async function getBankDetail(id: string): Promise<QuestionBank> {
-  const repo = await getRepo();
+  const repo = getRepo();
   return unwrap(
     await new GetBankDetailQuizUsecase(repo).execute(
       new GetBankDetailQuizParams(id),
@@ -86,7 +82,7 @@ export async function getBankDetail(id: string): Promise<QuestionBank> {
 export async function createBank(
   data: CreateBankQuizParams,
 ): Promise<QuestionBank> {
-  const repo = await getRepo();
+  const repo = getRepo();
   return unwrap(await new CreateBankQuizUsecase(repo).execute(data));
 }
 
@@ -94,7 +90,7 @@ export async function updateBank(
   id: string,
   data: UpdateBankQuizParams,
 ): Promise<QuestionBank> {
-  const repo = await getRepo();
+  const repo = getRepo();
   return unwrap(
     await new UpdateBankQuizUsecase(repo).execute(
       new UpdateBankCommand(id, data),
@@ -103,7 +99,7 @@ export async function updateBank(
 }
 
 export async function deleteBank(id: string): Promise<void> {
-  const repo = await getRepo();
+  const repo = getRepo();
   unwrap(
     await new DeleteBankQuizUsecase(repo).execute(new DeleteBankQuizParams(id)),
   );
@@ -114,7 +110,7 @@ export async function uploadExcel(
   file: File,
   fileHash?: string,
 ): Promise<{ message: string }> {
-  const repo = await getRepo();
+  const repo = getRepo();
   const buffer = Buffer.from(await file.arrayBuffer());
   return unwrap(
     await new UploadExcelQuizUsecase(repo).execute(
@@ -126,7 +122,7 @@ export async function uploadExcel(
 export async function getUploadHistory(
   bankId: string,
 ): Promise<UploadHistory[]> {
-  const repo = await getRepo();
+  const repo = getRepo();
   return unwrap(
     await new GetUploadHistoryQuizUsecase(repo).execute(
       new GetUploadHistoryQuizParams(bankId),
@@ -138,7 +134,7 @@ export async function getQuestionsForQuiz(
   bankId: string,
   showAnswers = false,
 ): Promise<Question[]> {
-  const repo = await getRepo();
+  const repo = getRepo();
   return unwrap(
     await new GetQuestionsForQuizUsecase(repo).execute(
       new GetQuestionsForQuizParams(bankId, showAnswers),
@@ -150,7 +146,7 @@ export async function verifyAnswer(
   questionId: string,
   selectedOptionId: string,
 ): Promise<VerifyAnswerResult> {
-  const repo = await getRepo();
+  const repo = getRepo();
   return unwrap(
     await new VerifyAnswerQuizUsecase(repo).execute(
       new VerifyAnswerQuizParams(questionId, selectedOptionId),
@@ -164,7 +160,7 @@ export async function submitQuiz(
   roadmapId?: string | null,
   durationSeconds?: number,
 ): Promise<QuizSubmitResult> {
-  const repo = await getRepo();
+  const repo = getRepo();
   return unwrap(
     await new SubmitQuizUsecase(repo).execute(
       new SubmitQuizParams(bankId, answers, roadmapId, durationSeconds),
@@ -176,7 +172,7 @@ export async function updateQuestion(
   id: string,
   data: UpdateQuestionQuizParams,
 ): Promise<Question> {
-  const repo = await getRepo();
+  const repo = getRepo();
   return unwrap(
     await new UpdateQuestionQuizUsecase(repo).execute(
       new UpdateQuestionCommand(id, data),
@@ -185,7 +181,7 @@ export async function updateQuestion(
 }
 
 export async function deleteQuestion(id: string): Promise<void> {
-  const repo = await getRepo();
+  const repo = getRepo();
   unwrap(
     await new DeleteQuestionQuizUsecase(repo).execute(
       new DeleteQuestionQuizParams(id),
@@ -195,7 +191,7 @@ export async function deleteQuestion(id: string): Promise<void> {
 
 export async function getTags(): Promise<Tag[]> {
   try {
-    const repo = await getRepo();
+    const repo = getRepo();
     return unwrap(await new GetTagsQuizUsecase(repo).execute({}));
   } catch {
     return [];
@@ -203,14 +199,14 @@ export async function getTags(): Promise<Tag[]> {
 }
 
 export async function createTag(name: string): Promise<Tag> {
-  const repo = await getRepo();
+  const repo = getRepo();
   return unwrap(
     await new CreateTagQuizUsecase(repo).execute(new CreateTagQuizParams(name)),
   );
 }
 
 export async function deleteTag(id: number): Promise<void> {
-  const repo = await getRepo();
+  const repo = getRepo();
   unwrap(
     await new DeleteTagQuizUsecase(repo).execute(new DeleteTagQuizParams(id)),
   );
@@ -220,7 +216,7 @@ export async function parseExcel(
   bankId: string,
   file: File,
 ): Promise<{ questions: ParsedQuestion[] }> {
-  const repo = await getRepo();
+  const repo = getRepo();
   const buffer = Buffer.from(await file.arrayBuffer());
   const result = unwrap(
     await new ParseExcelQuizUsecase(repo).execute(
@@ -231,7 +227,7 @@ export async function parseExcel(
 }
 
 export async function getDerivedBanks(bankId: string): Promise<DerivedBank[]> {
-  const repo = await getRepo();
+  const repo = getRepo();
   return unwrap(
     await new GetDerivedBanksQuizUsecase(repo).execute(
       new GetDerivedBanksQuizParams(bankId),
@@ -242,7 +238,7 @@ export async function getDerivedBanks(bankId: string): Promise<DerivedBank[]> {
 export async function getBankRoadmaps(
   bankId: string,
 ): Promise<BankRoadmapItem[]> {
-  const repo = await getRepo();
+  const repo = getRepo();
   return unwrap(
     await new GetBankRoadmapsQuizUsecase(repo).execute(
       new GetBankRoadmapsQuizParams(bankId),
@@ -251,7 +247,7 @@ export async function getBankRoadmaps(
 }
 
 export async function checkBankHash(hash: string): Promise<BankHashResult> {
-  const repo = await getRepo();
+  const repo = getRepo();
   const result = await new CheckBankHashQuizUsecase(repo).execute(
     new CheckBankHashQuizParams(hash),
   );

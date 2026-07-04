@@ -13,24 +13,16 @@ import {
   type NotificationsPage,
 } from '@learning-hub/domain';
 import { NetworkFailure, type NoParams } from '@learning-hub/core';
-import { cookies } from 'next/headers';
 
 const noParams = {} as NoParams;
-
-async function getToken(): Promise<string | undefined> {
-  const store = await cookies();
-  return store.get('accessToken')?.value;
-}
 
 export async function listNotifications(
   unreadOnly?: boolean,
   page = 1,
   limit = 20,
 ): Promise<NotificationsPage> {
-  const token = await getToken();
   const repo = new NotificationRepositoryImpl(
     new NotificationRemoteDataSourceImpl(),
-    token,
   );
   const result = await new ListNotificationsUsecase(repo).execute({
     unreadOnly,
@@ -42,10 +34,8 @@ export async function listNotifications(
 }
 
 export async function getUnreadNotificationCount(): Promise<number> {
-  const token = await getToken();
   const repo = new NotificationRepositoryImpl(
     new NotificationRemoteDataSourceImpl(),
-    token,
   );
   const result = await new CountUnreadNotificationsUsecase(repo).execute(
     noParams,
@@ -55,10 +45,8 @@ export async function getUnreadNotificationCount(): Promise<number> {
 }
 
 export async function markNotificationRead(id: string): Promise<boolean> {
-  const token = await getToken();
   const repo = new NotificationRepositoryImpl(
     new NotificationRemoteDataSourceImpl(),
-    token,
   );
   const result = await new MarkNotificationReadUsecase(repo).execute(id);
   if (result.type === 'left' && result.value instanceof NetworkFailure)
@@ -68,10 +56,8 @@ export async function markNotificationRead(id: string): Promise<boolean> {
 }
 
 export async function markAllNotificationsRead(): Promise<boolean> {
-  const token = await getToken();
   const repo = new NotificationRepositoryImpl(
     new NotificationRemoteDataSourceImpl(),
-    token,
   );
   const result = await new MarkAllNotificationsReadUsecase(repo).execute(
     noParams,
@@ -83,10 +69,8 @@ export async function markAllNotificationsRead(): Promise<boolean> {
 }
 
 export async function deleteReadNotifications(): Promise<void> {
-  const token = await getToken();
   const repo = new NotificationRepositoryImpl(
     new NotificationRemoteDataSourceImpl(),
-    token,
   );
   const result = await new DeleteReadNotificationsUsecase(repo).execute(
     noParams,

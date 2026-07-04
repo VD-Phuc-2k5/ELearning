@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useCallback } from 'react';
+import { useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { logoutAction } from '../../app/actions/auth.actions';
@@ -9,68 +9,29 @@ import { SideNav } from './side-nav';
 import { HeaderBar } from './header-bar';
 import { MobileNav } from './mobile-nav';
 
-function decodeJwtPayload(token: string): Record<string, unknown> | null {
-  try {
-    const parts = token.split('.');
-    if (parts.length !== 3) return null;
-    return JSON.parse(atob(parts[1]));
-  } catch {
-    return null;
-  }
-}
-
 type AppShellProps = { children: ReactNode };
 
 export function AppShell({ children }: AppShellProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, isLoading } = useCurrentUser();
+  const { user, isLoading, isFetching } = useCurrentUser();
 
   const handleLogout = async () => {
     await logoutAction();
     localStorage.removeItem('user');
+    sessionStorage.clear();
     router.push('/auth');
   };
-
-  const checkTokenIdentity = useCallback(() => {
-    if (typeof document === 'undefined') return;
-    const storedId = sessionStorage.getItem('__activeUserId');
-    if (!storedId) return;
-    const cookies = document.cookie;
-    const match = cookies.match(/(?:^|;\s*)accessToken=([^;]*)/);
-    if (!match) return;
-    const payload = decodeJwtPayload(match[1]);
-    if (!payload?.sub) return;
-    if (payload.sub !== storedId) {
-      sessionStorage.clear();
-      window.location.reload();
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!user?.id) return;
-    sessionStorage.setItem('__activeUserId', user.id);
-  }, [user?.id]);
-
-  useEffect(() => {
-    const onVisible = () => {
-      if (document.visibilityState === 'visible') {
-        checkTokenIdentity();
-      }
-    };
-    document.addEventListener('visibilitychange', onVisible);
-    return () => document.removeEventListener('visibilitychange', onVisible);
-  }, [checkTokenIdentity]);
 
   if (pathname?.startsWith('/auth')) {
     return <>{children}</>;
   }
 
   useEffect(() => {
-    if (!isLoading && !user) {
+    if (!isLoading && !isFetching && !user) {
       router.replace('/auth');
     }
-  }, [isLoading, user, router]);
+  }, [isLoading, isFetching, user, router]);
 
   if (isLoading || !user) {
     return null;

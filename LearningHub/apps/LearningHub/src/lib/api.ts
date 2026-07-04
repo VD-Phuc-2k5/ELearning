@@ -1,6 +1,5 @@
 import type { ApiErrorShape } from '@learning-hub/core';
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
-import { cookie } from '@learning-hub/core';
 
 interface RetryConfig extends InternalAxiosRequestConfig {
   _retry?: boolean;
@@ -8,12 +7,12 @@ interface RetryConfig extends InternalAxiosRequestConfig {
 type ApiError = AxiosError<{ error?: string }> & ApiErrorShape;
 
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_NEST_API_URL || 'http://localhost:8080',
+  baseURL: '/',
   headers: { 'Content-Type': 'application/json' },
   withCredentials: true,
 });
 
-let refreshPromise: Promise<string> | null = null;
+let refreshPromise: Promise<void> | null = null;
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -22,25 +21,22 @@ function sleep(ms: number) {
 const MAX_REFRESH_RETRIES = 2;
 const BASE_RETRY_DELAY = 500;
 
-const doRefresh = (): Promise<string> => {
+const doRefresh = (): Promise<void> => {
   if (refreshPromise) return refreshPromise;
 
   let attempts = 0;
 
-  const attempt = async (): Promise<string> => {
+  const attempt = async (): Promise<void> => {
     try {
-      const res = await fetch('/api/auth/refresh', { method: 'POST' });
-      if (!res.ok) throw new Error('Refresh failed');
-      const data = await res.json();
-      return data.accessToken as string;
-    } catch (err) {
+      await api.post('/api/auth/refresh');
+    } catch {
       if (attempts < MAX_REFRESH_RETRIES) {
         attempts++;
         await sleep(BASE_RETRY_DELAY * Math.pow(2, attempts - 1));
         return attempt();
       }
       if (typeof window !== 'undefined') window.location.href = '/auth';
-      throw err;
+      throw new Error('Refresh failed');
     }
   };
 
@@ -51,7 +47,7 @@ const doRefresh = (): Promise<string> => {
   return refreshPromise;
 };
 
-export const refreshAccessToken = (): Promise<string> => doRefresh();
+export const refreshAccessToken = (): Promise<void> => doRefresh();
 
 const makeErrorHandler = (instance: typeof api) => async (error: ApiError) => {
   const originalRequest = error.config as RetryConfig | undefined;
@@ -69,14 +65,6 @@ const makeErrorHandler = (instance: typeof api) => async (error: ApiError) => {
   }
   return Promise.reject(error);
 };
-
-api.interceptors.request.use((config) => {
-  const token = cookie.read('accessToken');
-  if (token && config.headers) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
 
 api.interceptors.response.use((r) => r, makeErrorHandler(api));
 

@@ -12,6 +12,14 @@ const nextConfig = {
     '@learning-hub/domain',
     '@learning-hub/data',
   ],
+  async rewrites() {
+    return [
+      {
+        source: '/api/:path*',
+        destination: `${process.env.NEXT_PUBLIC_NEST_API_URL || 'http://localhost:8080'}/api/:path*`,
+      },
+    ];
+  },
   turbopack: {
     root: path.resolve(__dirname, '../..'),
     resolveAlias: {

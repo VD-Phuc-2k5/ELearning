@@ -8,6 +8,7 @@ import {
 import { RegisterUsecase } from '@learning-hub/domain';
 import { serverLogin, serverLogout } from '@learning-hub/data/server';
 import { cookies } from 'next/headers';
+import axios from 'axios';
 
 export async function loginAction(data: {
   email: string;
@@ -29,18 +30,15 @@ export async function loginAction(data: {
 }
 
 export async function getCurrentUser(): Promise<User | null> {
-  const cookieStore = await cookies();
-  const token = cookieStore.get('accessToken')?.value;
-  if (!token) return null;
+  const store = await cookies();
+  const accessToken = store.get('accessToken')?.value;
+  if (!accessToken) return null;
   try {
-    const payload = JSON.parse(
-      Buffer.from(token.split('.')[1], 'base64').toString(),
-    );
-    return {
-      id: payload.sub ?? '',
-      email: payload.email ?? '',
-      username: payload.username ?? '',
-    };
+    const NEST_API = process.env.NEST_API_URL || 'http://localhost:8080';
+    const res = await axios.get(`${NEST_API}/auth/me`, {
+      headers: { Cookie: `accessToken=${accessToken}` },
+    });
+    return res.data?.user ?? null;
   } catch {
     return null;
   }
@@ -48,6 +46,11 @@ export async function getCurrentUser(): Promise<User | null> {
 
 export async function logoutAction(): Promise<void> {
   await serverLogout();
+}
+
+export async function getSocketToken(): Promise<string> {
+  const store = await cookies();
+  return store.get('accessToken')?.value ?? '';
 }
 
 export async function registerAction(

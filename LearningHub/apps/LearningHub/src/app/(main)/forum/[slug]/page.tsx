@@ -165,6 +165,10 @@ export default function ForumDetailPage({ params }: ForumDetailPageProps) {
     qc.invalidateQueries({ queryKey: ['forum-posts', forumId] });
   }, [qc, forumId]);
 
+  const handleCommentUpdated = useCallback(() => {
+    qc.invalidateQueries({ queryKey: ['forum-comments', forumId] });
+  }, [qc, forumId]);
+
   const handleReactionUpdate = useCallback(() => {
     qc.invalidateQueries({ queryKey: ['forum-post-reactions', forumId] });
     qc.invalidateQueries({ queryKey: ['forum-comment-reactions', forumId] });
@@ -183,6 +187,7 @@ export default function ForumDetailPage({ params }: ForumDetailPageProps) {
       onPostNew: handlePostNew,
       onCommentNew: handleCommentNew,
       onCommentDeleted: handleCommentDeleted,
+      onCommentUpdated: handleCommentUpdated,
       onReactionUpdate: handleReactionUpdate,
       onPostHidden: handlePostVisibilityChange,
       onPostRestored: handlePostVisibilityChange,

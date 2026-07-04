@@ -10,7 +10,6 @@ import { loginAction } from '../actions/auth.actions';
 import { Button, Input } from '../../components/ui';
 import { useState } from 'react';
 import { AlertCircle } from 'lucide-react';
-import { jwtDecode } from 'jwt-decode';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -31,19 +30,6 @@ export default function LoginPage() {
         setError(result.error);
         return;
       }
-      try {
-        const payload = jwtDecode<{ sub: string; email: string }>(
-          result.accessToken,
-        );
-        localStorage.setItem(
-          'user',
-          JSON.stringify({
-            id: payload.sub,
-            email: payload.email,
-            username: payload.email.split('@')[0],
-          }),
-        );
-      } catch {}
       router.push('/');
     },
     onError: () => {

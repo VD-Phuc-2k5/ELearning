@@ -31,37 +31,33 @@ import {
   UpdateRoadmapUsecaseParams,
   UpdateRoadmapUsecase,
 } from '@learning-hub/domain';
-import { cookies } from 'next/headers';
-
-async function getRepo() {
-  const store = await cookies();
-  const token = store.get('accessToken')?.value ?? '';
-  return new RoadmapRepositoryImpl(new RoadmapRemoteDataSourceImpl(), token);
+function getRepo() {
+  return new RoadmapRepositoryImpl(new RoadmapRemoteDataSourceImpl());
 }
 
 export async function listRoadmaps(
   params?: GetRoadmapsParams,
 ): Promise<RoadmapList> {
-  const repo = await getRepo();
+  const repo = getRepo();
   return unwrap(await new GetRoadmapsUsecase(repo).execute(params ?? {}));
 }
 
 export async function listMyRoadmaps(
   params?: GetRoadmapsParams,
 ): Promise<RoadmapList> {
-  const repo = await getRepo();
+  const repo = getRepo();
   return unwrap(await new GetMyRoadmapsUsecase(repo).execute(params ?? {}));
 }
 
 export async function createRoadmap(
   data: CreateRoadmapParams,
 ): Promise<Roadmap> {
-  const repo = await getRepo();
+  const repo = getRepo();
   return unwrap(await new CreateRoadmapUsecase(repo).execute(data));
 }
 
 export async function getRoadmapDetail(id: string): Promise<RoadmapDetail> {
-  const repo = await getRepo();
+  const repo = getRepo();
   return unwrap(
     await new GetRoadmapDetailUsecase(repo).execute(
       new GetRoadmapDetailParams(id),
@@ -73,7 +69,7 @@ export async function updateRoadmap(
   id: string,
   data: UpdateRoadmapParams,
 ): Promise<Roadmap> {
-  const repo = await getRepo();
+  const repo = getRepo();
   return unwrap(
     await new UpdateRoadmapUsecase(repo).execute(
       new UpdateRoadmapUsecaseParams(id, data),
@@ -82,7 +78,7 @@ export async function updateRoadmap(
 }
 
 export async function deleteRoadmap(id: string): Promise<void> {
-  const repo = await getRepo();
+  const repo = getRepo();
   unwrap(
     await new DeleteRoadmapUsecase(repo).execute(new DeleteRoadmapParams(id)),
   );
@@ -92,7 +88,7 @@ export async function setRoadmapItems(
   id: string,
   bankIds: string[],
 ): Promise<RoadmapItem[]> {
-  const repo = await getRepo();
+  const repo = getRepo();
   return unwrap(
     await new SetRoadmapItemsUsecase(repo).execute(
       new SetRoadmapItemsParams(id, bankIds),
@@ -101,20 +97,13 @@ export async function setRoadmapItems(
 }
 
 export async function enrollRoadmap(id: string): Promise<UserRoadmapProgress> {
-  const repo = await getRepo();
+  const repo = getRepo();
   return unwrap(
     await new EnrollRoadmapUsecase(repo).execute(new EnrollRoadmapParams(id)),
   );
 }
 
 export async function getMyRoadmapProgress(): Promise<UserRoadmapProgress[]> {
-  const store = await cookies();
-  const token = store.get('accessToken')?.value ?? '';
-  if (!token) return [];
-  const repo = new RoadmapRepositoryImpl(
-    new RoadmapRemoteDataSourceImpl(),
-    token,
-  );
-  const result = await new GetMyRoadmapProgressUsecase(repo).execute({});
+  const result = await new GetMyRoadmapProgressUsecase(getRepo()).execute({});
   return result.type === 'right' ? result.value : [];
 }

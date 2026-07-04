@@ -18,12 +18,8 @@ import {
   GetBankProgressQuizParams,
   GetBankProgressQuizUsecase,
 } from '@learning-hub/domain';
-import { cookies } from 'next/headers';
-
-async function getRepo() {
-  const store = await cookies();
-  const token = store.get('accessToken')?.value ?? '';
-  return new QuizRepositoryImpl(new QuizRemoteDataSourceImpl(), token);
+function getRepo() {
+  return new QuizRepositoryImpl(new QuizRemoteDataSourceImpl());
 }
 
 export async function listAttempts(params?: {
@@ -32,7 +28,7 @@ export async function listAttempts(params?: {
   bankId?: string;
   uploaderId?: string;
 }): Promise<AttemptList> {
-  const repo = await getRepo();
+  const repo = getRepo();
   const result = await new GetAttemptsQuizUsecase(repo).execute(
     new GetAttemptsQuizParams(
       params?.page,
@@ -45,7 +41,7 @@ export async function listAttempts(params?: {
 }
 
 export async function getAttemptDetail(id: string): Promise<QuizAttemptDetail> {
-  const repo = await getRepo();
+  const repo = getRepo();
   return unwrap(
     await new GetAttemptDetailQuizUsecase(repo).execute(
       new GetAttemptDetailQuizParams(id),
@@ -56,7 +52,7 @@ export async function getAttemptDetail(id: string): Promise<QuizAttemptDetail> {
 export async function getBankProgress(
   bankId: string,
 ): Promise<UserBankProgress | null> {
-  const repo = await getRepo();
+  const repo = getRepo();
   return unwrap(
     await new GetBankProgressQuizUsecase(repo).execute(
       new GetBankProgressQuizParams(bankId),
