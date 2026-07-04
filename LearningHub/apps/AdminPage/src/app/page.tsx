@@ -10,6 +10,7 @@ import {
   Settings,
   UserCog,
   ShieldAlert,
+  BookOpen,
 } from 'lucide-react';
 import '@aejkatappaja/phantom-ui';
 import type { Role, User } from '@learning-hub/domain';
@@ -29,6 +30,7 @@ import { PermissionsTab } from './tabs/permissions-tab';
 import { MonitoringTab } from './tabs/monitoring-tab';
 import { UserAdminTab } from './tabs/user-admin-tab';
 import { ForumModerationTab } from './tabs/forum-moderation-tab';
+import { QuizReviewTab } from './tabs/quiz-review-tab';
 
 type TabKey =
   | 'monitoring'
@@ -36,7 +38,8 @@ type TabKey =
   | 'roles'
   | 'permissions'
   | 'user-admin'
-  | 'forum-moderation';
+  | 'forum-moderation'
+  | 'quiz-review';
 
 const tabTitle: Record<TabKey, string> = {
   users: 'Quản lý Thành viên',
@@ -45,6 +48,7 @@ const tabTitle: Record<TabKey, string> = {
   monitoring: 'Giám sát Hệ thống',
   'user-admin': 'Quản trị User',
   'forum-moderation': 'Kiểm duyệt Forum',
+  'quiz-review': 'Kiểm duyệt Ngân hàng Câu hỏi',
 };
 
 export default function AdminDashboard() {
@@ -113,6 +117,12 @@ export default function AdminDashboard() {
             onClick={() => setActiveTab('forum-moderation')}
             icon={<ShieldAlert className="h-5 w-5" />}
             label="Kiểm duyệt Forum"
+          />
+          <TabButton
+            active={activeTab === 'quiz-review'}
+            onClick={() => setActiveTab('quiz-review')}
+            icon={<BookOpen className="h-5 w-5" />}
+            label="Kiểm duyệt Câu hỏi"
           />
         </nav>
         <div className="p-4 border-t border-white/10">
@@ -207,6 +217,7 @@ export default function AdminDashboard() {
         {activeTab === 'monitoring' && <MonitoringTab />}
         {activeTab === 'user-admin' && <UserAdminTab />}
         {activeTab === 'forum-moderation' && <ForumModerationTab />}
+        {activeTab === 'quiz-review' && <QuizReviewTab />}
       </main>
       {confirmModal}
     </div>

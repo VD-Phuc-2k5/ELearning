@@ -57,7 +57,7 @@ export default function CommunityPage() {
       getBanks({
         page,
         limit,
-        statusId: 'published',
+        statusId: 'approved',
         search: debouncedSearch || undefined,
         tagId: selectedTagId,
       }),
@@ -287,7 +287,7 @@ export default function CommunityPage() {
         <div className="flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-slate-200 bg-white p-16 text-center">
           <BookOpen className="h-12 w-12 text-slate-300 mb-4" />
           <h3 className="text-lg font-semibold text-slate-900">
-            No published question banks
+            No approved question banks
           </h3>
           <p className="mt-2 text-slate-500 max-w-sm text-sm">
             No public question banks match your search. Try adjusting your

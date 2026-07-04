@@ -339,19 +339,32 @@ export default function BankDetailPage() {
           <Button
             variant="secondary"
             size="md"
-            onClick={() =>
-              publishMutation.mutate(
-                bank.statusId === 'published' ? 'draft' : 'published',
-              )
-            }
+            onClick={() => {
+              if (bank.statusId === 'draft') {
+                publishMutation.mutate('pending_review');
+              } else if (bank.statusId === 'pending_review') {
+                publishMutation.mutate('draft');
+              } else {
+                publishMutation.mutate('draft');
+              }
+            }}
             isLoading={publishMutation.isPending}
+            disabled={
+              bank.statusId === 'pending_review' && publishMutation.isPending
+            }
             className={
-              bank.statusId === 'published'
+              bank.statusId === 'pending_review'
                 ? 'text-amber-600 border-amber-300 hover:bg-amber-50'
-                : 'text-emerald-600 border-emerald-300 hover:bg-emerald-50'
+                : bank.statusId === 'approved' || bank.statusId === 'published'
+                  ? 'text-amber-600 border-amber-300 hover:bg-amber-50'
+                  : 'text-emerald-600 border-emerald-300 hover:bg-emerald-50'
             }
           >
-            {bank.statusId === 'published' ? 'Unpublish' : 'Publish'}
+            {bank.statusId === 'pending_review'
+              ? 'Cancel Review'
+              : bank.statusId === 'approved' || bank.statusId === 'published'
+                ? 'Unpublish'
+                : 'Submit for Review'}
           </Button>
           <Button
             variant="secondary"
@@ -384,7 +397,14 @@ export default function BankDetailPage() {
           { label: 'Total questions', value: bank.totalQuestions },
           {
             label: 'Status',
-            value: bank.statusId === 'published' ? 'Published' : 'Draft',
+            value:
+              bank.statusId === 'pending_review'
+                ? 'Pending Review'
+                : bank.statusId === 'approved'
+                  ? 'Approved'
+                  : bank.statusId === 'published'
+                    ? 'Published'
+                    : 'Draft',
           },
           {
             label: 'Created',
