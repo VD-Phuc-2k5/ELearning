@@ -43,6 +43,9 @@ export class QuestionBankEntity {
   @Column({ name: 'status_id' })
   statusId!: string;
 
+  @Column({ name: 'reject_reason', nullable: true, type: 'text' })
+  rejectReason!: string | null;
+
   @ManyToOne(() => QuestionBankStatusEntity, (status) => status.questionBanks)
   @JoinColumn({ name: 'status_id' })
   status!: QuestionBankStatusEntity;

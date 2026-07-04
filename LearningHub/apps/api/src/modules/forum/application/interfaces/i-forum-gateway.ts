@@ -8,6 +8,7 @@ export interface IForumGateway {
   emitPostRestored(forumId: string, payload: unknown): void;
   emitNotification(userId: string, payload: unknown): void;
   emitReportCreated(payload: unknown): void;
+  emitBankReviewed(payload: unknown, affectedUserId?: string): void;
 }
 
 export const FORUM_GATEWAY = Symbol('IForumGateway');

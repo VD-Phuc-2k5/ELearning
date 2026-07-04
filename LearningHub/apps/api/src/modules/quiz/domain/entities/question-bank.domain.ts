@@ -7,6 +7,7 @@ export interface QuestionBankDomain {
   totalQuestions: number;
   passingScore: number;
   statusId: string;
+  rejectReason: string | null;
   createdAt: Date;
   updatedAt: Date;
   tags?: { id: number; name: string }[];

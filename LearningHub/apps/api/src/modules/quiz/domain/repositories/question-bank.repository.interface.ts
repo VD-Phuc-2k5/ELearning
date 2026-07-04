@@ -22,6 +22,7 @@ export interface UpdateQuestionBankInput {
   statusId?: string;
   tagIds?: number[];
   fileHash?: string;
+  rejectReason?: string | null;
 }
 
 export interface IQuestionBankRepository {
@@ -51,6 +52,7 @@ export interface IQuestionBankRepository {
       uploaderUsername: string;
     }>
   >;
+  findOriginalByHash(fileHash: string): Promise<QuestionBankDomain | null>;
 }
 
 export const QUESTION_BANK_REPOSITORY = Symbol('IQuestionBankRepository');

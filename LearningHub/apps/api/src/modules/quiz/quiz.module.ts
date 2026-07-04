@@ -67,6 +67,7 @@ import { QuizAttemptController } from './presentation/controllers/quiz-attempt.c
 import { QuizTagController } from './presentation/controllers/quiz-tag.controller';
 import { AdminQuizBankController } from './presentation/controllers/admin-quiz-bank.controller';
 import { RoadmapModule } from '../roadmap/roadmap.module';
+import { ForumModule } from '../forum/forum.module';
 import { UserRoleEntity } from '../auth/infrastructure/persistence/entities/user-role.entity';
 import { UserEntity } from '../auth/infrastructure/persistence/entities/user.entity';
 import { RoleEntity } from '../auth/infrastructure/persistence/entities/role.entity';
@@ -133,6 +134,7 @@ const repositoryProviders = [
     TypeOrmModule.forFeature(entities),
     MulterModule.register({ limits: { fileSize: 5 * 1024 * 1024 } }),
     forwardRef(() => RoadmapModule),
+    forwardRef(() => ForumModule),
   ],
   controllers: [
     QuizBankController,

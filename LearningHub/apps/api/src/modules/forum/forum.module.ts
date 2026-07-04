@@ -299,6 +299,6 @@ const useCases = [
     ForumTagController,
   ],
   providers: [...useCases, ...repositoryProviders],
-  exports: [],
+  exports: [FORUM_GATEWAY, NotificationService, FORUM_NOTIFICATION_REPOSITORY],
 })
 export class ForumModule {}

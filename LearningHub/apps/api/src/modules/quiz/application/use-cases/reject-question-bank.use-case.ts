@@ -13,6 +13,15 @@ import {
 } from '../../domain/repositories/question-bank.repository.interface';
 import { QuestionBankDomain } from '../../domain/entities/question-bank.domain';
 import { UserRoleEntity } from '../../../auth/infrastructure/persistence/entities/user-role.entity';
+import {
+  IForumNotificationRepository,
+  FORUM_NOTIFICATION_REPOSITORY,
+  CreateNotificationInput,
+} from '../../../forum/domain/repositories/forum-notification.repository.interface';
+import {
+  IForumGateway,
+  FORUM_GATEWAY,
+} from '../../../forum/application/interfaces/i-forum-gateway';
 
 @Injectable()
 export class RejectQuestionBankUseCase {
@@ -21,9 +30,17 @@ export class RejectQuestionBankUseCase {
     private readonly questionBankRepository: IQuestionBankRepository,
     @InjectRepository(UserRoleEntity)
     private readonly userRoleRepo: Repository<UserRoleEntity>,
+    @Inject(FORUM_NOTIFICATION_REPOSITORY)
+    private readonly notificationRepo: IForumNotificationRepository,
+    @Inject(FORUM_GATEWAY)
+    private readonly gateway: IForumGateway,
   ) {}
 
-  async execute(bankId: string, adminId: string): Promise<QuestionBankDomain> {
+  async execute(
+    bankId: string,
+    adminId: string,
+    reason?: string,
+  ): Promise<QuestionBankDomain> {
     const userRoles = await this.userRoleRepo.find({
       where: { userId: adminId },
       relations: { role: true },
@@ -50,6 +67,38 @@ export class RejectQuestionBankUseCase {
       );
     }
 
-    return this.questionBankRepository.update(bankId, { statusId: 'draft' });
+    const updated = await this.questionBankRepository.update(bankId, {
+      statusId: 'draft',
+      rejectReason: reason ?? null,
+    });
+
+    try {
+      const input: CreateNotificationInput = {
+        recipientId: bank.uploaderId,
+        actorId: adminId,
+        type: 'bank_rejected',
+        targetType: 'question_bank',
+        targetId: bankId,
+        metadata: {
+          reason: reason ?? null,
+          bankTitle: bank.title,
+        },
+      };
+      const notification = await this.notificationRepo.create(input);
+      this.gateway.emitNotification(bank.uploaderId, notification);
+    } catch {
+      // notification is non-critical
+    }
+
+    this.gateway.emitBankReviewed(
+      {
+        bankId,
+        action: 'rejected',
+        actorId: adminId,
+      },
+      bank.uploaderId,
+    );
+
+    return updated;
   }
 }

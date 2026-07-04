@@ -29,6 +29,7 @@ export class QuestionBankRepository implements IQuestionBankRepository {
       totalQuestions: entity.totalQuestions,
       passingScore: Number(entity.passingScore),
       statusId: entity.statusId,
+      rejectReason: entity.rejectReason ?? null,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
       tags: entity.tags?.map((t) => ({ id: t.id, name: t.name })),
@@ -130,6 +131,8 @@ export class QuestionBankRepository implements IQuestionBankRepository {
     if (input.description !== undefined) entity.description = input.description;
     if (input.statusId !== undefined) entity.statusId = input.statusId;
     if (input.fileHash !== undefined) entity.fileHash = input.fileHash;
+    if (input.rejectReason !== undefined)
+      entity.rejectReason = input.rejectReason;
     if (input.tagIds !== undefined) {
       entity.tags = input.tagIds.map((tagId) => ({
         id: tagId,
@@ -149,7 +152,11 @@ export class QuestionBankRepository implements IQuestionBankRepository {
     uploaderId?: string,
   ): Promise<QuestionBankDomain | null> {
     const entity = await this.repo.findOne({
-      where: { fileHash: hash, ...(uploaderId ? { uploaderId } : {}) },
+      where: {
+        fileHash: hash,
+        statusId: 'approved',
+        ...(uploaderId ? { uploaderId } : {}),
+      },
       relations: { tags: true, status: true },
     });
     if (!entity) return null;
@@ -173,6 +180,7 @@ export class QuestionBankRepository implements IQuestionBankRepository {
       .select(['bank.id', 'bank.title', 'bank.createdAt', 'uploader.username'])
       .where('bank.fileHash = :fileHash', { fileHash })
       .andWhere('bank.uploaderId != :excludeUploaderId', { excludeUploaderId })
+      .andWhere('bank.statusId = :statusId', { statusId: 'approved' })
       .getRawMany();
     return rows.map((r) => ({
       id: r.bank_id,
@@ -180,5 +188,17 @@ export class QuestionBankRepository implements IQuestionBankRepository {
       createdAt: r.bank_created_at,
       uploaderUsername: r.uploader_username,
     }));
+  }
+
+  async findOriginalByHash(
+    fileHash: string,
+  ): Promise<QuestionBankDomain | null> {
+    const entity = await this.repo.findOne({
+      where: { fileHash, statusId: 'approved' },
+      order: { createdAt: 'ASC' },
+      relations: { tags: true, status: true },
+    });
+    if (!entity) return null;
+    return this.toDomain(entity);
   }
 }

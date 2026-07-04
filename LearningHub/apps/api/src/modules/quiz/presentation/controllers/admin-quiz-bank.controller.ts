@@ -1,4 +1,11 @@
-import { Controller, Param, Patch, Request, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Param,
+  Patch,
+  Request,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { ApproveQuestionBankUseCase } from '../../application/use-cases/approve-question-bank.use-case';
@@ -26,7 +33,15 @@ export class AdminQuizBankController {
 
   @Patch(':id/reject')
   @ApiOperation({ summary: 'Admin từ chối ngân hàng câu hỏi' })
-  async reject(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
-    return this.rejectQuestionBankUseCase.execute(id, req.user.id);
+  async reject(
+    @Param('id') id: string,
+    @Body() body: { reason?: string },
+    @Request() req: AuthenticatedRequest,
+  ) {
+    return this.rejectQuestionBankUseCase.execute(
+      id,
+      req.user.id,
+      body?.reason,
+    );
   }
 }

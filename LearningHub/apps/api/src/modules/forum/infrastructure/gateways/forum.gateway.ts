@@ -160,4 +160,23 @@ export class ForumGateway
   emitReportCreated(payload: unknown): void {
     this.server?.to('admin:reports').emit('report:new', payload);
   }
+
+  @SubscribeMessage('join:admin-quiz')
+  handleJoinAdminQuiz(@ConnectedSocket() client: AuthSocket): { ok: true } {
+    client.join('admin:quiz-review');
+    return { ok: true };
+  }
+
+  @SubscribeMessage('leave:admin-quiz')
+  handleLeaveAdminQuiz(@ConnectedSocket() client: AuthSocket): { ok: true } {
+    client.leave('admin:quiz-review');
+    return { ok: true };
+  }
+
+  emitBankReviewed(payload: unknown, affectedUserId?: string): void {
+    this.server?.to('admin:quiz-review').emit('bank:reviewed', payload);
+    if (affectedUserId) {
+      this.server?.to(`user:${affectedUserId}`).emit('bank:reviewed', payload);
+    }
+  }
 }
