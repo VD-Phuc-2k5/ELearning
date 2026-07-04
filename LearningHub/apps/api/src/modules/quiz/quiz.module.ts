@@ -58,12 +58,18 @@ import { GetQuizAttemptsUseCase } from './application/use-cases/get-quiz-attempt
 import { GetQuizAttemptDetailUseCase } from './application/use-cases/get-quiz-attempt-detail.use-case';
 import { GetBankProgressUseCase } from './application/use-cases/get-bank-progress.use-case';
 import { GetBankRoadmapsUseCase } from './application/use-cases/get-bank-roadmaps.use-case';
+import { ApproveQuestionBankUseCase } from './application/use-cases/approve-question-bank.use-case';
+import { RejectQuestionBankUseCase } from './application/use-cases/reject-question-bank.use-case';
 
 import { MulterModule } from '@nestjs/platform-express';
 import { QuizBankController } from './presentation/controllers/quiz-bank.controller';
 import { QuizAttemptController } from './presentation/controllers/quiz-attempt.controller';
 import { QuizTagController } from './presentation/controllers/quiz-tag.controller';
+import { AdminQuizBankController } from './presentation/controllers/admin-quiz-bank.controller';
 import { RoadmapModule } from '../roadmap/roadmap.module';
+import { UserRoleEntity } from '../auth/infrastructure/persistence/entities/user-role.entity';
+import { UserEntity } from '../auth/infrastructure/persistence/entities/user.entity';
+import { RoleEntity } from '../auth/infrastructure/persistence/entities/role.entity';
 
 const entities = [
   QuestionBankEntity,
@@ -76,6 +82,9 @@ const entities = [
   QuizAttemptEntity,
   QuizAttemptAnswerEntity,
   UserBankProgressEntity,
+  UserRoleEntity,
+  UserEntity,
+  RoleEntity,
 ];
 
 const useCases = [
@@ -103,6 +112,8 @@ const useCases = [
   GetQuizAttemptDetailUseCase,
   GetBankProgressUseCase,
   GetBankRoadmapsUseCase,
+  ApproveQuestionBankUseCase,
+  RejectQuestionBankUseCase,
 ];
 
 const repositoryProviders = [
@@ -123,7 +134,12 @@ const repositoryProviders = [
     MulterModule.register({ limits: { fileSize: 5 * 1024 * 1024 } }),
     forwardRef(() => RoadmapModule),
   ],
-  controllers: [QuizBankController, QuizAttemptController, QuizTagController],
+  controllers: [
+    QuizBankController,
+    QuizAttemptController,
+    QuizTagController,
+    AdminQuizBankController,
+  ],
   providers: [
     ...useCases,
     ...repositoryProviders,
