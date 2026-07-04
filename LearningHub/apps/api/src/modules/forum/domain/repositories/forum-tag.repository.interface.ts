@@ -3,6 +3,7 @@ import type { ForumTagDomain } from '../entities/forum-tag.domain';
 export interface CreateTagInput {
   name: string;
   color?: string;
+  createdBy: string;
 }
 
 export interface UpdateTagInput {

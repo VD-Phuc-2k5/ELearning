@@ -134,6 +134,13 @@ export class ForumGateway
       .emit('comment:deleted', payload);
   }
 
+  emitCommentUpdated(forumId: string, postId: string, payload: unknown): void {
+    this.server
+      ?.to(`post:${postId}`)
+      .to(`forum:${forumId}`)
+      .emit('comment:updated', payload);
+  }
+
   emitReactionUpdate(forumId: string, postId: string, payload: unknown): void {
     this.server
       ?.to(`post:${postId}`)

@@ -13,4 +13,7 @@ export class ForumTagEntity {
 
   @Column({ type: 'varchar', length: 7, nullable: true })
   color!: string | null;
+
+  @Column({ name: 'created_by', type: 'uuid', nullable: true })
+  createdBy!: string | null;
 }

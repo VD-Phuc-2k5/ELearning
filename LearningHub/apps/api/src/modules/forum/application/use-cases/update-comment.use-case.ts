@@ -12,6 +12,7 @@ import {
   FORUM_MEMBER_REPOSITORY,
   IForumMemberRepository,
 } from '../../domain/repositories/forum-member.repository.interface';
+import { FORUM_GATEWAY, IForumGateway } from '../interfaces/i-forum-gateway';
 import { ForumCommentDomain } from '../../domain/entities/forum-comment.domain';
 
 @Injectable()
@@ -21,6 +22,8 @@ export class UpdateCommentUseCase {
     private readonly commentRepo: IForumCommentRepository,
     @Inject(FORUM_MEMBER_REPOSITORY)
     private readonly memberRepo: IForumMemberRepository,
+    @Inject(FORUM_GATEWAY)
+    private readonly gateway: IForumGateway,
   ) {}
 
   async execute(
@@ -41,6 +44,11 @@ export class UpdateCommentUseCase {
         'Only the author or moderators can edit this comment',
       );
     }
-    return this.commentRepo.update(commentId, content);
+    const updated = await this.commentRepo.update(commentId, content);
+    this.gateway.emitCommentUpdated(forumId, postId, {
+      commentId,
+      content: updated.content,
+    });
+    return updated;
   }
 }

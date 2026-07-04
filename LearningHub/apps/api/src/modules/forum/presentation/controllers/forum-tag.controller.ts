@@ -57,7 +57,7 @@ export class ForumTagController {
 
   @Delete(':id')
   @ApiOperation({ summary: 'Xóa tag' })
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.deleteTagUseCase.execute(id);
+  remove(@Param('id', ParseIntPipe) id: number, @Request() req: AuthReq) {
+    return this.deleteTagUseCase.execute(id, req.user.id);
   }
 }

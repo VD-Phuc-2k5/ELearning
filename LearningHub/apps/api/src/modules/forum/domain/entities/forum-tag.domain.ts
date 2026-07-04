@@ -3,4 +3,5 @@ export interface ForumTagDomain {
   name: string;
   slug: string;
   color: string | null;
+  createdBy: string | null;
 }

@@ -22,6 +22,7 @@ export class ForumTagRepository implements IForumTagRepository {
       name: e.name,
       slug: e.slug,
       color: e.color,
+      createdBy: e.createdBy,
     };
   }
 
@@ -47,6 +48,7 @@ export class ForumTagRepository implements IForumTagRepository {
       name: input.name,
       slug,
       color: input.color ?? null,
+      createdBy: input.createdBy,
     });
     return this.toDomain(await this.repo.save(entity));
   }

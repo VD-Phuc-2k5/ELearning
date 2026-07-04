@@ -1,4 +1,9 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import {
   FORUM_TAG_REPOSITORY,
   IForumTagRepository,
@@ -11,9 +16,12 @@ export class DeleteTagUseCase {
     private readonly tagRepo: IForumTagRepository,
   ) {}
 
-  async execute(id: number): Promise<void> {
+  async execute(id: number, userId: string): Promise<void> {
     const tag = await this.tagRepo.findById(id);
     if (!tag) throw new NotFoundException('Tag not found');
+    if (tag.createdBy !== null && tag.createdBy !== userId) {
+      throw new ForbiddenException('Only the creator can delete this tag');
+    }
     await this.tagRepo.delete(id);
   }
 }
