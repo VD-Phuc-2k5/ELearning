@@ -247,7 +247,10 @@ export class ForumPostRepository implements IForumPostRepository {
   }
 
   async incrementCommentCount(id: string, delta: number): Promise<void> {
-    await this.repo.increment({ id }, 'commentCount', delta);
+    await this.repo.query(
+      `UPDATE "forum_posts" SET "comment_count" = GREATEST(0, "comment_count" + $1) WHERE "id" = $2`,
+      [delta, id],
+    );
   }
 
   async incrementReactionCount(id: string, delta: number): Promise<void> {

@@ -13,10 +13,6 @@ import {
   IForumRepository,
 } from '../../domain/repositories/forum.repository.interface';
 import {
-  FORUM_MEMBER_REPOSITORY,
-  IForumMemberRepository,
-} from '../../domain/repositories/forum-member.repository.interface';
-import {
   ICloudinaryService,
   CLOUDINARY_SERVICE,
 } from '../interfaces/i-cloudinary.service';
@@ -32,8 +28,6 @@ export class DeletePostUseCase {
     private readonly postRepo: IForumPostRepository,
     @Inject(FORUM_REPOSITORY)
     private readonly forumRepo: IForumRepository,
-    @Inject(FORUM_MEMBER_REPOSITORY)
-    private readonly memberRepo: IForumMemberRepository,
     @Inject(CLOUDINARY_SERVICE)
     private readonly cloudinary: ICloudinaryService,
   ) {}
@@ -46,14 +40,8 @@ export class DeletePostUseCase {
     const post = await this.postRepo.findByIdAndForum(postId, forumId);
     if (!post) throw new NotFoundException('Post not found');
 
-    const member = await this.memberRepo.findByForumAndUser(forumId, userId);
-    const isAuthor = post.authorId === userId;
-    const isModerator =
-      member?.role === 'moderator' || member?.role === 'owner';
-    if (!isAuthor && !isModerator) {
-      throw new ForbiddenException(
-        'Only the author or moderators can delete this post',
-      );
+    if (post.authorId !== userId) {
+      throw new ForbiddenException('Only the author can delete this post');
     }
 
     if (post.content) {
