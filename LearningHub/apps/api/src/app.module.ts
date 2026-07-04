@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CacheModule } from '@nestjs/cache-manager';
 import { BullModule } from '@nestjs/bullmq';
+import { PrometheusModule } from '@willsoto/nestjs-prometheus';
 import { redisStore } from 'cache-manager-ioredis-yet';
 import { AuthModule } from './modules/auth/auth.module';
 import { QuizModule } from './modules/quiz/quiz.module';
@@ -14,6 +15,9 @@ import { ForumModule } from './modules/forum/forum.module';
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: 'apps/api/.env',
+    }),
+    PrometheusModule.register({
+      defaultMetrics: { enabled: true },
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
