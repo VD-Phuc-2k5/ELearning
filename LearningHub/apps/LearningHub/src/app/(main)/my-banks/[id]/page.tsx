@@ -5,6 +5,8 @@ import { useParams, useRouter } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import gsap from 'gsap';
+import { io } from 'socket.io-client';
+import { cookie } from '@learning-hub/core';
 import {
   getBankDetail,
   getQuestionsForQuiz,
@@ -131,6 +133,26 @@ export default function BankDetailPage() {
       { opacity: 1, y: 0, duration: 0.4, ease: 'power2.out' },
     );
   }, []);
+
+  useEffect(() => {
+    const socketUrl = (
+      process.env.NEXT_PUBLIC_NEST_API_URL ?? 'http://localhost:8080'
+    ).replace(/\/api\/?$/, '');
+    const socket = io(`${socketUrl}/forum`, {
+      auth: (cb: (data: { token: string }) => void) => {
+        cb({ token: cookie.read('accessToken') ?? '' });
+      },
+    });
+    socket.on('bank:reviewed', (payload: { bankId: string }) => {
+      if (payload.bankId === id) {
+        queryClient.invalidateQueries({ queryKey: ['bank', id] });
+        queryClient.invalidateQueries({ queryKey: ['bank-derived', id] });
+      }
+    });
+    return () => {
+      socket.disconnect();
+    };
+  }, [id, queryClient]);
 
   const deleteBankMutation = useMutation({
     mutationFn: () => deleteBank(id),

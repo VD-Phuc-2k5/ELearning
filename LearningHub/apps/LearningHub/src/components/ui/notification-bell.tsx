@@ -35,6 +35,10 @@ function notificationText(n: NotificationItem): string {
     return `Báo cáo của bạn đã được giải quyết${n.metadata?.note ? `: ${n.metadata.note}` : ''}`;
   if (n.type === 'report_dismissed')
     return `Báo cáo của bạn đã bị bỏ qua${n.metadata?.note ? `: ${n.metadata.note}` : ''}`;
+  if (n.type === 'bank_rejected')
+    return `Ngân hàng câu hỏi "${n.metadata?.bankTitle ?? 'Unknown'}" bị từ chối${n.metadata?.reason ? `: ${n.metadata.reason}` : ''}`;
+  if (n.type === 'bank_approved')
+    return `Ngân hàng câu hỏi "${n.metadata?.bankTitle ?? 'Unknown'}" đã được duyệt`;
   return `${name} sent a notification`;
 }
 
@@ -76,32 +80,29 @@ export function NotificationBell() {
   }, [fetchCount]);
 
   useEffect(() => {
-    const connectSocket = async () => {
-      const { io } = await import('socket.io-client');
-      const socketUrl = (
-        process.env.NEXT_PUBLIC_NEST_API_URL ?? 'http://localhost:8080'
-      ).replace(/\/api\/?$/, '');
-      const socket = io(`${socketUrl}/forum`, {
-        auth: (cb: (data: { token: string }) => void) => {
-          cb({ token: cookie.read('accessToken') ?? '' });
-        },
-        transports: ['websocket'],
-      });
-      socketRef.current = socket;
-      socket.on('notification', () => {
-        setCount((prev) => prev + 1);
-      });
-      socket.connect();
-      return () => {
-        socket.disconnect();
-        socketRef.current = null;
-      };
-    };
-    const cleanup = connectSocket();
+    const socketUrl = (
+      process.env.NEXT_PUBLIC_NEST_API_URL ?? 'http://localhost:8080'
+    ).replace(/\/api\/?$/, '');
+    const socket = io(`${socketUrl}/forum`, {
+      auth: (cb: (data: { token: string }) => void) => {
+        cb({ token: cookie.read('accessToken') ?? '' });
+      },
+      autoConnect: true,
+    });
+    socketRef.current = socket;
+    socket.on('connect_error', (err: Error) => {
+      if (process.env.NODE_ENV !== 'production') {
+        console.warn('[NotificationBell] socket connect_error:', err.message);
+      }
+    });
+    socket.on('notification', () => {
+      fetchCount();
+    });
     return () => {
-      cleanup.then((fn) => fn?.());
+      socket.disconnect();
+      socketRef.current = null;
     };
-  }, []);
+  }, [fetchCount]);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {

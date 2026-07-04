@@ -34,6 +34,8 @@ export function UploadTab({ bankId, onSuccess }: UploadTabProps) {
   const [preview, setPreview] = useState<ParsedQuestion[] | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const [parseError, setParseError] = useState<string | null>(null);
+
   const checkHashMutation = useMutation({
     mutationFn: (hash: string) => checkBankHash(hash),
     onSuccess: (data) => setIsDuplicate(data.exists),
@@ -44,7 +46,17 @@ export function UploadTab({ bankId, onSuccess }: UploadTabProps) {
       if (!file) throw new Error('No file selected');
       return parseExcel(bankId, file);
     },
-    onSuccess: (data) => setPreview(data.questions),
+    onSuccess: (data) => {
+      setParseError(null);
+      setPreview(data.questions);
+    },
+    onError: (e: unknown) => {
+      setParseError(
+        e instanceof Error
+          ? e.message
+          : 'Không thể đọc file. Vui lòng kiểm tra định dạng.',
+      );
+    },
   });
 
   const uploadMutation = useMutation({
@@ -71,6 +83,7 @@ export function UploadTab({ bankId, onSuccess }: UploadTabProps) {
     if (!file) return;
     setFile(file);
     setPreview(null);
+    setParseError(null);
     const hash = await computeFileHash(file);
     setFileHash(hash);
     checkHashMutation.mutate(hash);
@@ -81,6 +94,7 @@ export function UploadTab({ bankId, onSuccess }: UploadTabProps) {
     setFileHash(null);
     setIsDuplicate(false);
     setPreview(null);
+    setParseError(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -176,7 +190,7 @@ export function UploadTab({ bankId, onSuccess }: UploadTabProps) {
           </p>
         </div>
       )}
-      {file && !checkHashMutation.isPending && (
+      {file && !checkHashMutation.isPending && !parseError && (
         <div className="flex gap-3 rounded-2xl bg-emerald-50 border border-emerald-200 p-4">
           <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
           <p className="text-sm text-emerald-700">
@@ -186,12 +200,13 @@ export function UploadTab({ bankId, onSuccess }: UploadTabProps) {
           </p>
         </div>
       )}
-      {parseMutation.isError && (
+      {parseError && (
         <div className="flex gap-3 rounded-2xl bg-red-50 border border-red-200 p-4">
           <AlertCircle className="h-5 w-5 text-red-600 shrink-0 mt-0.5" />
-          <p className="text-sm text-red-700">
-            Không thể đọc file. Vui lòng kiểm tra định dạng.
-          </p>
+          <div>
+            <p className="text-sm text-red-700 font-medium">Lỗi khi đọc file</p>
+            <p className="text-xs text-red-600 mt-1">{parseError}</p>
+          </div>
         </div>
       )}
 
