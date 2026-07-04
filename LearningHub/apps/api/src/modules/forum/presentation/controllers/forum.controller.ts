@@ -74,12 +74,18 @@ export class ForumController {
     @Query('search') search?: string,
     @Request() req?: AuthReq,
   ) {
-    return this.getForumListUseCase.execute({
-      page,
-      limit,
-      search,
-      userId: req?.user?.id,
-    });
+    const authHeader = (req as any)?.headers?.authorization as
+      | string
+      | undefined;
+    return this.getForumListUseCase.execute(
+      {
+        page,
+        limit,
+        search,
+        userId: req?.user?.id,
+      },
+      authHeader,
+    );
   }
 
   @Public()

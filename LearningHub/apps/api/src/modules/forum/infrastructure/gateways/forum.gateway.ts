@@ -35,7 +35,14 @@ export class ForumGateway
   afterInit(server: Server): void {
     server.use((socket, next) => {
       try {
-        const token = socket.handshake.auth?.token as string | undefined;
+        let token = socket.handshake.auth?.token as string | undefined;
+        if (!token) {
+          const cookie = socket.handshake.headers.cookie;
+          if (cookie) {
+            const match = cookie.match(/(?:^|;\s*)accessToken=([^;]*)/);
+            if (match) token = match[1];
+          }
+        }
         if (!token) {
           return next(new Error('Missing token'));
         }

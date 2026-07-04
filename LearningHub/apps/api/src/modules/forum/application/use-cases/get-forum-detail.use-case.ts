@@ -76,15 +76,7 @@ export class GetForumDetailUseCase {
     }
 
     if (forum.visibility === 'private' && !member && !isAdminUser) {
-      const actualPostCount = await this.forumRepo.recalculatePostCount(
-        forum.id,
-      );
-      forum.postCount = actualPostCount;
-      return {
-        forum,
-        memberRole: null,
-        rules: [],
-      };
+      throw new NotFoundException('Forum not found');
     }
 
     const actualPostCount = await this.forumRepo.recalculatePostCount(forum.id);
@@ -92,7 +84,7 @@ export class GetForumDetailUseCase {
 
     const rules = await this.ruleRepo.findByForum(forum.id);
 
-    const effectiveRole = member?.role ?? (isAdminUser ? 'member' : null);
+    const effectiveRole = member?.role ?? null;
 
     return {
       forum,
