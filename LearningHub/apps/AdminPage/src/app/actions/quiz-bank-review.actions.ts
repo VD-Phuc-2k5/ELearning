@@ -12,7 +12,7 @@ import {
 } from '@learning-hub/core';
 import { AuthRemoteDataSourceImpl } from '@learning-hub/data';
 import { createTokenStore } from '@learning-hub/data/server';
-import type { QuestionBank } from '@learning-hub/domain';
+import type { QuestionBank, Question } from '@learning-hub/domain';
 
 const NEST_API = process.env.NEST_API_URL || 'http://localhost:8080';
 
@@ -51,7 +51,7 @@ async function executeWithRefresh<T>(
 
 export async function getPendingBanks(): Promise<QuestionBank[]> {
   return executeWithRefresh(async (token) => {
-    const { data } = await axios.get(`${NEST_API}/api/quiz/banks`, {
+    const { data } = await axios.get(`${NEST_API}/quiz/banks`, {
       params: { statusId: 'pending_review', limit: 100 },
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -62,7 +62,7 @@ export async function getPendingBanks(): Promise<QuestionBank[]> {
 export async function approveBank(bankId: string): Promise<QuestionBank> {
   return executeWithRefresh(async (token) => {
     const { data } = await axios.patch(
-      `${NEST_API}/api/admin/quiz/banks/${bankId}/approve`,
+      `${NEST_API}/admin/quiz/banks/${bankId}/approve`,
       {},
       { headers: { Authorization: `Bearer ${token}` } },
     );
@@ -70,13 +70,40 @@ export async function approveBank(bankId: string): Promise<QuestionBank> {
   });
 }
 
-export async function rejectBank(bankId: string): Promise<QuestionBank> {
+export async function rejectBank(
+  bankId: string,
+  reason?: string,
+): Promise<QuestionBank> {
   return executeWithRefresh(async (token) => {
     const { data } = await axios.patch(
-      `${NEST_API}/api/admin/quiz/banks/${bankId}/reject`,
-      {},
+      `${NEST_API}/admin/quiz/banks/${bankId}/reject`,
+      { reason: reason || undefined },
       { headers: { Authorization: `Bearer ${token}` } },
     );
     return data;
+  });
+}
+
+export async function getBankDetail(
+  bankId: string,
+): Promise<QuestionBank | null> {
+  return executeWithRefresh(async (token) => {
+    const { data } = await axios.get(`${NEST_API}/quiz/banks/${bankId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return data;
+  });
+}
+
+export async function getBankQuestions(bankId: string): Promise<Question[]> {
+  return executeWithRefresh(async (token) => {
+    const { data } = await axios.get(
+      `${NEST_API}/quiz/banks/${bankId}/questions`,
+      {
+        params: { showAnswers: 'true' },
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
+    return Array.isArray(data) ? data : (data.questions ?? []);
   });
 }

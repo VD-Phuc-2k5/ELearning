@@ -201,6 +201,7 @@ export function ForumModerationTab() {
           cb({ token: t });
         },
         transports: ['websocket'],
+        autoConnect: false,
       });
       socketRef.current = socket;
 
@@ -428,11 +429,9 @@ function ReportGroupCard({
                   <button
                     type="button"
                     onClick={() => {
-                      const token = cookie.read('accessToken');
                       const url = new URL(
                         `${LEARNINGHUB_URL}/forum/${post.forumSlug}`,
                       );
-                      if (token) url.searchParams.set('token', token);
                       window.open(url.toString(), '_blank');
                     }}
                     className="inline-flex items-center gap-0.5 text-blue-600 hover:text-blue-800"
