@@ -37,6 +37,11 @@ export class AdminRegisterUseCase
     const existing = await this.userRepository.findByEmail(params.email);
     if (existing) return left(AuthFailures.userAlreadyExists());
 
+    const existingUsername = await this.userRepository.findByUsername(
+      params.username,
+    );
+    if (existingUsername) return left(AuthFailures.usernameAlreadyExists());
+
     const hashedPassword = await this.passwordService.hash(params.password);
     const newUser = new User(
       crypto.randomUUID(),

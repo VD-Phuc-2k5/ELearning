@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 import { IsEmail, IsString, Matches, MinLength } from 'class-validator';
 
 export class RegisterDto {
@@ -19,7 +20,11 @@ export class RegisterDto {
   password!: string;
 
   @ApiProperty({ example: 'username' })
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   @IsString({ message: 'Tên người dùng phải là chuỗi ký tự' })
+  @Matches(/^(?!\s*$).+/, {
+    message: 'Tên người dùng không được chỉ chứa khoảng trắng',
+  })
   @MinLength(3, { message: 'Tên người dùng phải có ít nhất 3 ký tự' })
   username!: string;
 }

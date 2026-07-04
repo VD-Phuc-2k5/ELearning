@@ -22,7 +22,7 @@ import { AuthFailures } from '../../domain/errors/auth.failures';
 import {
   toUserPermissionsResponse,
   toUserPermissionResponse,
-} from '../dto/response.dto';
+} from '../dto/user-permission-response.dto';
 
 function mapFailure(failure: AuthFailures): never {
   switch (failure.code) {

@@ -25,13 +25,14 @@ import { UpdateUserUseCase } from '../../application/use-cases/update-user.use-c
 import { DeleteUserUseCase } from '../../application/use-cases/delete-user.use-case';
 import { UpdateUserDto } from '../../application/dto/user.dto';
 import { AuthFailures } from '../../domain/errors/auth.failures';
-import { toUserResponse } from '../dto/response.dto';
+import { toUserResponse } from '../dto/user-response.dto';
 
 function mapFailure(failure: AuthFailures): never {
   switch (failure.code) {
     case 'USER_NOT_FOUND':
       throw new NotFoundException(failure.message);
     case 'EMAIL_ALREADY_IN_USE':
+    case 'USERNAME_ALREADY_EXISTS':
       throw new ConflictException(failure.message);
     case 'CANNOT_DELETE_SELF':
       throw new ForbiddenException(failure.message);

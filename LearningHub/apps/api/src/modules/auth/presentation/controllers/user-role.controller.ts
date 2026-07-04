@@ -20,7 +20,10 @@ import { AssignRoleToUserUseCase } from '../../application/use-cases/assign-role
 import { RemoveRoleFromUserUseCase } from '../../application/use-cases/remove-role-from-user.use-case';
 import { AssignRoleDto } from '../../application/dto/user-role.dto';
 import { AuthFailures } from '../../domain/errors/auth.failures';
-import { toUserRolesResponse, toUserRoleResponse } from '../dto/response.dto';
+import {
+  toUserRolesResponse,
+  toUserRoleResponse,
+} from '../dto/user-role-response.dto';
 
 function mapFailure(failure: AuthFailures): never {
   switch (failure.code) {

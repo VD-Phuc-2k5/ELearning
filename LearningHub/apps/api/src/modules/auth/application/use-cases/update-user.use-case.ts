@@ -37,7 +37,14 @@ export class UpdateUserUseCase
         return left(AuthFailures.emailAlreadyInUse());
       user.email = params.email;
     }
-    if (params.username !== undefined) user.username = params.username;
+    if (params.username !== undefined && params.username !== user.username) {
+      const existingUsername = await this.userRepository.findByUsername(
+        params.username,
+      );
+      if (existingUsername && existingUsername.id !== user.id)
+        return left(AuthFailures.usernameAlreadyExists());
+      user.username = params.username;
+    }
     if (params.isActive !== undefined) user.isActive = params.isActive;
     if (params.password !== undefined) {
       user['password'] = await this.passwordService.hash(params.password);

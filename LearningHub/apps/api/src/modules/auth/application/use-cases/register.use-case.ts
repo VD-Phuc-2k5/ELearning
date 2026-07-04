@@ -35,6 +35,10 @@ export class RegisterUseCase
     if (user) {
       return left(AuthFailures.userAlreadyExists());
     }
+    const existingUsername = await this.userRepository.findByUsername(username);
+    if (existingUsername) {
+      return left(AuthFailures.usernameAlreadyExists());
+    }
     const hashedPassword = await this.passwordService.hash(password);
     const newUser = new User(
       crypto.randomUUID(),

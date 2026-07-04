@@ -24,7 +24,7 @@ import { LogoutDto } from '../../application/dto/logout.dto';
 import { AuthFailures } from '../../domain/errors/auth.failures';
 import { CurrentUser } from '../../infrastructure/decorators/current-user.decorator';
 import { User } from '../../domain/entities/user.entity';
-import { toUserResponse } from '../dto/response.dto';
+import { toUserResponse } from '../dto/user-response.dto';
 
 function setAuthCookies(
   res: Response,
@@ -68,7 +68,8 @@ export class AuthController {
     if (result.type === 'left') {
       if (
         result.value instanceof AuthFailures &&
-        result.value.code === 'USER_ALREADY_EXISTS'
+        (result.value.code === 'USER_ALREADY_EXISTS' ||
+          result.value.code === 'USERNAME_ALREADY_EXISTS')
       ) {
         throw new ConflictException(result.value.message);
       }
@@ -145,7 +146,8 @@ export class AuthController {
     if (result.type === 'left') {
       if (
         result.value instanceof AuthFailures &&
-        result.value.code === 'USER_ALREADY_EXISTS'
+        (result.value.code === 'USER_ALREADY_EXISTS' ||
+          result.value.code === 'USERNAME_ALREADY_EXISTS')
       ) {
         throw new ConflictException(result.value.message);
       }

@@ -87,6 +87,13 @@ export class AuthFailures extends Failure {
     return new AuthFailures('Email already in use', 'EMAIL_ALREADY_IN_USE');
   }
 
+  static usernameAlreadyExists(): AuthFailures {
+    return new AuthFailures(
+      'Username already exists',
+      'USERNAME_ALREADY_EXISTS',
+    );
+  }
+
   static cannotDeleteSelf(): AuthFailures {
     return new AuthFailures(
       'Cannot delete your own account',

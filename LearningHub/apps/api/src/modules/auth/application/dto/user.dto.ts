@@ -1,4 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 import {
   IsBoolean,
   IsEmail,
@@ -10,8 +11,12 @@ import {
 
 export class UpdateUserDto {
   @ApiPropertyOptional({ example: 'Nguyễn Văn A' })
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   @IsString()
   @IsOptional()
+  @Matches(/^(?!\s*$).+/, {
+    message: 'Tên người dùng không được chỉ chứa khoảng trắng',
+  })
   @MinLength(3, { message: 'Tên người dùng phải có ít nhất 3 ký tự' })
   username?: string;
 
