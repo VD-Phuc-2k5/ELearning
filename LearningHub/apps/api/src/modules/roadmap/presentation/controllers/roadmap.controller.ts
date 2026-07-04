@@ -26,11 +26,9 @@ import { DeleteRoadmapUseCase } from '../../application/use-cases/delete-roadmap
 import { SetRoadmapItemsUseCase } from '../../application/use-cases/set-roadmap-items.use-case';
 import { EnrollRoadmapUseCase } from '../../application/use-cases/enroll-roadmap.use-case';
 import { GetMyRoadmapProgressUseCase } from '../../application/use-cases/get-my-roadmap-progress.use-case';
-import {
-  CreateRoadmapDto,
-  UpdateRoadmapDto,
-  SetRoadmapItemsDto,
-} from '../dto/roadmap.request.dto';
+import { CreateRoadmapDto } from '../dto/create-roadmap.dto';
+import { UpdateRoadmapDto } from '../dto/update-roadmap.dto';
+import { SetRoadmapItemsDto } from '../dto/set-roadmap-items.dto';
 import { AuthReq } from '../types';
 
 @ApiTags('Roadmap')
