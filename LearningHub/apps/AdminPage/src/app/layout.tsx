@@ -15,6 +15,13 @@ interface RootLayoutProps {
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="vi" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: 'window.litDisableDevModeWarning=true;',
+          }}
+        />
+      </head>
       <body>
         <QueryProvider>{children}</QueryProvider>
       </body>
