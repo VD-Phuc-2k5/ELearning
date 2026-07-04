@@ -6,7 +6,10 @@ import {
   ConflictException,
   ForbiddenException,
   UnauthorizedException,
+  Res,
+  Req,
 } from '@nestjs/common';
+import type { Response, Request } from 'express';
 import { ApiTags } from '@nestjs/swagger';
 import { Public } from '../../infrastructure/decorators/public.decorator';
 import { RegisterUseCase } from '../../application/use-cases/register.use-case';
@@ -22,6 +25,30 @@ import { AuthFailures } from '../../domain/errors/auth.failures';
 import { CurrentUser } from '../../infrastructure/decorators/current-user.decorator';
 import { User } from '../../domain/entities/user.entity';
 import { toUserResponse } from '../dto/response.dto';
+
+function setAuthCookies(
+  res: Response,
+  accessToken: string,
+  refreshToken: string,
+) {
+  res.cookie('accessToken', accessToken, {
+    maxAge: 900000,
+    path: '/',
+    sameSite: 'lax',
+  });
+  res.cookie('refreshToken', refreshToken, {
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+    path: '/',
+    sameSite: 'lax',
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+  });
+}
+
+function clearAuthCookies(res: Response) {
+  res.clearCookie('accessToken', { path: '/', sameSite: 'lax' });
+  res.clearCookie('refreshToken', { path: '/', sameSite: 'lax' });
+}
 
 @ApiTags('auth')
 @Controller('auth')
@@ -52,7 +79,10 @@ export class AuthController {
 
   @Public()
   @Post('login')
-  async login(@Body() dto: LoginDto) {
+  async login(
+    @Body() dto: LoginDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
     const result = await this.loginUseCase.execute({
       ...dto,
       rejectAdminRole: true,
@@ -71,12 +101,16 @@ export class AuthController {
       }
       throw new BadRequestException(result.value.message);
     }
+    setAuthCookies(res, result.value.accessToken, result.value.refreshToken);
     return result.value;
   }
 
   @Public()
   @Post('admin/login')
-  async adminLogin(@Body() dto: LoginDto) {
+  async adminLogin(
+    @Body() dto: LoginDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
     const result = await this.loginUseCase.execute({
       ...dto,
       requireAdminRole: true,
@@ -95,6 +129,7 @@ export class AuthController {
       }
       throw new BadRequestException(result.value.message);
     }
+    setAuthCookies(res, result.value.accessToken, result.value.refreshToken);
     return result.value;
   }
 
@@ -121,8 +156,15 @@ export class AuthController {
 
   @Public()
   @Post('refresh')
-  async refresh(@Body() dto: RefreshTokenDto) {
-    const result = await this.refreshUseCase.execute(dto);
+  async refresh(
+    @Body() dto: RefreshTokenDto,
+    @Res({ passthrough: true }) res: Response,
+    @Req() req: Request,
+  ) {
+    const token =
+      dto.token ||
+      (req.headers.cookie?.match(/(?:^|;\s*)refreshToken=([^;]*)/)?.[1] ?? '');
+    const result = await this.refreshUseCase.execute({ token });
     if (result.type === 'left') {
       if (
         result.value instanceof AuthFailures &&
@@ -132,13 +174,21 @@ export class AuthController {
       }
       throw new BadRequestException(result.value.message);
     }
+    setAuthCookies(res, result.value.accessToken, result.value.refreshToken);
     return result.value;
   }
 
   @Public()
   @Post('logout')
-  async logout(@Body() dto: LogoutDto) {
-    const result = await this.logoutUseCase.execute(dto);
+  async logout(
+    @Body() dto: LogoutDto,
+    @Res({ passthrough: true }) res: Response,
+    @Req() req: Request,
+  ) {
+    const token =
+      dto.refreshToken ||
+      (req.headers.cookie?.match(/(?:^|;\s*)refreshToken=([^;]*)/)?.[1] ?? '');
+    const result = await this.logoutUseCase.execute({ refreshToken: token });
     if (result.type === 'left') {
       if (
         result.value instanceof AuthFailures &&
@@ -148,6 +198,7 @@ export class AuthController {
       }
       throw new BadRequestException(result.value.message);
     }
+    clearAuthCookies(res);
     return result.value;
   }
 }
