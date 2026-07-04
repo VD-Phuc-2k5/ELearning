@@ -1,11 +1,10 @@
 'use server';
 
-import { withTokenRefresh } from '@learning-hub/core';
+import { unwrap } from '@learning-hub/core';
 import {
   AuthRemoteDataSourceImpl,
   AuthRepositoryImpl,
 } from '@learning-hub/data';
-import { createTokenStore } from '@learning-hub/data/server';
 import type {
   CreatePermissionParams,
   CreateRoleParams,
@@ -47,121 +46,89 @@ export interface RolePermissionMatrix {
   matrix: Record<number, number[]>;
 }
 
-const tokenStore = createTokenStore();
+function makeRepo() {
+  return new AuthRepositoryImpl(new AuthRemoteDataSourceImpl());
+}
 
-async function executeWithRefresh<T>(
+async function exec<T>(
   fn: (
     repo: AuthRepositoryImpl,
   ) => Promise<
     import('@learning-hub/core').Either<import('@learning-hub/core').Failure, T>
   >,
 ): Promise<T> {
-  return withTokenRefresh(
-    tokenStore,
-    async (refreshToken) => {
-      const refreshDs = new AuthRemoteDataSourceImpl();
-      return refreshDs.refreshToken({ token: refreshToken });
-    },
-    (token) =>
-      fn(new AuthRepositoryImpl(new AuthRemoteDataSourceImpl(), token)),
-  );
+  return unwrap(await fn(makeRepo()));
 }
 
 export async function getUsers(role?: string): Promise<User[]> {
-  return executeWithRefresh((repo) =>
-    new GetUsersUsecase(repo).execute({ role }),
-  );
+  return exec((repo) => new GetUsersUsecase(repo).execute({ role }));
 }
 
 export async function registerAdmin(data: RegisterParams): Promise<User> {
-  return executeWithRefresh((repo) =>
-    new AdminRegisterUsecase(repo).execute(data),
-  );
+  return exec((repo) => new AdminRegisterUsecase(repo).execute(data));
 }
 
 export async function updateAdmin(
   id: string,
   data: UpdateAdminParams,
 ): Promise<User> {
-  return executeWithRefresh((repo) =>
-    new UpdateAdminUsecase(repo).execute({ id, ...data }),
-  );
+  return exec((repo) => new UpdateAdminUsecase(repo).execute({ id, ...data }));
 }
 
 export async function deleteAdmin(id: string): Promise<void> {
-  return executeWithRefresh((repo) =>
-    new DeleteAdminUsecase(repo).execute({ id }),
-  );
+  return exec((repo) => new DeleteAdminUsecase(repo).execute({ id }));
 }
 
 export async function searchUsers(email: string): Promise<User[]> {
-  return executeWithRefresh((repo) =>
-    new SearchUsersUsecase(repo).execute({ email }),
-  );
+  return exec((repo) => new SearchUsersUsecase(repo).execute({ email }));
 }
 
 export async function toggleUserLock(
   id: string,
   isActive: boolean,
 ): Promise<User> {
-  return executeWithRefresh((repo) =>
-    new UpdateAdminUsecase(repo).execute({ id, isActive }),
-  );
+  return exec((repo) => new UpdateAdminUsecase(repo).execute({ id, isActive }));
 }
 
 export async function getRoles(): Promise<Role[]> {
-  return executeWithRefresh((repo) => new GetRolesUsecase(repo).execute({}));
+  return exec((repo) => new GetRolesUsecase(repo).execute({}));
 }
 
 export async function createRole(data: CreateRoleParams): Promise<Role> {
-  return executeWithRefresh((repo) =>
-    new CreateRoleUsecase(repo).execute(data),
-  );
+  return exec((repo) => new CreateRoleUsecase(repo).execute(data));
 }
 
 export async function updateRole(
   id: number,
   data: UpdateRoleParams,
 ): Promise<Role> {
-  return executeWithRefresh((repo) =>
-    new UpdateRoleUsecase(repo).execute({ id, data }),
-  );
+  return exec((repo) => new UpdateRoleUsecase(repo).execute({ id, data }));
 }
 
 export async function deleteRole(id: number): Promise<void> {
-  return executeWithRefresh((repo) =>
-    new DeleteRoleUsecase(repo).execute({ id }),
-  );
+  return exec((repo) => new DeleteRoleUsecase(repo).execute({ id }));
 }
 
 export async function getPermissions(): Promise<Permission[]> {
-  return executeWithRefresh((repo) =>
-    new GetPermissionsUsecase(repo).execute({}),
-  );
+  return exec((repo) => new GetPermissionsUsecase(repo).execute({}));
 }
 
 export async function getResources(): Promise<string[]> {
-  return executeWithRefresh((repo) =>
-    new GetResourcesUsecase(repo).execute({}),
-  );
+  return exec((repo) => new GetResourcesUsecase(repo).execute({}));
 }
 
 export async function createPermission(
   data: CreatePermissionParams,
 ): Promise<Permission> {
-  return executeWithRefresh((repo) =>
-    new CreatePermissionUsecase(repo).execute(data),
-  );
+  return exec((repo) => new CreatePermissionUsecase(repo).execute(data));
 }
 
 export async function deletePermission(id: number): Promise<void> {
-  return executeWithRefresh((repo) =>
-    new DeletePermissionUsecase(repo).execute({ id }),
-  );
+  return exec((repo) => new DeletePermissionUsecase(repo).execute({ id }));
 }
 
 export async function getRolePermissions(roleId: number): Promise<number[]> {
-  return executeWithRefresh((repo) =>
+  return exec((repo) =>
     new GetRolePermissionsUsecase(repo).execute({ roleId }),
   );
 }
@@ -170,7 +137,7 @@ export async function assignPermissionToRole(
   roleId: number,
   permissionId: number,
 ): Promise<void> {
-  return executeWithRefresh((repo) =>
+  return exec((repo) =>
     new AssignPermissionToRoleUsecase(repo).execute({ roleId, permissionId }),
   );
 }
@@ -179,22 +146,20 @@ export async function removePermissionFromRole(
   roleId: number,
   permissionId: number,
 ): Promise<void> {
-  return executeWithRefresh((repo) =>
+  return exec((repo) =>
     new RemovePermissionFromRoleUsecase(repo).execute({ roleId, permissionId }),
   );
 }
 
 export async function getUserRoles(userId: string): Promise<Role[]> {
-  return executeWithRefresh((repo) =>
-    new GetUserRolesUsecase(repo).execute({ userId }),
-  );
+  return exec((repo) => new GetUserRolesUsecase(repo).execute({ userId }));
 }
 
 export async function assignRoleToUser(
   userId: string,
   roleId: number,
 ): Promise<void> {
-  return executeWithRefresh((repo) =>
+  return exec((repo) =>
     new AssignRoleToUserUsecase(repo).execute({ userId, roleId }),
   );
 }
@@ -203,7 +168,7 @@ export async function removeRoleFromUser(
   userId: string,
   roleId: number,
 ): Promise<void> {
-  return executeWithRefresh((repo) =>
+  return exec((repo) =>
     new RemoveRoleFromUserUsecase(repo).execute({ userId, roleId }),
   );
 }
@@ -211,7 +176,7 @@ export async function removeRoleFromUser(
 export async function getUserPermissions(
   userId: string,
 ): Promise<Permission[]> {
-  return executeWithRefresh((repo) =>
+  return exec((repo) =>
     new GetUserPermissionsUsecase(repo).execute({ userId }),
   );
 }
@@ -220,7 +185,7 @@ export async function grantUserPermission(
   userId: string,
   permissionId: number,
 ): Promise<void> {
-  return executeWithRefresh((repo) =>
+  return exec((repo) =>
     new GrantUserPermissionUsecase(repo).execute({
       userId,
       permissionId,
@@ -233,7 +198,7 @@ export async function revokeUserPermission(
   userId: string,
   permissionId: number,
 ): Promise<void> {
-  return executeWithRefresh((repo) =>
+  return exec((repo) =>
     new RevokeUserPermissionUsecase(repo).execute({ userId, permissionId }),
   );
 }

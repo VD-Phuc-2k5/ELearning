@@ -22,8 +22,7 @@ import {
   getBankQuestions,
 } from '../actions/quiz-bank-review.actions';
 import { useState, useEffect, useRef } from 'react';
-import { cookie } from '@learning-hub/core';
-
+import { getSocketToken } from '../actions/auth.actions';
 export function QuizReviewTab() {
   const qc = useQueryClient();
   const [error, setError] = useState('');
@@ -83,19 +82,22 @@ export function QuizReviewTab() {
   > | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
     const connect = async () => {
+      const token = await getSocketToken();
+      if (cancelled) return;
       const { io } = await import('socket.io-client');
       const socketUrl = (
         process.env.NEXT_PUBLIC_NEST_API_URL ?? 'http://localhost:8080'
       ).replace(/\/api\/?$/, '');
       const socket = io(`${socketUrl}/forum`, {
-        auth: (cb: (data: { token: string }) => void) => {
-          const t = cookie.read('accessToken') ?? '';
-          cb({ token: t });
-        },
+        auth: { token },
         transports: ['websocket'],
         autoConnect: false,
       });
+      if (cancelled) {
+        return;
+      }
       socketRef.current = socket;
 
       socket.on('connect', () => {
@@ -109,12 +111,11 @@ export function QuizReviewTab() {
       socket.connect();
     };
 
-    const cleanup = connect();
+    connect();
     return () => {
-      cleanup.then(() => {
-        socketRef.current?.disconnect();
-        socketRef.current = null;
-      });
+      cancelled = true;
+      socketRef.current?.disconnect();
+      socketRef.current = null;
     };
   }, [qc]);
 

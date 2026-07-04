@@ -5,6 +5,8 @@ import {
   serverRefresh,
   serverLogout,
 } from '@learning-hub/data/server';
+import { cookies } from 'next/headers';
+import axios from 'axios';
 
 export type AdminLoginResult =
   | { success: true; accessToken: string; refreshToken: string }
@@ -43,4 +45,24 @@ export async function refreshAdminTokenAction(): Promise<
 
 export async function adminLogoutAction(): Promise<void> {
   await serverLogout();
+}
+
+export async function checkAdminAuth(): Promise<boolean> {
+  const store = await cookies();
+  const accessToken = store.get('accessToken')?.value;
+  if (!accessToken) return false;
+  try {
+    const NEST_API = process.env.NEST_API_URL || 'http://localhost:8080';
+    await axios.get(`${NEST_API}/auth/me`, {
+      headers: { Cookie: `accessToken=${accessToken}` },
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function getSocketToken(): Promise<string> {
+  const store = await cookies();
+  return store.get('accessToken')?.value ?? '';
 }

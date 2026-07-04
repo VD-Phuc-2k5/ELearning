@@ -24,7 +24,7 @@ import {
   getPostDetail,
 } from '../actions/forum-moderation.actions';
 import { getAxiosMessage } from '../../lib/admin-api';
-import { cookie } from '@learning-hub/core';
+import { getSocketToken } from '../actions/auth.actions';
 
 const LEARNINGHUB_URL =
   process.env.NEXT_PUBLIC_LEARNINGHUB_URL ?? 'http://localhost:3002';
@@ -190,19 +190,22 @@ export function ForumModerationTab() {
   > | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
     const connect = async () => {
+      const token = await getSocketToken();
+      if (cancelled) return;
       const { io } = await import('socket.io-client');
       const socketUrl = (
         process.env.NEXT_PUBLIC_NEST_API_URL ?? 'http://localhost:8080'
       ).replace(/\/api\/?$/, '');
       const socket = io(`${socketUrl}/forum`, {
-        auth: (cb: (data: { token: string }) => void) => {
-          const t = cookie.read('accessToken') ?? '';
-          cb({ token: t });
-        },
+        auth: { token },
         transports: ['websocket'],
         autoConnect: false,
       });
+      if (cancelled) {
+        return;
+      }
       socketRef.current = socket;
 
       socket.on('connect', () => {
@@ -216,12 +219,11 @@ export function ForumModerationTab() {
       socket.connect();
     };
 
-    const cleanup = connect();
+    connect();
     return () => {
-      cleanup.then(() => {
-        socketRef.current?.disconnect();
-        socketRef.current = null;
-      });
+      cancelled = true;
+      socketRef.current?.disconnect();
+      socketRef.current = null;
     };
   }, [qc]);
 

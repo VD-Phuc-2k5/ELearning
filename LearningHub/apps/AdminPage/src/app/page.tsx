@@ -14,10 +14,9 @@ import {
 } from 'lucide-react';
 import '@aejkatappaja/phantom-ui';
 import type { Role, User } from '@learning-hub/domain';
-import { cookie } from '@learning-hub/core';
 import { useConfirmModal } from '../components/admin/modal';
 import { LoginScreen } from '../components/admin/login-screen';
-import { adminLogoutAction } from './actions/auth.actions';
+import { adminLogoutAction, checkAdminAuth } from './actions/auth.actions';
 import { TabButton } from '../components/admin/tab-button';
 import { CreateAdminModal } from '../components/admin/create-admin-modal';
 import { AddPermissionModal } from '../components/admin/add-permission-modal';
@@ -53,7 +52,7 @@ const tabTitle: Record<TabKey, string> = {
 };
 
 export default function AdminDashboard() {
-  const [token, setToken] = useState<string | null>(null);
+  const [authenticated, setAuthenticated] = useState<boolean | null>(null);
   const [activeTab, setActiveTab] = useState<TabKey>('users');
   const [showCreate, setShowCreate] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
@@ -64,11 +63,20 @@ export default function AdminDashboard() {
   const { modal: confirmModal, openConfirm } = useConfirmModal();
 
   useEffect(() => {
-    setToken(cookie.read('accessToken'));
+    checkAdminAuth().then(setAuthenticated);
   }, []);
 
-  if (token === null)
-    return <LoginScreen onLogin={() => setToken(cookie.read('accessToken'))} />;
+  if (authenticated === null) return null;
+
+  if (!authenticated)
+    return (
+      <LoginScreen
+        onLogin={async () => {
+          const ok = await checkAdminAuth();
+          setAuthenticated(ok);
+        }}
+      />
+    );
 
   return (
     <div className="flex h-screen bg-[#F8FAFC]">
@@ -125,9 +133,8 @@ export default function AdminDashboard() {
         <div className="p-4 border-t border-white/10">
           <button
             onClick={async () => {
-              cookie.remove('accessToken');
               await adminLogoutAction();
-              setToken(null);
+              setAuthenticated(false);
             }}
             className="w-full text-left px-4 py-3 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 text-sm transition"
           >

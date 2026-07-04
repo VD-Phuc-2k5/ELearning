@@ -1,12 +1,10 @@
 'use server';
 
-import { withTokenRefresh } from '@learning-hub/core';
+import { unwrap } from '@learning-hub/core';
 import {
-  AuthRemoteDataSourceImpl,
   ForumRemoteDataSourceImpl,
   ForumRepositoryImpl,
 } from '@learning-hub/data';
-import { createTokenStore } from '@learning-hub/data/server';
 import type {
   AdminReportDetail,
   ForumReport,
@@ -14,31 +12,25 @@ import type {
   PostDetail,
 } from '@learning-hub/domain';
 
-const tokenStore = createTokenStore();
+function makeRepo() {
+  return new ForumRepositoryImpl(new ForumRemoteDataSourceImpl());
+}
 
-async function executeWithRefresh<T>(
+async function exec<T>(
   fn: (
     repo: ForumRepositoryImpl,
   ) => Promise<
     import('@learning-hub/core').Either<import('@learning-hub/core').Failure, T>
   >,
 ): Promise<T> {
-  return withTokenRefresh(
-    tokenStore,
-    async (refreshToken) => {
-      const refreshDs = new AuthRemoteDataSourceImpl();
-      return refreshDs.refreshToken({ token: refreshToken });
-    },
-    (token) =>
-      fn(new ForumRepositoryImpl(new ForumRemoteDataSourceImpl(), token)),
-  );
+  return unwrap(await fn(makeRepo()));
 }
 
 export async function getForumReports(
   forumId: string,
   params?: { status?: string; page?: number; limit?: number },
 ): Promise<PaginatedResponse<ForumReport>> {
-  return executeWithRefresh((repo) => repo.getReports({ forumId, ...params }));
+  return exec((repo) => repo.getReports({ forumId, ...params }));
 }
 
 export async function resolveForumReport(
@@ -46,9 +38,7 @@ export async function resolveForumReport(
   reportId: string,
   resolutionNote: string,
 ): Promise<ForumReport> {
-  return executeWithRefresh((repo) =>
-    repo.resolveReport(forumId, reportId, resolutionNote),
-  );
+  return exec((repo) => repo.resolveReport(forumId, reportId, resolutionNote));
 }
 
 export async function dismissForumReport(
@@ -56,9 +46,7 @@ export async function dismissForumReport(
   reportId: string,
   note?: string,
 ): Promise<ForumReport> {
-  return executeWithRefresh((repo) =>
-    repo.dismissReport(forumId, reportId, note),
-  );
+  return exec((repo) => repo.dismissReport(forumId, reportId, note));
 }
 
 export async function hideForumPost(
@@ -67,16 +55,14 @@ export async function hideForumPost(
   reasonCode: string,
   reasonText?: string,
 ): Promise<void> {
-  return executeWithRefresh((repo) =>
-    repo.hidePost(forumId, postId, reasonCode, reasonText),
-  );
+  return exec((repo) => repo.hidePost(forumId, postId, reasonCode, reasonText));
 }
 
 export async function restoreForumPost(
   forumId: string,
   postId: string,
 ): Promise<void> {
-  return executeWithRefresh((repo) => repo.restorePost(forumId, postId));
+  return exec((repo) => repo.restorePost(forumId, postId));
 }
 
 export async function getAdminReports(params?: {
@@ -85,23 +71,21 @@ export async function getAdminReports(params?: {
   page?: number;
   limit?: number;
 }): Promise<PaginatedResponse<AdminReportDetail>> {
-  return executeWithRefresh((repo) => repo.getAdminReports(params ?? {}));
+  return exec((repo) => repo.getAdminReports(params ?? {}));
 }
 
 export async function adminResolveReport(
   reportId: string,
   resolutionNote: string,
 ): Promise<ForumReport> {
-  return executeWithRefresh((repo) =>
-    repo.adminResolveReport(reportId, resolutionNote),
-  );
+  return exec((repo) => repo.adminResolveReport(reportId, resolutionNote));
 }
 
 export async function adminDismissReport(
   reportId: string,
   note?: string,
 ): Promise<ForumReport> {
-  return executeWithRefresh((repo) => repo.adminDismissReport(reportId, note));
+  return exec((repo) => repo.adminDismissReport(reportId, note));
 }
 
 export async function adminHidePost(
@@ -109,18 +93,16 @@ export async function adminHidePost(
   reasonCode: string,
   reasonText?: string,
 ): Promise<void> {
-  return executeWithRefresh((repo) =>
-    repo.adminHidePost(postId, reasonCode, reasonText),
-  );
+  return exec((repo) => repo.adminHidePost(postId, reasonCode, reasonText));
 }
 
 export async function adminRestorePost(postId: string): Promise<void> {
-  return executeWithRefresh((repo) => repo.adminRestorePost(postId));
+  return exec((repo) => repo.adminRestorePost(postId));
 }
 
 export async function getPostDetail(
   forumId: string,
   postId: string,
 ): Promise<PostDetail> {
-  return executeWithRefresh((repo) => repo.getPostDetail(forumId, postId));
+  return exec((repo) => repo.getPostDetail(forumId, postId));
 }
