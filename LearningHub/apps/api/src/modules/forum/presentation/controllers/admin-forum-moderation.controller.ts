@@ -22,11 +22,9 @@ import {
   AdminHidePostUseCase,
   AdminRestorePostUseCase,
 } from '../../application/use-cases/admin-moderation.use-case';
-import {
-  DismissReportDto,
-  HideContentDto,
-  ResolveReportDto,
-} from '../dto/forum-moderation.request.dto';
+import { DismissReportDto } from '../dto/dismiss-report.dto';
+import { HideContentDto } from '../dto/hide-content.dto';
+import { ResolveReportDto } from '../dto/resolve-report.dto';
 import type { AuthReq } from '../types';
 
 @ApiTags('Admin Moderation')

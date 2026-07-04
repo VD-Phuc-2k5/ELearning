@@ -25,11 +25,9 @@ import { UpdateForumUseCase } from '../../application/use-cases/update-forum.use
 import { DeleteForumUseCase } from '../../application/use-cases/delete-forum.use-case';
 import { SetForumRulesUseCase } from '../../application/use-cases/set-forum-rules.use-case';
 import { Public } from '../../../auth/infrastructure/decorators/public.decorator';
-import {
-  CreateForumDto,
-  SetForumRulesDto,
-  UpdateForumDto,
-} from '../dto/forum.request.dto';
+import { CreateForumDto } from '../dto/create-forum.dto';
+import { SetForumRulesDto } from '../dto/set-forum-rules.dto';
+import { UpdateForumDto } from '../dto/update-forum.dto';
 import { AuthReq } from '../types';
 
 @ApiTags('Forum')

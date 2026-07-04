@@ -17,7 +17,8 @@ import { CreateTagUseCase } from '../../application/use-cases/create-tag.use-cas
 import { UpdateTagUseCase } from '../../application/use-cases/update-tag.use-case';
 import { DeleteTagUseCase } from '../../application/use-cases/delete-tag.use-case';
 import { Public } from '../../../auth/infrastructure/decorators/public.decorator';
-import { CreateTagDto, UpdateTagDto } from '../dto/forum-tag.request.dto';
+import { CreateForumTagDto } from '../dto/create-forum-tag.dto';
+import { UpdateForumTagDto } from '../dto/update-forum-tag.dto';
 import { AuthReq } from '../types';
 
 @ApiTags('Forum Tags')
@@ -41,13 +42,16 @@ export class ForumTagController {
 
   @Post()
   @ApiOperation({ summary: 'Tạo tag mới' })
-  create(@Body() dto: CreateTagDto, @Request() req: AuthReq) {
+  create(@Body() dto: CreateForumTagDto, @Request() req: AuthReq) {
     return this.createTagUseCase.execute(dto, req.user.id);
   }
 
   @Patch(':id')
   @ApiOperation({ summary: 'Cập nhật tag' })
-  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateTagDto) {
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateForumTagDto,
+  ) {
     return this.updateTagUseCase.execute(id, dto);
   }
 

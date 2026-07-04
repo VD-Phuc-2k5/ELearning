@@ -21,10 +21,8 @@ import { CreateCommentUseCase } from '../../application/use-cases/create-comment
 import { GetCommentsUseCase } from '../../application/use-cases/get-comments.use-case';
 import { UpdateCommentUseCase } from '../../application/use-cases/update-comment.use-case';
 import { DeleteCommentUseCase } from '../../application/use-cases/delete-comment.use-case';
-import {
-  CreateCommentDto,
-  UpdateCommentDto,
-} from '../dto/forum-post.request.dto';
+import { CreateCommentDto } from '../dto/create-comment.dto';
+import { UpdateCommentDto } from '../dto/update-comment.dto';
 import { AuthReq } from '../types';
 
 @ApiTags('Forum Comments')

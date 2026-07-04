@@ -28,7 +28,8 @@ import { GetInvitesUseCase } from '../../application/use-cases/get-invites.use-c
 import { RevokeInviteUseCase } from '../../application/use-cases/revoke-invite.use-case';
 import { AcceptInviteUseCase } from '../../application/use-cases/accept-invite.use-case';
 import { SearchMembersUseCase } from '../../application/use-cases/search-members.use-case';
-import { CreateInviteDto, UpdateMemberRoleDto } from '../dto/forum.request.dto';
+import { CreateInviteDto } from '../dto/create-invite.dto';
+import { UpdateMemberRoleDto } from '../dto/update-member-role.dto';
 import { AuthReq } from '../types';
 
 @ApiTags('Forum Membership')

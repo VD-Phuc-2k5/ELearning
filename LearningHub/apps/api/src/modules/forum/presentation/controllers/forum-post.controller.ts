@@ -25,7 +25,8 @@ import { DeletePostUseCase } from '../../application/use-cases/delete-post.use-c
 import { PinPostUseCase } from '../../application/use-cases/pin-post.use-case';
 import { LockPostUseCase } from '../../application/use-cases/lock-post.use-case';
 import type { PostType } from '../../domain/entities/forum-post.domain';
-import { CreatePostDto, UpdatePostDto } from '../dto/forum-post.request.dto';
+import { CreatePostDto } from '../dto/create-post.dto';
+import { UpdatePostDto } from '../dto/update-post.dto';
 import { AuthReq } from '../types';
 import { Public } from '../../../auth/infrastructure/decorators/public.decorator';
 

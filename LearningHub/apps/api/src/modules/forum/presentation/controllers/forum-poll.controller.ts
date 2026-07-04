@@ -11,7 +11,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { VotePollUseCase } from '../../application/use-cases/vote-poll.use-case';
 import { RemovePollVoteUseCase } from '../../application/use-cases/remove-poll-vote.use-case';
-import { VotePollDto } from '../dto/forum-post.request.dto';
+import { VotePollDto } from '../dto/vote-poll.dto';
 import { AuthReq } from '../types';
 
 @ApiTags('Forum Polls')

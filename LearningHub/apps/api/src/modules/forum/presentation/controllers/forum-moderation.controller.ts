@@ -30,12 +30,10 @@ import {
   RestorePostUseCase,
 } from '../../application/use-cases/moderation.use-case';
 import type { ReportTargetType } from '../../domain/entities/forum-report.domain';
-import {
-  CreateReportDto,
-  DismissReportDto,
-  HideContentDto,
-  ResolveReportDto,
-} from '../dto/forum-moderation.request.dto';
+import { CreateReportDto } from '../dto/create-report.dto';
+import { DismissReportDto } from '../dto/dismiss-report.dto';
+import { HideContentDto } from '../dto/hide-content.dto';
+import { ResolveReportDto } from '../dto/resolve-report.dto';
 import { AuthReq } from '../types';
 
 @ApiTags('Forum Moderation')
