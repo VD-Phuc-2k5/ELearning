@@ -1,13 +1,3 @@
-export interface SubmitAnswerItem {
-  questionId: string;
-  selectedOptionId: string;
-}
-export interface SubmitQuizDto {
-  answers: SubmitAnswerItem[];
-  roadmapId?: string | null;
-  durationSeconds?: number;
-}
-
 export interface SubmitQuizResultDetail {
   questionId: string;
   selectedOptionId: string;

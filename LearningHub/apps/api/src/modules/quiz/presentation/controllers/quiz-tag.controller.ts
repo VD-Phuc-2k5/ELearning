@@ -14,10 +14,8 @@ import { GetAllTagsUseCase } from '../../application/use-cases/get-all-tags.use-
 import { CreateTagUseCase } from '../../application/use-cases/create-tag.use-case';
 import { UpdateTagUseCase } from '../../application/use-cases/update-tag.use-case';
 import { DeleteTagUseCase } from '../../application/use-cases/delete-tag.use-case';
-import {
-  CreateTagRequestDto,
-  UpdateTagRequestDto,
-} from '../dto/tag.request.dto';
+import { CreateTagRequestDto } from '../dto/create-tag-request.dto';
+import { UpdateTagRequestDto } from '../dto/update-tag-request.dto';
 
 @ApiTags('Quiz - Tags')
 @ApiBearerAuth()

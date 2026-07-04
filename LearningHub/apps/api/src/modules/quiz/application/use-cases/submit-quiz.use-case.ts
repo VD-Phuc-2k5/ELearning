@@ -23,20 +23,20 @@ import {
   IUserRoadmapProgressRepository,
   USER_ROADMAP_PROGRESS_REPOSITORY,
 } from '../../../roadmap/domain/repositories/user-roadmap-progress.repository.interface';
+import { SubmitQuizInputDto } from '../dto/submit-quiz-input.dto';
 import {
-  SubmitQuizDto,
   SubmitQuizResult,
   SubmitQuizResultDetail,
   NextBankSuggestion,
-} from '../dto/submit-quiz.dto';
+} from '../dto/quiz-result.dto';
 
+export { SubmitQuizInputDto } from '../dto/submit-quiz-input.dto';
+export { SubmitAnswerInputDto } from '../dto/submit-answer-input.dto';
 export type {
-  SubmitAnswerItem,
-  SubmitQuizDto,
   SubmitQuizResultDetail,
   NextBankSuggestion,
   SubmitQuizResult,
-} from '../dto/submit-quiz.dto';
+} from '../dto/quiz-result.dto';
 
 @Injectable()
 export class SubmitQuizUseCase {
@@ -57,7 +57,7 @@ export class SubmitQuizUseCase {
 
   async execute(
     bankId: string,
-    dto: SubmitQuizDto,
+    dto: SubmitQuizInputDto,
     userId: string,
   ): Promise<SubmitQuizResult> {
     const bank = await this.questionBankRepository.findById(bankId);

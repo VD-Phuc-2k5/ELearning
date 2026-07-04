@@ -20,7 +20,7 @@ import { GetQuizAttemptsUseCase } from '../../application/use-cases/get-quiz-att
 import { GetQuizAttemptDetailUseCase } from '../../application/use-cases/get-quiz-attempt-detail.use-case';
 import { GetBankProgressUseCase } from '../../application/use-cases/get-bank-progress.use-case';
 import { GetBankRoadmapsUseCase } from '../../application/use-cases/get-bank-roadmaps.use-case';
-import { SubmitQuizRequestDto } from '../dto/quiz-attempt.request.dto';
+import { SubmitQuizRequestDto } from '../dto/submit-quiz-request.dto';
 
 interface AuthenticatedRequest {
   user: { id: string };

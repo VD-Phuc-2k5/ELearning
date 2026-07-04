@@ -47,13 +47,11 @@ import { GetDerivedBanksUseCase } from '../../application/use-cases/get-derived-
 import { UploadQuestionsUseCase } from '../../application/use-cases/upload-questions.use-case';
 import { ParseExcelUseCase } from '../../application/use-cases/parse-excel.use-case';
 
-import {
-  CreateQuestionBankRequestDto,
-  UploadQuestionsRequestDto,
-  VerifyQuestionAnswerRequestDto,
-  UpdateQuestionBankRequestDto,
-  UpdateQuestionRequestDto,
-} from '../dto/question-bank.request.dto';
+import { CreateQuestionBankRequestDto } from '../dto/create-question-bank-request.dto';
+import { UploadQuestionsRequestDto } from '../dto/upload-questions-request.dto';
+import { VerifyQuestionAnswerRequestDto } from '../dto/verify-question-answer-request.dto';
+import { UpdateQuestionBankRequestDto } from '../dto/update-question-bank-request.dto';
+import { UpdateQuestionRequestDto } from '../dto/update-question-request.dto';
 
 @ApiTags('Quiz - Ngân hàng câu hỏi')
 @ApiBearerAuth()
