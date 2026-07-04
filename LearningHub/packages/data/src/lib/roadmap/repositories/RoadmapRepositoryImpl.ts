@@ -38,12 +38,7 @@ function toFailure(e: unknown): Failure {
 }
 
 export class RoadmapRepositoryImpl implements IRoadmapRepository {
-  constructor(
-    private dataSource: IRoadmapRemoteDataSource,
-    token: string,
-  ) {
-    this.dataSource.setToken(token);
-  }
+  constructor(private dataSource: IRoadmapRemoteDataSource) {}
 
   async getRoadmaps(
     params: GetRoadmapsParams,

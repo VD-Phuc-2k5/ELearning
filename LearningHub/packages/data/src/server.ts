@@ -13,6 +13,7 @@ async function setCookies(accessToken: string, refreshToken: string) {
     maxAge: 900,
     path: '/',
     sameSite: 'lax',
+    httpOnly: true,
   });
   jar.set('refreshToken', refreshToken, {
     maxAge: 7 * 24 * 60 * 60,
@@ -43,7 +44,7 @@ export async function serverLogin(email: string, password: string) {
 }
 
 export async function serverAdminLogin(email: string, password: string) {
-  const repo = new AuthRepositoryImpl(new AuthRemoteDataSourceImpl(), '');
+  const repo = new AuthRepositoryImpl(new AuthRemoteDataSourceImpl());
   const result = await new AdminLoginUsecase(repo).execute({
     email,
     password,
@@ -78,5 +79,3 @@ export async function serverRefresh(): Promise<{
   }
   throw result.value;
 }
-
-export { createTokenStore } from './lib/auth/createTokenStore';

@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { handleAxiosError } from '@learning-hub/core';
+import { getServerCookies } from '../../serverCookies';
 import {
   CreateRoadmapParams,
   GetRoadmapsParams,
@@ -15,21 +16,16 @@ import { IRoadmapRemoteDataSource } from './IRoadmapRemoteDataSource';
 const NEST_API = process.env.NEST_API_URL || 'http://localhost:8080';
 
 export class RoadmapRemoteDataSourceImpl implements IRoadmapRemoteDataSource {
-  private token?: string;
-
-  private api = axios.create({ baseURL: NEST_API });
+  private api = axios.create({
+    baseURL: NEST_API,
+    withCredentials: true,
+  });
 
   constructor() {
-    this.api.interceptors.request.use((config) => {
-      if (this.token) {
-        config.headers.Authorization = `Bearer ${this.token}`;
-      }
+    this.api.interceptors.request.use(async (config) => {
+      config.headers.Cookie = await getServerCookies();
       return config;
     });
-  }
-
-  setToken(token: string): void {
-    this.token = token;
   }
 
   async getRoadmaps(params: GetRoadmapsParams): Promise<RoadmapList> {

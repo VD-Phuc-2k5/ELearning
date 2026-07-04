@@ -35,7 +35,6 @@ import {
 } from '@learning-hub/domain';
 
 export interface IForumRemoteDataSource {
-  setToken(token: string): void;
   listForums(
     params: ListForumsParams,
   ): Promise<PaginatedResponse<ForumListItem>>;

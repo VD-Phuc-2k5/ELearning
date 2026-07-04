@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getServerCookies } from '../../serverCookies';
 import {
   AuthTokens,
   CreatePermissionParams,
@@ -16,24 +17,16 @@ import { handleAxiosError } from '@learning-hub/core';
 import { IAuthRemoteDataSource } from './IAuthRemoteDataSource';
 
 export class AuthRemoteDataSourceImpl implements IAuthRemoteDataSource {
-  private token?: string;
-
   private api = axios.create({
     baseURL: process.env.NEST_API_URL || 'http://localhost:8080',
     withCredentials: true,
   });
 
   constructor() {
-    this.api.interceptors.request.use((config) => {
-      if (this.token) {
-        config.headers.Authorization = `Bearer ${this.token}`;
-      }
+    this.api.interceptors.request.use(async (config) => {
+      config.headers.Cookie = await getServerCookies();
       return config;
     });
-  }
-
-  setToken(token: string): void {
-    this.token = token;
   }
 
   async register(data: RegisterParams): Promise<{ user: User }> {

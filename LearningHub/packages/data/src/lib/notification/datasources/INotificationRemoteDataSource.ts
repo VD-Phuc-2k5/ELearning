@@ -4,7 +4,6 @@ import {
 } from '@learning-hub/domain';
 
 export interface INotificationRemoteDataSource {
-  setToken(token: string): void;
   listNotifications(
     params: ListNotificationsParams,
   ): Promise<NotificationsPage>;

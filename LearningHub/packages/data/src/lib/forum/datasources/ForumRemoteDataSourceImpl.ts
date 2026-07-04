@@ -36,30 +36,24 @@ import {
   UploadImageResult,
 } from '@learning-hub/domain';
 import { handleAxiosError } from '@learning-hub/core';
+import { getServerCookies } from '../../serverCookies';
 import { IForumRemoteDataSource } from './IForumRemoteDataSource';
 
 export class ForumRemoteDataSourceImpl implements IForumRemoteDataSource {
-  private token?: string;
-
   private api = axios.create({
     baseURL:
       process.env.NEST_API_URL ||
       process.env.NEXT_PUBLIC_API_URL ||
       'http://127.0.0.1:8080/api',
     timeout: 15000,
+    withCredentials: true,
   });
 
   constructor() {
-    this.api.interceptors.request.use((config) => {
-      if (this.token) {
-        config.headers.Authorization = `Bearer ${this.token}`;
-      }
+    this.api.interceptors.request.use(async (config) => {
+      config.headers.Cookie = await getServerCookies();
       return config;
     });
-  }
-
-  setToken(token: string): void {
-    this.token = token;
   }
 
   async listForums(

@@ -32,12 +32,7 @@ function toFailure(e: unknown): Failure {
 }
 
 export class NotificationRepositoryImpl implements INotificationRepository {
-  constructor(
-    private dataSource: INotificationRemoteDataSource,
-    token?: string,
-  ) {
-    if (token) this.dataSource.setToken(token);
-  }
+  constructor(private dataSource: INotificationRemoteDataSource) {}
 
   async listNotifications(
     params: ListNotificationsParams,

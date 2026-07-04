@@ -41,12 +41,7 @@ function toFailure(e: unknown): Failure {
 }
 
 export class AuthRepositoryImpl implements IAuthRepository {
-  constructor(
-    private dataSource: IAuthRemoteDataSource,
-    token?: string,
-  ) {
-    if (token) this.dataSource.setToken(token);
-  }
+  constructor(private dataSource: IAuthRemoteDataSource) {}
 
   async register(data: RegisterParams): Promise<Either<Failure, User>> {
     try {

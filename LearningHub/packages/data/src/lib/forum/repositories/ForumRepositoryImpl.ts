@@ -64,12 +64,7 @@ function toFailure(e: unknown): Failure {
 }
 
 export class ForumRepositoryImpl implements IForumRepository {
-  constructor(
-    private dataSource: IForumRemoteDataSource,
-    token?: string,
-  ) {
-    if (token) this.dataSource.setToken(token);
-  }
+  constructor(private dataSource: IForumRemoteDataSource) {}
 
   async listForums(
     params: ListForumsParams,

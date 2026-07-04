@@ -23,7 +23,6 @@ import {
 } from '@learning-hub/domain';
 
 export interface IQuizRemoteDataSource {
-  setToken(token: string): void;
   getBanks(params: GetBanksQuizParams): Promise<BankList>;
   getBankDetail(id: string): Promise<QuestionBank>;
   createBank(params: CreateBankQuizParams): Promise<QuestionBank>;

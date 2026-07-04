@@ -10,7 +10,6 @@ import {
 } from '@learning-hub/domain';
 
 export interface IRoadmapRemoteDataSource {
-  setToken(token: string): void;
   getRoadmaps(params: GetRoadmapsParams): Promise<RoadmapList>;
   getMyRoadmaps(params: GetRoadmapsParams): Promise<RoadmapList>;
   createRoadmap(params: CreateRoadmapParams): Promise<Roadmap>;

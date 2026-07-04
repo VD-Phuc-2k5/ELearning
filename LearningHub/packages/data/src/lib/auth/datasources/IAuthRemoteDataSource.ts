@@ -13,7 +13,6 @@ import {
 } from '@learning-hub/domain';
 
 export interface IAuthRemoteDataSource {
-  setToken(token: string): void;
   register(data: RegisterParams): Promise<{ user: User }>;
   login(data: LoginParams): Promise<AuthTokens>;
   adminLogin(data: LoginParams): Promise<AuthTokens>;

@@ -51,12 +51,7 @@ function toFailure(e: unknown): Failure {
 }
 
 export class QuizRepositoryImpl implements IQuizRepository {
-  constructor(
-    private dataSource: IQuizRemoteDataSource,
-    token: string,
-  ) {
-    this.dataSource.setToken(token);
-  }
+  constructor(private dataSource: IQuizRemoteDataSource) {}
 
   async getBanks(
     params: GetBanksQuizParams,
