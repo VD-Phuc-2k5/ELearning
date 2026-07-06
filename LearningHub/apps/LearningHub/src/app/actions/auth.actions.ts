@@ -34,7 +34,7 @@ export async function getCurrentUser(): Promise<User | null> {
   const accessToken = store.get('accessToken')?.value;
   if (!accessToken) return null;
   try {
-    const NEST_API = process.env.NEST_API_URL || 'http://localhost:8080';
+    const NEST_API = `${process.env.NEST_API_URL || 'http://localhost:8080'}/api`;
     const res = await axios.get(`${NEST_API}/auth/me`, {
       headers: { Cookie: `accessToken=${accessToken}` },
     });
