@@ -5,7 +5,7 @@ allowBuilds:
   '@swc/core': true
   bcrypt: true
   less: true
-  msgpackr-extract: set this to true or false
+  msgpackr-extract: true
   nx: true
   sharp: true
   unrs-resolver: true
