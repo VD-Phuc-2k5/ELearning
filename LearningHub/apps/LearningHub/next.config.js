@@ -7,11 +7,20 @@ const { composePlugins, withNx } = require('@nx/next');
  * @type {import('@nx/next/plugins/with-nx').WithNxOptions}
  **/
 const nextConfig = {
+  output: 'standalone',
   transpilePackages: [
     '@learning-hub/core',
     '@learning-hub/domain',
     '@learning-hub/data',
   ],
+  experimental: {
+    serverActions: {
+      allowedOrigins: ['localhost:8080', 'localhost:8081'],
+    },
+    outputFileTracingExcludes: {
+      '*': ['**/@swc+core*', '**/@esbuild+*', '**/esbuild/**', '**/sharp/**'],
+    },
+  },
   async rewrites() {
     return [
       {

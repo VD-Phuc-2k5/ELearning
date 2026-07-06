@@ -10,6 +10,38 @@
       "options": {
         "port": 3001
       }
+    },
+    "build": {
+      "executor": "@nx/next:build",
+      "outputs": ["{options.outputPath}"],
+      "defaultConfiguration": "production",
+      "options": {
+        "outputPath": "dist/apps/AdminPage"
+      },
+      "configurations": {
+        "development": {
+          "outputPath": "dist/apps/AdminPage"
+        },
+        "production": {
+          "outputPath": "dist/apps/AdminPage"
+        }
+      }
+    },
+    "start": {
+      "executor": "@nx/next:server",
+      "defaultConfiguration": "production",
+      "options": {
+        "buildTarget": "AdminPage:build:production",
+        "port": 3001
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "AdminPage:build:development"
+        },
+        "production": {
+          "buildTarget": "AdminPage:build:production"
+        }
+      }
     }
   }
 }
