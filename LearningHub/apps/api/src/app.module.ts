@@ -44,6 +44,8 @@ import { AddTagCreatedBy1784000000009 } from './migrations/1784000000009-AddTagC
 import { AddUniqueUsername1785000000001 } from './migrations/1785000000001-AddUniqueUsername';
 import { AddRejectReasonToQuestionBanks1785000000002 } from './migrations/1785000000002-AddRejectReasonToQuestionBanks';
 import { DropBrokenForumPostSearchTrigger1785000000003 } from './migrations/1785000000003-DropBrokenForumPostSearchTrigger';
+import { SandboxModule } from './modules/sandbox/sandbox.module';
+import { JudgeModule } from './modules/judge/judge.module';
 
 @Module({
   imports: [
@@ -131,6 +133,8 @@ import { DropBrokenForumPostSearchTrigger1785000000003 } from './migrations/1785
     QuizModule,
     RoadmapModule,
     ForumModule,
+    SandboxModule,
+    JudgeModule,
   ],
   controllers: [],
   providers: [],

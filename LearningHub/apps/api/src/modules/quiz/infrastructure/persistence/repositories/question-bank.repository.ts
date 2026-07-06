@@ -82,10 +82,10 @@ export class QuestionBankRepository implements IQuestionBankRepository {
     if (bankIds.length > 0) {
       const rows = await this.repo.manager
         .createQueryBuilder(QuestionBankUploadEntity, 'up')
-        .select('up.question_bank_id', 'bankId')
-        .addSelect('MAX(up.uploaded_at)', 'latestTime')
-        .where('up.question_bank_id IN (:...bankIds)', { bankIds })
-        .groupBy('up.question_bank_id')
+        .select('up.questionBankId', 'bankId')
+        .addSelect('MAX(up.uploadedAt)', 'latestTime')
+        .where('up.questionBankId IN (:...bankIds)', { bankIds })
+        .groupBy('up.questionBankId')
         .getRawMany<{ bankId: string; latestTime: Date }>();
       for (const row of rows) {
         latestUploads.set(row.bankId, row.latestTime ?? null);

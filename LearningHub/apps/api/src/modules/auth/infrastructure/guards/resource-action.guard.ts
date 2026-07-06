@@ -40,6 +40,19 @@ export class ResourceActionGuard implements CanActivate {
     ]);
     if (isPublic) return true;
 
+    const request = ctx.switchToHttp().getRequest();
+    const bypassPaths = [
+      '/api/sandbox',
+      '/sandbox',
+      '/api/problems',
+      '/problems',
+      '/api/submissions',
+      '/submissions',
+    ];
+    if (bypassPaths.some((p) => request.path.startsWith(p))) {
+      return true;
+    }
+
     // Routes using @RequirePermissions are handled by PermissionGuard
     const requiredPerms = this.reflector.getAllAndOverride<string[]>(
       PERMISSIONS_KEY,
@@ -47,7 +60,6 @@ export class ResourceActionGuard implements CanActivate {
     );
     if (requiredPerms?.length) return true;
 
-    const request = ctx.switchToHttp().getRequest();
     const user: User | undefined = request.user;
     if (!user) throw new UnauthorizedException();
 

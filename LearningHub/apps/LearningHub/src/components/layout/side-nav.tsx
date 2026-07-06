@@ -8,6 +8,8 @@ import {
   Map,
   MessageSquare,
   LogOut,
+  Terminal,
+  Code2,
 } from 'lucide-react';
 import type { User } from '@learning-hub/domain';
 import { Brand } from './brand';
@@ -19,6 +21,8 @@ const navigation = [
   { href: '/my-banks', label: 'Workshop', Icon: BookOpen },
   { href: '/roadmaps/manage', label: 'Roadmaps', Icon: Map },
   { href: '/forum', label: 'Forum', Icon: MessageSquare },
+  { href: '/playground', label: 'Playground', Icon: Terminal },
+  { href: '/problems', label: 'Coding Problems', Icon: Code2 },
 ];
 
 interface SideNavProps {

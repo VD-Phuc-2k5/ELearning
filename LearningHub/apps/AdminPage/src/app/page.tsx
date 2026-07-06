@@ -11,6 +11,7 @@ import {
   UserCog,
   ShieldAlert,
   BookOpen,
+  Terminal,
 } from 'lucide-react';
 import '@aejkatappaja/phantom-ui';
 import type { Role, User } from '@learning-hub/domain';
@@ -31,6 +32,8 @@ import { MonitoringTab } from './tabs/monitoring-tab';
 import { UserAdminTab } from './tabs/user-admin-tab';
 import { ForumModerationTab } from './tabs/forum-moderation-tab';
 import { QuizReviewTab } from './tabs/quiz-review-tab';
+import { ProblemsTab } from './tabs/problems-tab';
+import { CreateProblemModal } from '../components/admin/create-problem-modal';
 
 type TabKey =
   | 'monitoring'
@@ -39,7 +42,8 @@ type TabKey =
   | 'permissions'
   | 'user-admin'
   | 'forum-moderation'
-  | 'quiz-review';
+  | 'quiz-review'
+  | 'problems';
 
 const tabTitle: Record<TabKey, string> = {
   users: 'Quản lý Thành viên',
@@ -49,6 +53,7 @@ const tabTitle: Record<TabKey, string> = {
   'user-admin': 'Quản trị User',
   'forum-moderation': 'Kiểm duyệt Forum',
   'quiz-review': 'Kiểm duyệt Ngân hàng Câu hỏi',
+  problems: 'Quản lý Đề bài Lập trình',
 };
 
 export default function AdminDashboard() {
@@ -60,6 +65,7 @@ export default function AdminDashboard() {
   const [showCreatePerm, setShowCreatePerm] = useState(false);
   const [showCreateRole, setShowCreateRole] = useState(false);
   const [editingRole, setEditingRole] = useState<Role | null>(null);
+  const [showCreateProblem, setShowCreateProblem] = useState(false);
   const { modal: confirmModal, openConfirm } = useConfirmModal();
 
   useEffect(() => {
@@ -129,6 +135,12 @@ export default function AdminDashboard() {
             icon={<BookOpen className="h-5 w-5" />}
             label="Kiểm duyệt Câu hỏi"
           />
+          <TabButton
+            active={activeTab === 'problems'}
+            onClick={() => setActiveTab('problems')}
+            icon={<Terminal className="h-5 w-5" />}
+            label="Đề bài Coding"
+          />
         </nav>
         <div className="p-4 border-t border-white/10">
           <button
@@ -173,6 +185,14 @@ export default function AdminDashboard() {
                 <Plus className="h-5 w-5" /> Thêm vai trò
               </button>
             )}
+            {activeTab === 'problems' && (
+              <button
+                onClick={() => setShowCreateProblem(true)}
+                className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-xl font-bold hover:bg-indigo-700 transition"
+              >
+                <Plus className="h-5 w-5" /> Thêm đề bài
+              </button>
+            )}
           </div>
         </header>
 
@@ -203,6 +223,9 @@ export default function AdminDashboard() {
             onClose={() => setEditingRole(null)}
           />
         )}
+        {showCreateProblem && (
+          <CreateProblemModal onClose={() => setShowCreateProblem(false)} />
+        )}
 
         {activeTab === 'users' && (
           <UsersTab
@@ -221,6 +244,7 @@ export default function AdminDashboard() {
         {activeTab === 'user-admin' && <UserAdminTab />}
         {activeTab === 'forum-moderation' && <ForumModerationTab />}
         {activeTab === 'quiz-review' && <QuizReviewTab />}
+        {activeTab === 'problems' && <ProblemsTab />}
       </main>
       {confirmModal}
     </div>
