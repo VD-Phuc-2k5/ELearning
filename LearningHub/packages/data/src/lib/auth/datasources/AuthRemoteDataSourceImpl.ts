@@ -18,7 +18,7 @@ import { IAuthRemoteDataSource } from './IAuthRemoteDataSource';
 
 export class AuthRemoteDataSourceImpl implements IAuthRemoteDataSource {
   private api = axios.create({
-    baseURL: process.env.NEST_API_URL || 'http://localhost:8080',
+    baseURL: `${process.env.NEST_API_URL || 'http://localhost:8080'}/api`,
     withCredentials: true,
   });
 

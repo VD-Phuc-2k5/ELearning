@@ -4,7 +4,7 @@ import axios from 'axios';
 import { cookies } from 'next/headers';
 import type { QuestionBank, Question } from '@learning-hub/domain';
 
-const NEST_API = process.env.NEST_API_URL || 'http://localhost:8080';
+const NEST_API = `${process.env.NEST_API_URL || 'http://localhost:8080'}/api`;
 
 async function cookieHeader(): Promise<string> {
   const jar = await cookies();

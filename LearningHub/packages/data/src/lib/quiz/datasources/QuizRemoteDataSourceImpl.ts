@@ -11,7 +11,7 @@ import {
 } from '@learning-hub/domain';
 import { IQuizRemoteDataSource } from './IQuizRemoteDataSource';
 
-const NEST_API = process.env.NEST_API_URL || 'http://localhost:8080';
+const NEST_API = `${process.env.NEST_API_URL || 'http://localhost:8080'}/api`;
 
 export class QuizRemoteDataSourceImpl implements IQuizRemoteDataSource {
   private api = axios.create({

@@ -52,7 +52,7 @@ export async function checkAdminAuth(): Promise<boolean> {
   const accessToken = store.get('accessToken')?.value;
   if (!accessToken) return false;
   try {
-    const NEST_API = process.env.NEST_API_URL || 'http://localhost:8080';
+    const NEST_API = `${process.env.NEST_API_URL || 'http://localhost:8080'}/api`;
     await axios.get(`${NEST_API}/auth/me`, {
       headers: { Cookie: `accessToken=${accessToken}` },
     });

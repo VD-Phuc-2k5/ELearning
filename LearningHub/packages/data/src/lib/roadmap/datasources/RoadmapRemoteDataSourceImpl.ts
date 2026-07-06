@@ -13,7 +13,7 @@ import {
 } from '@learning-hub/domain';
 import { IRoadmapRemoteDataSource } from './IRoadmapRemoteDataSource';
 
-const NEST_API = process.env.NEST_API_URL || 'http://localhost:8080';
+const NEST_API = `${process.env.NEST_API_URL || 'http://localhost:8080'}/api`;
 
 export class RoadmapRemoteDataSourceImpl implements IRoadmapRemoteDataSource {
   private api = axios.create({

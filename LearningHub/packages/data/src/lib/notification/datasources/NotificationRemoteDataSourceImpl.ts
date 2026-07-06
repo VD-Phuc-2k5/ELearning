@@ -11,10 +11,7 @@ export class NotificationRemoteDataSourceImpl
   implements INotificationRemoteDataSource
 {
   private api = axios.create({
-    baseURL:
-      process.env.NEST_API_URL ||
-      process.env.NEXT_PUBLIC_API_URL ||
-      'http://127.0.0.1:8080/api',
+    baseURL: `${process.env.NEST_API_URL || 'http://localhost:8080'}/api`,
     timeout: 10000,
     withCredentials: true,
   });
