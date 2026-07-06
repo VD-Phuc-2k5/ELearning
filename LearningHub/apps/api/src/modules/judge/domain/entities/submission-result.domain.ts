@@ -1,3 +1,5 @@
+import { TestCaseDomain } from './test-case.domain';
+
 export interface SubmissionResultDomain {
   id: string;
   submissionId: string;
@@ -12,5 +14,6 @@ export interface SubmissionResultDomain {
   executionTimeMs: number | null;
   memoryUsedKb: number | null;
   errorMessage: string | null;
+  testCase?: TestCaseDomain;
   createdAt: Date;
 }

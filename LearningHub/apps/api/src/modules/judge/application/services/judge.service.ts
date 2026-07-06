@@ -122,19 +122,9 @@ export class JudgeService {
       let finalCode = submission.sourceCode;
       const wrapperCode = problem.wrappers?.[submission.language];
       if (wrapperCode) {
-        if (wrapperCode.includes('// {{STUDENT_CODE}}')) {
+        if (wrapperCode.includes('{{STUDENT_CODE}}')) {
           finalCode = wrapperCode.replace(
-            '// {{STUDENT_CODE}}',
-            submission.sourceCode,
-          );
-        } else if (wrapperCode.includes('# {{STUDENT_CODE}}')) {
-          finalCode = wrapperCode.replace(
-            '# {{STUDENT_CODE}}',
-            submission.sourceCode,
-          );
-        } else if (wrapperCode.includes('/* {{STUDENT_CODE}} */')) {
-          finalCode = wrapperCode.replace(
-            '/* {{STUDENT_CODE}} */',
+            '{{STUDENT_CODE}}',
             submission.sourceCode,
           );
         } else {

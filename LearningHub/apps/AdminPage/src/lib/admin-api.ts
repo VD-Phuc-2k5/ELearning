@@ -1,5 +1,3 @@
-import type { ApiErrorShape } from '@learning-hub/core';
-
 export const VALID_ACTIONS = ['create', 'get', 'update', 'delete'] as const;
 
 export const inputCls =

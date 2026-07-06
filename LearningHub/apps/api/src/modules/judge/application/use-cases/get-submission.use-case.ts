@@ -24,16 +24,34 @@ export class GetSubmissionUseCase {
     const submission = await this.submissionRepo.findById(id);
     if (!submission) throw new NotFoundException('Submission not found');
 
-    if (submission.userId !== userId) {
-      const roles = await this.userRoleRepo.findByUserId(userId);
-      const isAdmin = roles.some(
-        (ur) => ur.role.code === 'ADMIN' || ur.role.code === 'OWNER',
+    const roles = await this.userRoleRepo.findByUserId(userId);
+    const isAdmin = roles.some(
+      (ur) => ur.role.code === 'ADMIN' || ur.role.code === 'OWNER',
+    );
+
+    if (submission.userId !== userId && !isAdmin) {
+      throw new ForbiddenException(
+        'You are not authorized to view this submission',
       );
-      if (!isAdmin) {
-        throw new ForbiddenException(
-          'You are not authorized to view this submission',
-        );
-      }
+    }
+
+    // Nếu không phải là ADMIN/OWNER, lọc ẩn toàn bộ thông tin nhạy cảm của test case ẩn
+    if (!isAdmin && submission.results) {
+      submission.results = submission.results.map((res) => {
+        if (res.testCase?.isHidden) {
+          return {
+            ...res,
+            actualOutput: null,
+            errorMessage: null,
+            testCase: {
+              ...res.testCase,
+              input: '',
+              expectedOutput: '',
+            },
+          };
+        }
+        return res;
+      });
     }
 
     return submission;

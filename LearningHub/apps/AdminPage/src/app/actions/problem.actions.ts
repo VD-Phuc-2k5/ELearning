@@ -6,7 +6,7 @@ import axios from 'axios';
 const API_URL = process.env.NEST_API_URL || 'http://localhost:8080/api';
 
 async function getAuthHeader() {
-  const token = (await cookies()).get('adminToken')?.value ?? '';
+  const token = (await cookies()).get('accessToken')?.value ?? '';
   return { Authorization: `Bearer ${token}` };
 }
 

@@ -37,17 +37,24 @@ export class SubmissionRepository implements ISubmissionRepository {
         id: r.id,
         submissionId: r.submissionId,
         testCaseId: r.testCaseId,
-        status: r.status as
-          | 'accepted'
-          | 'wrong_answer'
-          | 'time_limit_exceeded'
-          | 'runtime_error'
-          | 'memory_limit_exceeded',
+        status: r.status as any,
         actualOutput: r.actualOutput,
         executionTimeMs: r.executionTimeMs,
         memoryUsedKb: r.memoryUsedKb,
         errorMessage: r.errorMessage,
         createdAt: r.createdAt,
+        testCase: r.testCase
+          ? {
+              id: r.testCase.id,
+              problemId: r.testCase.problemId,
+              input: r.testCase.input,
+              expectedOutput: r.testCase.expectedOutput,
+              isHidden: r.testCase.isHidden,
+              orderIndex: r.testCase.orderIndex,
+              points: r.testCase.points,
+              createdAt: r.testCase.createdAt,
+            }
+          : undefined,
       })),
     };
   }
