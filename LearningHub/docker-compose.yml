@@ -1,0 +1,350 @@
+services:
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    ports:
+      - '8080:80'
+      - '8081:81'
+    configs:
+      - source: nginx_config
+        target: /etc/nginx/nginx.conf
+    depends_on:
+      api:
+        condition: service_healthy
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    env_file:
+      - apps/api/.env
+    environment:
+      REDIS_HOST: redis
+      POSTGRES_HOST: postgres
+      CORS_ORIGINS: 'http://localhost:8080,http://localhost:8081'
+    volumes:
+      - api_logs:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    deploy:
+      replicas: 1
+      endpoint_mode: vip
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'wget -qO /dev/null http://localhost:8080/metrics 2>&1 || exit 1',
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  postgres:
+    image: postgres:17
+    container_name: postgres
+    env_file:
+      - apps/api/.env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-dev_learning_hub}',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  redis:
+    image: redis:8-alpine
+    container_name: redis
+    ports:
+      - '6379:6379'
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    env_file:
+      - apps/api/.env
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+    ports:
+      - '5050:80'
+    depends_on:
+      - postgres
+
+  loki:
+    image: grafana/loki:latest
+    container_name: loki
+    ports:
+      - '3100:3100'
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - loki_data:/loki
+
+  promtail:
+    image: grafana/promtail:latest
+    container_name: promtail
+    volumes:
+      - api_logs:/var/log/api
+    configs:
+      - source: promtail_config
+        target: /etc/promtail/config.yml
+    command: -config.file=/etc/promtail/config.yml
+    depends_on:
+      - loki
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - '9090:9090'
+    volumes:
+      - prometheus_data:/prometheus
+    configs:
+      - source: prometheus_config
+        target: /etc/prometheus/prometheus.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+
+  learninghub:
+    build:
+      context: .
+      dockerfile: apps/LearningHub/Dockerfile
+      args:
+        # ponytail: baked into client JS for socket.io; server-side rewrites read NEST_API_URL at runtime
+        NEXT_PUBLIC_NEST_API_URL: http://localhost:8080
+    environment:
+      NEST_API_URL: http://api:8080
+      PORT: 3002
+    depends_on:
+      - nginx
+    deploy:
+      replicas: 2
+      endpoint_mode: vip
+
+  adminpage:
+    build:
+      context: .
+      dockerfile: apps/AdminPage/Dockerfile
+      args:
+        NEXT_PUBLIC_NEST_API_URL: http://localhost:8080
+    environment:
+      NEST_API_URL: http://api:8080
+      PORT: 3001
+    depends_on:
+      - nginx
+    deploy:
+      replicas: 2
+      endpoint_mode: vip
+
+  jenkins:
+    build:
+      context: ./apps/jenkins
+      dockerfile: Dockerfile
+    container_name: jenkins
+    ports:
+      - '8088:8080'
+      - '50000:50000'
+    volumes:
+      - jenkins_data:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - '3003:3000'
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+    configs:
+      - source: grafana_datasources
+        target: /etc/grafana/provisioning/datasources/datasources.yml
+    depends_on:
+      - loki
+      - prometheus
+
+volumes:
+  api_logs:
+  postgres_data:
+  redis_data:
+  loki_data:
+  grafana_data:
+  prometheus_data:
+  jenkins_data:
+
+configs:
+  nginx_config:
+    content: |
+      events { worker_connections 4096; }
+
+      http {
+        resolver 127.0.0.11 valid=30s ipv6=off;
+
+        upstream api {
+          least_conn;
+          server api:8080;
+        }
+
+        server {
+          listen 80;
+          server_name _;
+
+          location /api/ {
+            proxy_pass http://api;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $$http_upgrade;
+            proxy_set_header Connection "upgrade";
+            proxy_set_header Host $$http_host;
+            proxy_set_header X-Real-IP $$remote_addr;
+            proxy_set_header X-Forwarded-For $$proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $$scheme;
+            proxy_set_header X-Forwarded-Host $$http_host;
+            proxy_read_timeout 86400;
+          }
+
+          location /_next/ {
+            set $$learninghub learninghub:3002;
+            proxy_pass http://$$learninghub;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $$http_upgrade;
+            proxy_set_header Connection "upgrade";
+            proxy_set_header Host $$http_host;
+            proxy_set_header X-Real-IP $$remote_addr;
+            proxy_set_header X-Forwarded-For $$proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $$scheme;
+            proxy_set_header X-Forwarded-Host $$http_host;
+          }
+
+          location / {
+            set $$learninghub learninghub:3002;
+            proxy_pass http://$$learninghub;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $$http_upgrade;
+            proxy_set_header Connection "upgrade";
+            proxy_set_header Host $$http_host;
+            proxy_set_header X-Real-IP $$remote_addr;
+            proxy_set_header X-Forwarded-For $$proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $$scheme;
+            proxy_set_header X-Forwarded-Host $$http_host;
+            proxy_read_timeout 86400;
+          }
+        }
+
+        server {
+          listen 81;
+          server_name _;
+
+          location /_next/ {
+            set $$adminpage adminpage:3001;
+            proxy_pass http://$$adminpage;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $$http_upgrade;
+            proxy_set_header Connection "upgrade";
+            proxy_set_header Host $$http_host;
+            proxy_set_header X-Real-IP $$remote_addr;
+            proxy_set_header X-Forwarded-For $$proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $$scheme;
+            proxy_set_header X-Forwarded-Host $$http_host;
+          }
+
+          location / {
+            set $$adminpage adminpage:3001;
+            proxy_pass http://$$adminpage;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $$http_upgrade;
+            proxy_set_header Connection "upgrade";
+            proxy_set_header Host $$http_host;
+            proxy_set_header X-Real-IP $$remote_addr;
+            proxy_set_header X-Forwarded-For $$proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $$scheme;
+            proxy_set_header X-Forwarded-Host $$http_host;
+            proxy_read_timeout 86400;
+          }
+        }
+      }
+
+  prometheus_config:
+    content: |
+      global:
+        scrape_interval: 15s
+      scrape_configs:
+        - job_name: 'learninghub-api'
+          dns_sd_configs:
+            - names: ['api']
+              type: A
+              port: 8080
+
+  promtail_config:
+    content: |
+      server:
+        http_listen_port: 9080
+        grpc_listen_port: 0
+      positions:
+        filename: /tmp/positions.yaml
+      clients:
+        - url: http://loki:3100/loki/api/v1/push
+      scrape_configs:
+        - job_name: learninghub-api
+          static_configs:
+            - targets:
+                - localhost
+              labels:
+                job: api
+                app: learninghub
+                __path__: /var/log/api/*.log
+          pipeline_stages:
+            - json:
+                expressions:
+                  level: level
+                  msg: msg
+                  context: context
+                  trace: trace
+                  time: time
+            - labels:
+                level:
+                context:
+            - timestamp:
+                source: time
+                format: ISO8601
+
+  grafana_datasources:
+    content: |
+      apiVersion: 1
+      datasources:
+        - name: Loki
+          type: loki
+          access: proxy
+          url: http://loki:3100
+          isDefault: true
+        - name: Prometheus
+          type: prometheus
+          access: proxy
+          url: http://prometheus:9090

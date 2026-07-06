@@ -1,0 +1,55 @@
+pipeline {
+  agent any
+
+  triggers {
+    githubPush()
+  }
+
+  environment {
+    IMAGE_NAME   = 'learninghub-api'
+    COMPOSE_FILE = 'docker-compose.yml'
+  }
+
+  stages {
+    stage('Install') {
+      steps {
+        sh 'pnpm install --frozen-lockfile'
+      }
+    }
+
+    stage('Lint') {
+      steps {
+        sh 'pnpm nx run-many --target=lint --projects=api,LearningHub,AdminPage --parallel=3'
+      }
+    }
+
+    stage('Test') {
+      steps {
+        sh 'pnpm nx run-many --target=test --projects=api'
+      }
+    }
+
+    stage('Build') {
+      steps {
+        sh 'pnpm nx run-many --target=build --projects=api,LearningHub,AdminPage --parallel=3'
+      }
+    }
+
+    stage('Docker Build & Deploy') {
+      when { branch 'main' }
+      steps {
+        sh """
+          docker build -f apps/api/Dockerfile         -t learninghub-api:latest .
+          docker build -f apps/LearningHub/Dockerfile -t learninghub-web:latest .
+          docker build -f apps/AdminPage/Dockerfile   -t learninghub-admin:latest .
+          docker compose -f ${COMPOSE_FILE} up -d --scale api=3
+        """
+      }
+    }
+  }
+
+  post {
+    failure { echo 'Pipeline FAILED' }
+    success { echo 'Pipeline PASSED' }
+  }
+}

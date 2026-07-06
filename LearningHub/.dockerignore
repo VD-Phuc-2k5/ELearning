@@ -1,0 +1,13 @@
+node_modules
+dist
+.git
+*.log
+logs/
+.env
+.env.local
+apps/**/.env*
+**/.next
+.nx
+Jenkinsfile
+GUIDE_DEPLOYMENT.md
+apps/jenkins
