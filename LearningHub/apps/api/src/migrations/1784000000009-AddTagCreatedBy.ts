@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class AddTagCreatedBy1783184556911 implements MigrationInterface {
-  name = 'AddTagCreatedBy1783184556911';
+export class AddTagCreatedBy1784000000009 implements MigrationInterface {
+  name = 'AddTagCreatedBy1784000000009';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(
