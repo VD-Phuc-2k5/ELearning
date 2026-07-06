@@ -98,7 +98,7 @@ function PostDetailModal({
               </div>
               {post.tags?.length ? (
                 <div className="flex flex-wrap gap-1">
-                  {post.tags.map((t) => (
+                  {post.tags.map((t: { id: number; name: string }) => (
                     <span
                       key={t.id}
                       className="rounded-full px-2 py-0.5 text-[10px] font-medium bg-slate-100 text-slate-700"
@@ -228,7 +228,9 @@ export function ForumModerationTab() {
   }, [qc]);
 
   const reports = reportsData?.data ?? [];
-  const pendingCount = reports.filter((r) => r.status === 'pending').length;
+  const pendingCount = reports.filter(
+    (r: AdminReportDetail) => r.status === 'pending',
+  ).length;
 
   const groups = new Map<
     string,
@@ -377,7 +379,9 @@ function ReportGroupCard({
   onViewPost: () => void;
 }) {
   const isPostHidden = post.postStatus === 'hidden';
-  const pendingCount = reports.filter((r) => r.status === 'pending').length;
+  const pendingCount = reports.filter(
+    (r: AdminReportDetail) => r.status === 'pending',
+  ).length;
   const isPost = post.targetType === 'post';
 
   return (

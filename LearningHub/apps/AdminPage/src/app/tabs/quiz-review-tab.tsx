@@ -14,7 +14,7 @@ import {
   AlertCircle,
   Send,
 } from 'lucide-react';
-import type { QuestionBank, Question } from '@learning-hub/domain';
+import type { QuestionBank, Question, Tag } from '@learning-hub/domain';
 import {
   getPendingBanks,
   approveBank,
@@ -191,7 +191,7 @@ export function QuizReviewTab() {
         </div>
       ) : (
         <div className="grid gap-4">
-          {banks.map((bank) => {
+          {banks.map((bank: QuestionBank) => {
             const isExpanded = expandedId === bank.id;
             const isLoadingDetail = isExpanded && questionsLoading;
 
@@ -227,7 +227,7 @@ export function QuizReviewTab() {
                       </div>
                       {bank.tags && bank.tags.length > 0 && (
                         <div className="flex flex-wrap gap-1.5 mt-3">
-                          {bank.tags.map((tag) => (
+                          {bank.tags.map((tag: Tag) => (
                             <span
                               key={tag.id}
                               className="px-2 py-0.5 text-[10px] font-medium text-indigo-600 bg-indigo-50 rounded-full"
