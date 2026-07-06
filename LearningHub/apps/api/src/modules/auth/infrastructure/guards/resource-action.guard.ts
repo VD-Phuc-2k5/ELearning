@@ -28,6 +28,12 @@ export class ResourceActionGuard implements CanActivate {
   ) {}
 
   async canActivate(ctx: ExecutionContext): Promise<boolean> {
+    if (
+      ctx.getType() === 'http' &&
+      ctx.switchToHttp().getRequest().path === '/metrics'
+    ) {
+      return true;
+    }
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
       ctx.getHandler(),
       ctx.getClass(),

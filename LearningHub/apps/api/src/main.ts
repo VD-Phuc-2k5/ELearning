@@ -1,17 +1,21 @@
-import { BadRequestException, ValidationPipe } from '@nestjs/common';
+import {
+  BadRequestException,
+  ValidationPipe,
+  RequestMethod,
+} from '@nestjs/common';
 import type { ValidationError } from 'class-validator';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { NestFactory } from '@nestjs/core';
-import { IoAdapter } from '@nestjs/platform-socket.io';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { PinoLogger } from './common/logging/pino.logger';
+import { RedisIoAdapter } from './redis-io.adapter';
 
 const appLogger = new PinoLogger();
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { logger: appLogger });
-  app.useWebSocketAdapter(new IoAdapter(app));
+  app.useWebSocketAdapter(new RedisIoAdapter(app));
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -33,7 +37,9 @@ async function bootstrap() {
   });
   const globalPrefix = 'api';
   app.useGlobalFilters(new HttpExceptionFilter(appLogger));
-  app.setGlobalPrefix(globalPrefix);
+  app.setGlobalPrefix(globalPrefix, {
+    exclude: [{ path: 'metrics', method: RequestMethod.GET }],
+  });
   const port = process.env.PORT || 3000;
   // Swagger
   const config = new DocumentBuilder()
