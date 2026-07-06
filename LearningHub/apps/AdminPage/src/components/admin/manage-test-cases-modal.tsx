@@ -8,8 +8,17 @@ import {
   getTestCases,
   createTestCase,
   deleteTestCase,
+  importTestCases,
+  getTestCasesTemplate,
 } from '../../app/actions/problem.actions';
-import { Trash2, Plus, Eye, EyeOff } from 'lucide-react';
+import {
+  Trash2,
+  Plus,
+  Eye,
+  EyeOff,
+  FileSpreadsheet,
+  Upload,
+} from 'lucide-react';
 
 interface ManageTestCasesModalProps {
   problemId: string;
@@ -31,6 +40,43 @@ export function ManageTestCasesModal({
     orderIndex: 0,
   });
   const [err, setErr] = useState('');
+  const [isImporting, setIsImporting] = useState(false);
+
+  const handleDownloadTemplate = async () => {
+    try {
+      setErr('');
+      const template = await getTestCasesTemplate();
+      const link = document.createElement('a');
+      link.href = `data:${template.contentType};base64,${template.data}`;
+      link.download = 'template_testcases.xlsx';
+      link.click();
+    } catch (e: any) {
+      setErr(e.message || 'Tải file mẫu thất bại');
+    }
+  };
+
+  const handleImportExcel = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    setIsImporting(true);
+    setErr('');
+    try {
+      const res = await importTestCases(problemId, formData);
+      qc.invalidateQueries({ queryKey: ['admin-testcases', problemId] });
+      alert(res.message || 'Import test cases thành công!');
+    } catch (err: any) {
+      setErr(
+        err.message || 'Import thất bại. Vui lòng kiểm tra lại định dạng file.',
+      );
+    } finally {
+      setIsImporting(false);
+      e.target.value = '';
+    }
+  };
 
   const { data: testCases, isLoading } = useQuery<any[]>({
     queryKey: ['admin-testcases', problemId],
@@ -64,13 +110,39 @@ export function ManageTestCasesModal({
   });
 
   return (
-    <Modal title={`Cấu hình Test Cases: ${problemTitle}`} onClose={onClose}>
+    <Modal
+      title={`Cấu hình Test Cases: ${problemTitle}`}
+      onClose={onClose}
+      wide
+    >
       <div className="space-y-6 max-h-[80vh] overflow-y-auto pr-2">
-        {/* Test Cases List */}
         <div>
-          <h3 className="text-sm font-semibold text-slate-800 mb-2">
-            Danh sách Test Cases hiện có ({testCases?.length ?? 0})
-          </h3>
+          <div className="flex justify-between items-center mb-3">
+            <h3 className="text-sm font-semibold text-slate-800">
+              Danh sách Test Cases hiện có ({testCases?.length ?? 0})
+            </h3>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={handleDownloadTemplate}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition cursor-pointer"
+              >
+                <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-600" />
+                Tải File Mẫu
+              </button>
+              <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-100 hover:bg-emerald-100 text-xs font-semibold text-emerald-700 transition cursor-pointer">
+                <Upload className="h-3.5 w-3.5" />
+                {isImporting ? 'Đang import...' : 'Import Excel'}
+                <input
+                  type="file"
+                  accept=".xlsx"
+                  onChange={handleImportExcel}
+                  className="hidden"
+                  disabled={isImporting}
+                />
+              </label>
+            </div>
+          </div>
 
           {isLoading ? (
             <p className="text-sm text-slate-500 py-4 text-center">
@@ -89,10 +161,10 @@ export function ManageTestCasesModal({
                       Thứ tự
                     </th>
                     <th className="px-4 py-2 text-xs font-bold text-slate-500 uppercase">
-                      Đầu vào (Input)
+                      Đầu vào
                     </th>
                     <th className="px-4 py-2 text-xs font-bold text-slate-500 uppercase">
-                      Đầu ra (Output)
+                      Đầu ra
                     </th>
                     <th className="px-4 py-2 text-xs font-bold text-slate-500 uppercase">
                       Loại
@@ -113,7 +185,7 @@ export function ManageTestCasesModal({
                       </td>
                       <td className="px-4 py-2 font-mono text-slate-600 truncate max-w-[120px]">
                         {tc.input || (
-                          <span className="italic text-slate-400">Empty</span>
+                          <span className="italic text-slate-400">Trống</span>
                         )}
                       </td>
                       <td className="px-4 py-2 font-mono text-slate-600 truncate max-w-[120px]">
@@ -166,7 +238,7 @@ export function ManageTestCasesModal({
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Đầu vào (Input)
+                  Đầu vào
                 </label>
                 <textarea
                   value={form.input}
@@ -180,7 +252,7 @@ export function ManageTestCasesModal({
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Đầu ra mong muốn (Expected Output) *
+                  Đầu ra mong muốn *
                 </label>
                 <textarea
                   value={form.expectedOutput}

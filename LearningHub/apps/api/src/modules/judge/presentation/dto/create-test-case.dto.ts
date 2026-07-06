@@ -5,18 +5,21 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  MaxLength,
   Min,
 } from 'class-validator';
 
 export class CreateTestCaseDto {
   @ApiProperty()
   @IsString()
-  @IsNotEmpty()
+  @IsNotEmpty({ message: 'Input không được để trống' })
+  @MaxLength(65536, { message: 'Input không được vượt quá 64KB' })
   input!: string;
 
   @ApiProperty()
   @IsString()
-  @IsNotEmpty()
+  @IsNotEmpty({ message: 'Expected output không được để trống' })
+  @MaxLength(65536, { message: 'Expected output không được vượt quá 64KB' })
   expectedOutput!: string;
 
   @ApiPropertyOptional({ default: true })

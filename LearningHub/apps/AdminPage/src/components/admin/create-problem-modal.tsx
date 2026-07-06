@@ -10,6 +10,7 @@ import {
   getAxiosMessage,
 } from '../../lib/admin-api';
 import { createProblem } from '../../app/actions/problem.actions';
+import { MarkdownEditor } from './markdown-editor';
 
 interface CreateProblemModalProps {
   onClose: () => void;
@@ -33,7 +34,7 @@ export function CreateProblemModal({ onClose }: CreateProblemModalProps) {
 
   const availableLanguages = [
     { value: 'python', label: 'Python 3' },
-    { value: 'javascript', label: 'Node.js' },
+    { value: 'javascript', label: 'JavaScript' },
     { value: 'typescript', label: 'TypeScript' },
     { value: 'cpp', label: 'C++ (GCC)' },
     { value: 'c', label: 'C (GCC)' },
@@ -44,12 +45,82 @@ export function CreateProblemModal({ onClose }: CreateProblemModalProps) {
     { value: 'swift', label: 'Swift' },
   ];
 
+  const validateForm = () => {
+    if (!form.title.trim()) {
+      setErr('Tiêu đề không được để trống hoặc chỉ chứa khoảng trắng');
+      return false;
+    }
+    if (form.title.trim().length > 200) {
+      setErr('Tiêu đề không được vượt quá 200 ký tự');
+      return false;
+    }
+    if (!form.description.trim()) {
+      setErr('Mô tả không được để trống hoặc chỉ chứa khoảng trắng');
+      return false;
+    }
+    if (form.description.trim().length > 10000) {
+      setErr('Mô tả không được vượt quá 10000 ký tự');
+      return false;
+    }
+    if (form.languages.length === 0) {
+      setErr('Vui lòng chọn ít nhất 1 ngôn ngữ lập trình hỗ trợ');
+      return false;
+    }
+    if (
+      form.timeLimitMs === undefined ||
+      form.timeLimitMs === null ||
+      isNaN(form.timeLimitMs) ||
+      form.timeLimitMs < 100
+    ) {
+      setErr('Thời gian giới hạn tối thiểu là 100ms');
+      return false;
+    }
+    if (
+      form.memoryLimitMb === undefined ||
+      form.memoryLimitMb === null ||
+      isNaN(form.memoryLimitMb) ||
+      form.memoryLimitMb < 16
+    ) {
+      setErr('Bộ nhớ giới hạn tối thiểu là 16MB');
+      return false;
+    }
+    // Kiểm tra cấu hình LeetCode-style bắt buộc cho các ngôn ngữ đã chọn
+    for (const lang of form.languages) {
+      const template = form.templates[lang]?.trim();
+      const wrapper = form.wrappers[lang]?.trim();
+
+      if (!template) {
+        setErr(
+          `Ngôn ngữ ${lang.toUpperCase()}: Bắt buộc phải nhập Mẫu Code học sinh nhìn thấy`,
+        );
+        return false;
+      }
+      if (!wrapper) {
+        setErr(
+          `Ngôn ngữ ${lang.toUpperCase()}: Bắt buộc phải nhập Mã bọc chạy chấm điểm (Driver Code)`,
+        );
+        return false;
+      }
+      if (!wrapper.includes('{{STUDENT_CODE}}')) {
+        setErr(
+          `Ngôn ngữ ${lang.toUpperCase()}: Mã bọc chạy (Driver Code) bắt buộc phải chứa placeholder {{STUDENT_CODE}} để ghép code`,
+        );
+        return false;
+      }
+    }
+
+    setErr('');
+    return true;
+  };
+
   const mut = useMutation({
     mutationFn: () =>
       createProblem({
         ...form,
-        sampleInput: form.sampleInput || null,
-        sampleOutput: form.sampleOutput || null,
+        title: form.title.trim(),
+        description: form.description.trim(),
+        sampleInput: form.sampleInput?.trim() || null,
+        sampleOutput: form.sampleOutput?.trim() || null,
       }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['admin-problems'] });
@@ -68,7 +139,7 @@ export function CreateProblemModal({ onClose }: CreateProblemModalProps) {
   };
 
   return (
-    <Modal title="Tạo đề bài lập trình mới" onClose={onClose}>
+    <Modal title="Tạo đề bài lập trình mới" onClose={onClose} extraWide>
       <div className="space-y-4 max-h-[75vh] overflow-y-auto pr-2">
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">
@@ -86,16 +157,16 @@ export function CreateProblemModal({ onClose }: CreateProblemModalProps) {
 
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">
-            Mô tả đề bài (Hỗ trợ Markdown) *
+            Mô tả đề bài *
+            <span className="ml-2 text-[11px] font-normal text-slate-400">
+              Hỗ trợ Markdown — Bold, Italic, Code, Blockquote, ...
+            </span>
           </label>
-          <textarea
+          <MarkdownEditor
             value={form.description}
-            onChange={(e) =>
-              setForm((p) => ({ ...p, description: e.target.value }))
-            }
+            onChange={(val) => setForm((p) => ({ ...p, description: val }))}
             placeholder="Nhập mô tả đề bài, các điều kiện đầu vào và đầu ra..."
-            className={`${inputCls} h-32`}
-            required
+            height={280}
           />
         </div>
 
@@ -212,7 +283,7 @@ export function CreateProblemModal({ onClose }: CreateProblemModalProps) {
         {form.languages.length > 0 && (
           <div className="space-y-4 border-t border-slate-200 pt-4">
             <h4 className="text-sm font-bold text-slate-800">
-              Cấu hình LeetCode-style (Tùy chọn)
+              Cấu hình LeetCode-style *
             </h4>
             <div className="space-y-4">
               {form.languages.map((lang: string) => (
@@ -286,11 +357,15 @@ export function CreateProblemModal({ onClose }: CreateProblemModalProps) {
           </button>
           <button
             type="button"
-            onClick={() => mut.mutate()}
+            onClick={() => {
+              if (validateForm()) {
+                mut.mutate();
+              }
+            }}
             disabled={
               mut.isPending ||
-              !form.title ||
-              !form.description ||
+              !form.title.trim() ||
+              !form.description.trim() ||
               form.languages.length === 0
             }
             className={btnPrimary}

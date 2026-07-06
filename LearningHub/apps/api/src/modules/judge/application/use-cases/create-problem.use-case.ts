@@ -1,4 +1,9 @@
-import { Inject, Injectable, ForbiddenException } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  ForbiddenException,
+  BadRequestException,
+} from '@nestjs/common';
 import {
   CODING_PROBLEM_REPOSITORY,
   ICodingProblemRepository,
@@ -35,6 +40,29 @@ export class CreateProblemUseCase {
     >,
   ): Promise<CodingProblemDomain> {
     await this.checkAdmin(userId);
+
+    // Validate LeetCode-style templates and wrappers for all supported languages
+    for (const lang of params.languages) {
+      const template = params.templates?.[lang]?.trim();
+      const wrapper = params.wrappers?.[lang]?.trim();
+
+      if (!template) {
+        throw new BadRequestException(
+          `Ngôn ngữ ${lang.toUpperCase()}: Bắt buộc phải có Mẫu Code học sinh nhìn thấy`,
+        );
+      }
+      if (!wrapper) {
+        throw new BadRequestException(
+          `Ngôn ngữ ${lang.toUpperCase()}: Bắt buộc phải có Mã bọc chạy chấm điểm (Driver Code)`,
+        );
+      }
+      if (!wrapper.includes('{{STUDENT_CODE}}')) {
+        throw new BadRequestException(
+          `Ngôn ngữ ${lang.toUpperCase()}: Mã bọc chạy (Driver Code) bắt buộc phải chứa placeholder {{STUDENT_CODE}}`,
+        );
+      }
+    }
+
     return this.problemRepo.create({
       ...params,
       creatorId: userId,

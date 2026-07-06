@@ -1,4 +1,10 @@
-import { Inject, Injectable, ForbiddenException } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  ForbiddenException,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import {
   CODING_PROBLEM_REPOSITORY,
   ICodingProblemRepository,
@@ -35,6 +41,38 @@ export class UpdateProblemUseCase {
     >,
   ): Promise<CodingProblemDomain> {
     await this.checkAdmin(userId);
+
+    const existing = await this.problemRepo.findById(problemId);
+    if (!existing) {
+      throw new NotFoundException('Không tìm thấy đề bài để cập nhật');
+    }
+
+    const languages = params.languages ?? existing.languages;
+    const templates = params.templates ?? existing.templates;
+    const wrappers = params.wrappers ?? existing.wrappers;
+
+    // Validate LeetCode-style templates and wrappers for all supported languages
+    for (const lang of languages) {
+      const template = templates?.[lang]?.trim();
+      const wrapper = wrappers?.[lang]?.trim();
+
+      if (!template) {
+        throw new BadRequestException(
+          `Ngôn ngữ ${lang.toUpperCase()}: Bắt buộc phải có Mẫu Code học sinh nhìn thấy`,
+        );
+      }
+      if (!wrapper) {
+        throw new BadRequestException(
+          `Ngôn ngữ ${lang.toUpperCase()}: Bắt buộc phải có Mã bọc chạy chấm điểm (Driver Code)`,
+        );
+      }
+      if (!wrapper.includes('{{STUDENT_CODE}}')) {
+        throw new BadRequestException(
+          `Ngôn ngữ ${lang.toUpperCase()}: Mã bọc chạy (Driver Code) bắt buộc phải chứa placeholder {{STUDENT_CODE}}`,
+        );
+      }
+    }
+
     return this.problemRepo.update(problemId, params);
   }
 }

@@ -10,6 +10,7 @@ interface ModalProps {
   subtitle?: string;
   onClose: () => void;
   wide?: boolean;
+  extraWide?: boolean;
   children: ReactNode;
 }
 
@@ -18,12 +19,15 @@ export function Modal({
   subtitle,
   onClose,
   wide,
+  extraWide,
   children,
 }: ModalProps) {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div
-        className={`bg-white rounded-3xl p-8 w-full shadow-2xl ${wide ? 'max-w-2xl' : 'max-w-md'}`}
+        className={`bg-white rounded-3xl p-8 w-full shadow-2xl transition-all ${
+          extraWide ? 'max-w-5xl' : wide ? 'max-w-2xl' : 'max-w-md'
+        }`}
       >
         <div className="flex justify-between items-start mb-6">
           <div>
@@ -34,7 +38,7 @@ export function Modal({
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-slate-100 rounded-xl"
+            className="p-2 hover:bg-slate-100 rounded-xl cursor-pointer"
           >
             <X className="h-5 w-5" />
           </button>

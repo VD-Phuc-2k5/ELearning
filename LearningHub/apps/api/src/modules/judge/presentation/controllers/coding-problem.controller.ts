@@ -9,20 +9,33 @@ import {
   Query,
   Request,
   UseGuards,
+  UseInterceptors,
+  UploadedFile,
+  BadRequestException,
+  Res,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { FileInterceptor } from '@nestjs/platform-express';
+import * as ExcelJS from 'exceljs';
 import {
   ApiBearerAuth,
+  ApiConsumes,
   ApiOperation,
   ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
+
+interface UploadedFile {
+  buffer: Buffer;
+  originalname: string;
+}
+
 import { CreateProblemUseCase } from '../../application/use-cases/create-problem.use-case';
 import { ManageTestCasesUseCase } from '../../application/use-cases/manage-test-cases.use-case';
 import { ListProblemsUseCase } from '../../application/use-cases/list-problems.use-case';
 import { UpdateProblemUseCase } from '../../application/use-cases/update-problem.use-case';
 import { DeleteProblemUseCase } from '../../application/use-cases/delete-problem.use-case';
-import { CreateProblemDto } from '../dto/create-problem.dto';
+import { CreateProblemDto, UpdateProblemDto } from '../dto/create-problem.dto';
 import { CreateTestCaseDto } from '../dto/create-test-case.dto';
 interface AuthenticatedRequest {
   user: {
@@ -78,6 +91,56 @@ export class CodingProblemController {
     });
   }
 
+  @Get('test-cases/excel-template')
+  @ApiOperation({ summary: 'Tải file Excel mẫu để import testcase (Admin)' })
+  async downloadTemplate(@Res() res: any) {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Template Test Cases');
+
+    // Set headers
+    worksheet.columns = [
+      { header: 'Đầu vào', key: 'input', width: 25 },
+      {
+        header: 'Đầu ra mong muốn *',
+        key: 'expectedOutput',
+        width: 35,
+      },
+      { header: 'Điểm số', key: 'points', width: 15 },
+      { header: 'Test case ẩn', key: 'isHidden', width: 20 },
+      { header: 'Thứ tự chạy', key: 'orderIndex', width: 20 },
+    ];
+
+    // Add sample rows
+    worksheet.addRow({
+      input: '1 2',
+      expectedOutput: '3',
+      points: 1,
+      isHidden: 'Không',
+      orderIndex: 0,
+    });
+
+    worksheet.addRow({
+      input: '5 5',
+      expectedOutput: '10',
+      points: 2,
+      isHidden: 'Có',
+      orderIndex: 1,
+    });
+
+    // Write to buffer and return
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    );
+    res.setHeader(
+      'Content-Disposition',
+      'attachment; filename=template_testcases.xlsx',
+    );
+
+    await workbook.xlsx.write(res);
+    res.end();
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Xem chi tiết đề bài coding' })
   findOne(@Param('id') id: string) {
@@ -98,6 +161,25 @@ export class CodingProblemController {
       orderIndex: dto.orderIndex ?? 0,
       points: dto.points ?? 1,
     });
+  }
+
+  @Post(':id/test-cases/import-excel')
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'Import test cases từ file Excel (.xlsx) (Admin)' })
+  async importTestCasesExcel(
+    @Param('id') problemId: string,
+    @UploadedFile() file: UploadedFile,
+    @Request() req: AuthenticatedRequest,
+  ) {
+    if (!file) {
+      throw new BadRequestException('Vui lòng chọn file Excel để import.');
+    }
+    return this.manageTestCasesUseCase.importTestCasesExcel(
+      req.user.id,
+      problemId,
+      file.buffer,
+    );
   }
 
   @Get(':id/test-cases')
@@ -123,7 +205,7 @@ export class CodingProblemController {
   update(
     @Request() req: AuthenticatedRequest,
     @Param('id') id: string,
-    @Body() dto: Partial<CreateProblemDto>,
+    @Body() dto: UpdateProblemDto,
   ) {
     return this.updateProblemUseCase.execute(req.user.id, id, {
       title: dto.title,

@@ -164,3 +164,58 @@ export async function deleteProblem(id: string) {
     );
   }
 }
+
+export async function importTestCases(problemId: string, formData: FormData) {
+  try {
+    const headers = {
+      ...(await getAuthHeader()),
+      'Content-Type': 'multipart/form-data',
+    };
+    const res = await axios.post(
+      `${API_URL}/problems/${problemId}/test-cases/import-excel`,
+      formData,
+      { headers },
+    );
+    return res.data;
+  } catch (error: any) {
+    console.error(
+      'Error importing test cases:',
+      error.response?.data || error.message,
+    );
+    // Since getAxiosMessage handles errors object/array on client side, we should pass back the structured data if possible. But here, we can throw a detailed error message.
+    const details = error.response?.data;
+    if (details?.errors && Array.isArray(details.errors)) {
+      throw new Error(
+        details.errors.map((e: any) => `${e.field}: ${e.message}`).join(', '),
+      );
+    }
+    if (Array.isArray(details?.message)) {
+      throw new Error(details.message.join(', '));
+    }
+    throw new Error(
+      details?.message || error.message || 'Failed to import test cases',
+    );
+  }
+}
+
+export async function getTestCasesTemplate() {
+  try {
+    const headers = await getAuthHeader();
+    const res = await axios.get(
+      `${API_URL}/problems/test-cases/excel-template`,
+      {
+        headers,
+        responseType: 'arraybuffer',
+      },
+    );
+    return {
+      data: Buffer.from(res.data).toString('base64'),
+      contentType:
+        res.headers['content-type'] ||
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    };
+  } catch (error: any) {
+    console.error('Error fetching template:', error.message);
+    throw new Error('Không thể tải file mẫu từ hệ thống');
+  }
+}
