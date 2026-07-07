@@ -20,3 +20,5 @@ export * from './UpdateBankQuizUsecase';
 export * from './UpdateQuestionQuizUsecase';
 export * from './UploadExcelQuizUsecase';
 export * from './VerifyAnswerQuizUsecase';
+export * from './ApproveBankQuizUsecase';
+export * from './RejectBankQuizUsecase';

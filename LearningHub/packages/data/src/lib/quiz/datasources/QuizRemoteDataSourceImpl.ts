@@ -249,4 +249,24 @@ export class QuizRemoteDataSourceImpl implements IQuizRemoteDataSource {
       return handleAxiosError(e);
     }
   }
+
+  async approveBank(bankId: string) {
+    try {
+      const res = await this.api.patch(`/admin/quiz/banks/${bankId}/approve`);
+      return res.data;
+    } catch (e) {
+      return handleAxiosError(e);
+    }
+  }
+
+  async rejectBank(bankId: string, reason?: string) {
+    try {
+      const res = await this.api.patch(`/admin/quiz/banks/${bankId}/reject`, {
+        reason: reason || undefined,
+      });
+      return res.data;
+    } catch (e) {
+      return handleAxiosError(e);
+    }
+  }
 }

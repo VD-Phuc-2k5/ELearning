@@ -75,8 +75,8 @@ export class AuthRemoteDataSourceImpl implements IAuthRemoteDataSource {
 
   async getProfile(): Promise<User> {
     try {
-      const res = await this.api.get('/auth/profile');
-      return res.data;
+      const res = await this.api.get('/auth/me');
+      return res.data?.user;
     } catch (e) {
       return handleAxiosError(e);
     }

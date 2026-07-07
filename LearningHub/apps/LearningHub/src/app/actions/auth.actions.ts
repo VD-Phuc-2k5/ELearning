@@ -1,14 +1,17 @@
 'use server';
 
-import type { RegisterParams, User } from '@learning-hub/domain';
+import {
+  RegisterUsecase,
+  GetProfileUsecase,
+  type RegisterParams,
+  type User,
+} from '@learning-hub/domain';
 import {
   AuthRemoteDataSourceImpl,
   AuthRepositoryImpl,
 } from '@learning-hub/data';
-import { RegisterUsecase } from '@learning-hub/domain';
 import { serverLogin, serverLogout } from '@learning-hub/data/server';
 import { cookies } from 'next/headers';
-import axios from 'axios';
 
 export async function loginAction(data: {
   email: string;
@@ -34,11 +37,12 @@ export async function getCurrentUser(): Promise<User | null> {
   const accessToken = store.get('accessToken')?.value;
   if (!accessToken) return null;
   try {
-    const NEST_API = `${process.env.NEST_API_URL || 'http://localhost:8080'}/api`;
-    const res = await axios.get(`${NEST_API}/auth/me`, {
-      headers: { Cookie: `accessToken=${accessToken}` },
-    });
-    return res.data?.user ?? null;
+    const repo = new AuthRepositoryImpl(new AuthRemoteDataSourceImpl());
+    const result = await new GetProfileUsecase(repo).execute({});
+    if (result.type === 'right') {
+      return result.value;
+    }
+    return null;
   } catch {
     return null;
   }

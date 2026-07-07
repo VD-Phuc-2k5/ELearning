@@ -68,4 +68,6 @@ export interface IQuizRemoteDataSource {
   checkBankHash(hash: string): Promise<BankHashResult>;
   getDerivedBanks(bankId: string): Promise<DerivedBank[]>;
   getBankRoadmaps(bankId: string): Promise<BankRoadmapItem[]>;
+  approveBank(bankId: string): Promise<QuestionBank>;
+  rejectBank(bankId: string, reason?: string): Promise<QuestionBank>;
 }
