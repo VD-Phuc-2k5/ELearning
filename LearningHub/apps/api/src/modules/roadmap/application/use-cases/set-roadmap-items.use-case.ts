@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ForbiddenException,
   Inject,
   Injectable,
@@ -20,6 +21,10 @@ import {
   IUserBankProgressRepository,
   USER_BANK_PROGRESS_REPOSITORY,
 } from '../../../quiz/domain/repositories/user-bank-progress.repository.interface';
+import {
+  IQuestionBankRepository,
+  QUESTION_BANK_REPOSITORY,
+} from '../../../quiz/domain/repositories/question-bank.repository.interface';
 import { RoadmapItemDomain } from '../../domain/entities/roadmap-item.domain';
 import { RoadmapProgressStatus } from '../../domain/entities/user-roadmap-progress.domain';
 
@@ -34,6 +39,8 @@ export class SetRoadmapItemsUseCase {
     private readonly progressRepo: IUserRoadmapProgressRepository,
     @Inject(USER_BANK_PROGRESS_REPOSITORY)
     private readonly bankProgressRepo: IUserBankProgressRepository,
+    @Inject(QUESTION_BANK_REPOSITORY)
+    private readonly questionBankRepo: IQuestionBankRepository,
   ) {}
 
   async execute(
@@ -45,6 +52,21 @@ export class SetRoadmapItemsUseCase {
     if (!roadmap) throw new NotFoundException(`Roadmap ${roadmapId} not found`);
     if (roadmap.creatorId !== userId)
       throw new ForbiddenException('Bạn không có quyền chỉnh sửa roadmap này');
+
+    if (bankIds.length > 0) {
+      const banks = await Promise.all(
+        bankIds.map((id) => this.questionBankRepo.findById(id)),
+      );
+      const approvedIds = new Set(
+        banks.filter((b) => b?.statusId === 'approved').map((b) => b!.id),
+      );
+      const nonApproved = bankIds.filter((id) => !approvedIds.has(id));
+      if (nonApproved.length > 0) {
+        throw new BadRequestException(
+          `Các ngân hàng câu hỏi sau chưa được duyệt: ${nonApproved.join(', ')}`,
+        );
+      }
+    }
 
     const items = await this.itemRepo.setItems(roadmapId, bankIds);
     const newTotal = bankIds.length;

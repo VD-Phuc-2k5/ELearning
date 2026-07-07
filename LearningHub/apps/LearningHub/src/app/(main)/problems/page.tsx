@@ -110,7 +110,7 @@ export default function ProblemsPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {problems.map((p) => (
+          {problems.map((p: ProblemItem) => (
             <div
               key={p.id}
               className="group bg-white border border-slate-200 hover:border-indigo-200 hover:shadow-lg hover:shadow-indigo-50/50 rounded-3xl p-6 transition flex flex-col justify-between"
