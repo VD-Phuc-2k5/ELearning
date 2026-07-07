@@ -10,7 +10,7 @@ import {
 async function setCookies(accessToken: string, refreshToken: string) {
   const jar = await cookies();
   jar.set('accessToken', accessToken, {
-    maxAge: 900,
+    maxAge: 86400,
     path: '/',
     sameSite: 'lax',
     httpOnly: true,
