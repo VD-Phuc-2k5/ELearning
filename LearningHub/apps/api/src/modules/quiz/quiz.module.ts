@@ -152,6 +152,10 @@ const repositoryProviders = [
       provide: USER_BANK_PROGRESS_REPOSITORY,
       useClass: UserBankProgressRepository,
     },
+    {
+      provide: QUESTION_BANK_REPOSITORY,
+      useClass: QuestionBankRepository,
+    },
   ],
 })
 export class QuizModule {}
