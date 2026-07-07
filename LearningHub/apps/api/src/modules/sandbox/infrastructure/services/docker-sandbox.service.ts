@@ -3,7 +3,7 @@ import { ISandboxService } from '../../application/interfaces/i-sandbox.service'
 import { ExecutionResult } from '../../domain/entities/execution-result';
 import { SUPPORTED_LANGUAGES } from '../../domain/entities/supported-language';
 import * as Docker from 'dockerode';
-import { writeFileSync, mkdtempSync, rmSync } from 'fs';
+import { writeFileSync, mkdtempSync, rmSync, chmodSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
 
@@ -40,6 +40,8 @@ export class DockerSandboxService implements ISandboxService {
     if (hasStdin) {
       writeFileSync(join(tempDir, 'input.txt'), params.stdin!);
     }
+
+    chmodSync(tempDir, 0o777);
 
     // 2. Build execution command inside shell
     let runCmd = '';
@@ -94,16 +96,18 @@ export class DockerSandboxService implements ISandboxService {
       container = await this.docker.createContainer({
         Image: langConfig.image,
         Cmd: ['sh', '-c', runCmd],
+        Env: ['TMPDIR=/tmp', 'DENO_DIR=/tmp/deno-cache'],
         HostConfig: {
-          Memory: memoryLimitMb * 1024 * 1024, // RAM Limit
-          MemorySwap: memoryLimitMb * 1024 * 1024, // Disable swap
-          NanoCpus: 0.5 * 1e9, // 0.5 CPU core
-          NetworkMode: 'none', // No internet access
-          ReadonlyRootfs: true, // Read-only root filesystem
-          Binds: [`${tempDir.replace(/\\/g, '/')}:/sandbox:ro`], // Mount code dir as Read-Only
-          Tmpfs: { '/tmp': 'rw,exec,size=128m' }, // Small rw tmpfs for compilation output execution
-          PidsLimit: 200, // Prevent fork bombs, increased for compilers like Go/Rust
+          Memory: memoryLimitMb * 1024 * 1024,
+          MemorySwap: memoryLimitMb * 1024 * 1024,
+          NanoCpus: 0.5 * 1e9,
+          NetworkMode: 'none',
+          ReadonlyRootfs: true,
+          Binds: [`${tempDir.replace(/\\/g, '/')}:/sandbox:rw`],
+          Tmpfs: { '/tmp': 'rw,exec,size=256m' },
+          PidsLimit: 200,
           SecurityOpt: ['no-new-privileges'],
+          CapDrop: ['ALL'],
         },
         WorkingDir: '/sandbox',
         StopTimeout: 1,

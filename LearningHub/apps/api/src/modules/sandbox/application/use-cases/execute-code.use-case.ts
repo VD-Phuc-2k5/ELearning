@@ -34,7 +34,7 @@ export class ExecuteCodeUseCase
         : 10000,
       memoryLimitMb: process.env.SANDBOX_MEMORY_LIMIT_MB
         ? Number(process.env.SANDBOX_MEMORY_LIMIT_MB)
-        : 64,
+        : 256,
     });
 
     // Save history in repository
