@@ -11,3 +11,14 @@ apps/**/.env*
 Jenkinsfile
 GUIDE_DEPLOYMENT.md
 apps/jenkins
+**/*.test.ts
+**/*.spec.ts
+**/__tests__/
+sandbox/images/
+.vscode/
+.idea/
+*.md
+.gitignore
+.gitattributes
+.husky/
+secrets/

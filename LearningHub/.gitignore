@@ -55,3 +55,7 @@ test-output
 .env
 tsconfig.tsbuildinfo
 .claude/plans
+
+# Docker secrets (keep example)
+secrets/*
+!secrets/.env.secrets.example
