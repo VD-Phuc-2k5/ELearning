@@ -426,7 +426,11 @@ export default function ForumDetailPage({ params }: ForumDetailPageProps) {
           isJoining={mutations.join.isPending}
           isLeaving={mutations.leave.isPending}
           onJoin={() => mutations.join.mutate()}
-          onLeave={() => mutations.leave.mutate()}
+          onLeave={() =>
+            mutations.leave.mutate(undefined, {
+              onSuccess: () => router.push('/forums'),
+            })
+          }
           isDeletingForum={mutations.deleteForumMutation.isPending}
           onDeleteForum={handleDeleteForum}
         />

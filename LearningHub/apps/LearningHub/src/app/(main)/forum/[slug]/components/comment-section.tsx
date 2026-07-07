@@ -24,7 +24,12 @@ export function CommentSection({
 
   const queryKey = ['forum-comments', forumId, postId];
 
-  const { data, isLoading } = useQuery<PaginatedResponse<CommentItem>>({
+  const {
+    data,
+    isLoading,
+    isError,
+    error: queryError,
+  } = useQuery<PaginatedResponse<CommentItem>>({
     queryKey,
     queryFn: () => listComments(forumId, postId),
   });
@@ -68,7 +73,15 @@ export function CommentSection({
         </div>
       </div>
 
-      {topLevelComments.length === 0 && !isLoading && (
+      {isError && (
+        <p className="text-center text-xs text-red-500 py-4">
+          {queryError instanceof Error
+            ? queryError.message
+            : 'Failed to load comments'}
+        </p>
+      )}
+
+      {!isError && topLevelComments.length === 0 && !isLoading && (
         <p className="text-center text-xs text-slate-400 py-4">
           No comments yet. Be the first!
         </p>

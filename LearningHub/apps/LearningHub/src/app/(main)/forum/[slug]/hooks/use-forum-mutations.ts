@@ -47,6 +47,7 @@ export function useForumMutations({
   const leave = useMutation({
     mutationFn: () => leaveForum(forumId),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['forum', slug] }),
+    onError: (e: Error) => onError(e.message),
   });
 
   const saveEdit = useMutation({
