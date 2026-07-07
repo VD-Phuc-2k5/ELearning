@@ -80,7 +80,7 @@ export default function RoadmapsPage() {
                 <span
                   className={[
                     'text-xs font-semibold px-2 py-1 rounded-full',
-                    r.status === 'published'
+                    r.status === 'approved'
                       ? 'bg-emerald-100 text-emerald-700'
                       : 'bg-slate-100 text-slate-500',
                   ].join(' ')}
