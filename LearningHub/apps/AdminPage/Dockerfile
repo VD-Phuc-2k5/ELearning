@@ -18,8 +18,8 @@ COPY --from=build --chown=nextjs:nodejs /app/dist/apps/AdminPage/.next/standalon
 COPY --from=build --chown=nextjs:nodejs /app/dist/apps/AdminPage/.next/static ./dist/apps/AdminPage/.next/static
 COPY --from=build --chown=nextjs:nodejs /app/apps/AdminPage/public ./apps/AdminPage/public
 USER nextjs
-ENV NODE_ENV=production PORT=3001
+ENV NODE_ENV=production PORT=3001 HOSTNAME=0.0.0.0
 EXPOSE 3001
 HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
-  CMD wget -qO /dev/null http://localhost:3001/ || exit 1
+  CMD wget -qO /dev/null http://127.0.0.1:3001/ || exit 1
 CMD ["node", "apps/AdminPage/server.js"]

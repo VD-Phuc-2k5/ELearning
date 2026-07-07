@@ -18,8 +18,8 @@ COPY --from=build --chown=nextjs:nodejs /app/dist/apps/LearningHub/.next/standal
 COPY --from=build --chown=nextjs:nodejs /app/dist/apps/LearningHub/.next/static ./dist/apps/LearningHub/.next/static
 COPY --from=build --chown=nextjs:nodejs /app/apps/LearningHub/public ./apps/LearningHub/public
 USER nextjs
-ENV NODE_ENV=production PORT=3002
+ENV NODE_ENV=production PORT=3002 HOSTNAME=0.0.0.0
 EXPOSE 3002
 HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
-  CMD wget -qO /dev/null http://localhost:3002/ || exit 1
+  CMD wget -qO /dev/null http://127.0.0.1:3002/ || exit 1
 CMD ["node", "apps/LearningHub/server.js"]

@@ -6,7 +6,7 @@ RUN --mount=type=cache,id=pnpm-store,target=/root/.local/share/pnpm/store \
     pnpm install --frozen-lockfile
 COPY . .
 RUN --mount=type=cache,id=nx-cache-api,sharing=locked,target=/app/.nx \
-    pnpm nx build api && pnpm prune --prod --ignore-scripts
+    pnpm nx sync && pnpm nx build api && pnpm prune --prod --ignore-scripts
 
 FROM node:22-alpine
 RUN addgroup -g 1001 -S nodejs && adduser -S nestjs -u 1001 -G nodejs
