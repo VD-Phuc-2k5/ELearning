@@ -286,4 +286,23 @@ export class QuizRepositoryImpl implements IQuizRepository {
       return left(toFailure(e));
     }
   }
+
+  async approveBank(bankId: string): Promise<Either<Failure, QuestionBank>> {
+    try {
+      return right(await this.dataSource.approveBank(bankId));
+    } catch (e) {
+      return left(toFailure(e));
+    }
+  }
+
+  async rejectBank(
+    bankId: string,
+    reason?: string,
+  ): Promise<Either<Failure, QuestionBank>> {
+    try {
+      return right(await this.dataSource.rejectBank(bankId, reason));
+    } catch (e) {
+      return left(toFailure(e));
+    }
+  }
 }

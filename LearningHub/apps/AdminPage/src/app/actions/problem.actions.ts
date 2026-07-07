@@ -1,29 +1,32 @@
 'use server';
 
-import { cookies } from 'next/headers';
-import axios from 'axios';
+import { unwrap } from '@learning-hub/core';
+import {
+  CreateProblemUsecase,
+  CreateTestCaseParamsWithId,
+  CreateTestCaseUsecase,
+  DeleteProblemUsecase,
+  DeleteTestCaseParams,
+  DeleteTestCaseUsecase,
+  GetProblemsUsecase,
+  GetTestCasesTemplateUsecase,
+  GetTestCasesUsecase,
+  ImportTestCasesParams,
+  ImportTestCasesUsecase,
+  UpdateProblemParamsWithId,
+  UpdateProblemUsecase,
+} from '@learning-hub/domain';
+import {
+  ProblemRemoteDataSourceImpl,
+  ProblemRepositoryImpl,
+} from '@learning-hub/data';
 
-const API_URL = process.env.NEST_API_URL || 'http://localhost:8080/api';
-
-async function getAuthHeader() {
-  const token = (await cookies()).get('accessToken')?.value ?? '';
-  return { Authorization: `Bearer ${token}` };
+function getRepo() {
+  return new ProblemRepositoryImpl(new ProblemRemoteDataSourceImpl());
 }
 
 export async function getProblems() {
-  try {
-    const headers = await getAuthHeader();
-    const res = await axios.get(`${API_URL}/problems`, { headers });
-    return res.data;
-  } catch (error: any) {
-    console.error(
-      'Error fetching problems:',
-      error.response?.data || error.message,
-    );
-    throw new Error(
-      error.response?.data?.message || 'Failed to fetch problems',
-    );
-  }
+  return unwrap(await new GetProblemsUsecase(getRepo()).execute(undefined));
 }
 
 export async function createProblem(data: {
@@ -36,37 +39,11 @@ export async function createProblem(data: {
   sampleOutput: string | null;
   languages: string[];
 }) {
-  try {
-    const headers = await getAuthHeader();
-    const res = await axios.post(`${API_URL}/problems`, data, { headers });
-    return res.data;
-  } catch (error: any) {
-    console.error(
-      'Error creating problem:',
-      error.response?.data || error.message,
-    );
-    throw new Error(
-      error.response?.data?.message || 'Failed to create problem',
-    );
-  }
+  return unwrap(await new CreateProblemUsecase(getRepo()).execute(data));
 }
 
 export async function getTestCases(problemId: string) {
-  try {
-    const headers = await getAuthHeader();
-    const res = await axios.get(`${API_URL}/problems/${problemId}/test-cases`, {
-      headers,
-    });
-    return res.data;
-  } catch (error: any) {
-    console.error(
-      'Error fetching test cases:',
-      error.response?.data || error.message,
-    );
-    throw new Error(
-      error.response?.data?.message || 'Failed to fetch test cases',
-    );
-  }
+  return unwrap(await new GetTestCasesUsecase(getRepo()).execute(problemId));
 }
 
 export async function createTestCase(
@@ -79,42 +56,19 @@ export async function createTestCase(
     points?: number;
   },
 ) {
-  try {
-    const headers = await getAuthHeader();
-    const res = await axios.post(
-      `${API_URL}/problems/${problemId}/test-cases`,
-      data,
-      { headers },
-    );
-    return res.data;
-  } catch (error: any) {
-    console.error(
-      'Error creating test case:',
-      error.response?.data || error.message,
-    );
-    throw new Error(
-      error.response?.data?.message || 'Failed to create test case',
-    );
-  }
+  return unwrap(
+    await new CreateTestCaseUsecase(getRepo()).execute(
+      new CreateTestCaseParamsWithId(problemId, data),
+    ),
+  );
 }
 
 export async function deleteTestCase(problemId: string, id: string) {
-  try {
-    const headers = await getAuthHeader();
-    const res = await axios.delete(
-      `${API_URL}/problems/${problemId}/test-cases/${id}`,
-      { headers },
-    );
-    return res.data;
-  } catch (error: any) {
-    console.error(
-      'Error deleting testcase:',
-      error.response?.data || error.message,
-    );
-    throw new Error(
-      error.response?.data?.message || 'Failed to delete testcase',
-    );
-  }
+  return unwrap(
+    await new DeleteTestCaseUsecase(getRepo()).execute(
+      new DeleteTestCaseParams(problemId, id),
+    ),
+  );
 }
 
 export async function updateProblem(
@@ -132,90 +86,30 @@ export async function updateProblem(
     wrappers?: Record<string, string>;
   },
 ) {
-  try {
-    const headers = await getAuthHeader();
-    const res = await axios.patch(`${API_URL}/problems/${id}`, data, {
-      headers,
-    });
-    return res.data;
-  } catch (error: any) {
-    console.error(
-      'Error updating problem:',
-      error.response?.data || error.message,
-    );
-    throw new Error(
-      error.response?.data?.message || 'Failed to update problem',
-    );
-  }
+  return unwrap(
+    await new UpdateProblemUsecase(getRepo()).execute(
+      new UpdateProblemParamsWithId(id, data),
+    ),
+  );
 }
 
 export async function deleteProblem(id: string) {
-  try {
-    const headers = await getAuthHeader();
-    const res = await axios.delete(`${API_URL}/problems/${id}`, { headers });
-    return res.data;
-  } catch (error: any) {
-    console.error(
-      'Error deleting problem:',
-      error.response?.data || error.message,
-    );
-    throw new Error(
-      error.response?.data?.message || 'Failed to delete problem',
-    );
-  }
+  return unwrap(await new DeleteProblemUsecase(getRepo()).execute(id));
 }
 
 export async function importTestCases(problemId: string, formData: FormData) {
-  try {
-    const headers = {
-      ...(await getAuthHeader()),
-      'Content-Type': 'multipart/form-data',
-    };
-    const res = await axios.post(
-      `${API_URL}/problems/${problemId}/test-cases/import-excel`,
-      formData,
-      { headers },
-    );
-    return res.data;
-  } catch (error: any) {
-    console.error(
-      'Error importing test cases:',
-      error.response?.data || error.message,
-    );
-    // Since getAxiosMessage handles errors object/array on client side, we should pass back the structured data if possible. But here, we can throw a detailed error message.
-    const details = error.response?.data;
-    if (details?.errors && Array.isArray(details.errors)) {
-      throw new Error(
-        details.errors.map((e: any) => `${e.field}: ${e.message}`).join(', '),
-      );
-    }
-    if (Array.isArray(details?.message)) {
-      throw new Error(details.message.join(', '));
-    }
-    throw new Error(
-      details?.message || error.message || 'Failed to import test cases',
-    );
+  const file = formData.get('file') as File;
+  if (!file) {
+    throw new Error('Vui lòng chọn file Excel để import.');
   }
+  const buffer = Buffer.from(await file.arrayBuffer());
+  return unwrap(
+    await new ImportTestCasesUsecase(getRepo()).execute(
+      new ImportTestCasesParams(problemId, buffer, file.name),
+    ),
+  );
 }
 
 export async function getTestCasesTemplate() {
-  try {
-    const headers = await getAuthHeader();
-    const res = await axios.get(
-      `${API_URL}/problems/test-cases/excel-template`,
-      {
-        headers,
-        responseType: 'arraybuffer',
-      },
-    );
-    return {
-      data: Buffer.from(res.data).toString('base64'),
-      contentType:
-        res.headers['content-type'] ||
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    };
-  } catch (error: any) {
-    console.error('Error fetching template:', error.message);
-    throw new Error('Không thể tải file mẫu từ hệ thống');
-  }
+  return unwrap(await new GetTestCasesTemplateUsecase(getRepo()).execute({}));
 }

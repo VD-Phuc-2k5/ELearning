@@ -1,12 +1,15 @@
 'use server';
-import type { LoginParams } from '@learning-hub/domain';
+import { GetProfileUsecase, type LoginParams } from '@learning-hub/domain';
 import {
   serverAdminLogin,
   serverRefresh,
   serverLogout,
 } from '@learning-hub/data/server';
+import {
+  AuthRemoteDataSourceImpl,
+  AuthRepositoryImpl,
+} from '@learning-hub/data';
 import { cookies } from 'next/headers';
-import axios from 'axios';
 
 export type AdminLoginResult =
   | { success: true; accessToken: string; refreshToken: string }
@@ -52,11 +55,9 @@ export async function checkAdminAuth(): Promise<boolean> {
   const accessToken = store.get('accessToken')?.value;
   if (!accessToken) return false;
   try {
-    const NEST_API = `${process.env.NEST_API_URL || 'http://localhost:8080'}/api`;
-    await axios.get(`${NEST_API}/auth/me`, {
-      headers: { Cookie: `accessToken=${accessToken}` },
-    });
-    return true;
+    const repo = new AuthRepositoryImpl(new AuthRemoteDataSourceImpl());
+    const result = await new GetProfileUsecase(repo).execute({});
+    return result.type === 'right';
   } catch {
     return false;
   }

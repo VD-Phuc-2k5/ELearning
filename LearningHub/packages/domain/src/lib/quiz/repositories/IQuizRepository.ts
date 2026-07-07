@@ -108,4 +108,9 @@ export interface IQuizRepository {
   checkBankHash(hash: string): Promise<Either<Failure, BankHashResult>>;
   getDerivedBanks(bankId: string): Promise<Either<Failure, DerivedBank[]>>;
   getBankRoadmaps(bankId: string): Promise<Either<Failure, BankRoadmapItem[]>>;
+  approveBank(bankId: string): Promise<Either<Failure, QuestionBank>>;
+  rejectBank(
+    bankId: string,
+    reason?: string,
+  ): Promise<Either<Failure, QuestionBank>>;
 }

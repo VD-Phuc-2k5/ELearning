@@ -9,3 +9,4 @@ export * from './lib/quiz/repositories/repositories';
 export * from './lib/roadmap/datasources/datasources';
 export * from './lib/roadmap/repositories/repositories';
 export * from './lib/sandbox/sandbox';
+export * from './lib/problem/problem';
