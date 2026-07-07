@@ -5,8 +5,20 @@ import { getStudentProblems } from '../../actions/problem.actions';
 import { Code2, ArrowRight, Clock, ShieldAlert } from 'lucide-react';
 import Link from 'next/link';
 
+interface ProblemItem {
+  id: string;
+  title: string;
+  description: string;
+  difficulty: string;
+  timeLimitMs: number;
+  languages: string[];
+}
+
 export default function ProblemsPage() {
-  const { data, isLoading, error } = useQuery<{ data: any[]; total: number }>({
+  const { data, isLoading, error } = useQuery<{
+    data: ProblemItem[];
+    total: number;
+  }>({
     queryKey: ['student-problems'],
     queryFn: getStudentProblems,
   });
