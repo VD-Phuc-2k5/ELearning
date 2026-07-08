@@ -79,9 +79,7 @@
     "lint": {
       "dependsOn": ["typecheck"]
     },
-    "test": {
-      "dependsOn": ["^build"]
-    }
+    "test": {}
   },
   "generators": {
     "@nx/next": {
