@@ -3,12 +3,14 @@ import path from 'path';
 
 export default defineConfig({
   testDir: './tests',
-  timeout: 30000,
-  retries: 0,
+  timeout: 60000,
+  retries: 1,
+  globalSetup: './playwright/global-setup',
   use: {
     baseURL: 'http://localhost:8080',
     headless: true,
     screenshot: 'only-on-failure',
+    trace: 'on-first-retry',
   },
   webServer: {
     command: 'echo "Using external server"',
@@ -24,6 +26,7 @@ export default defineConfig({
     {
       name: 'e2e',
       testMatch: /.*\.spec\.ts/,
+      testIgnore: /admin\.spec\.ts/,
       dependencies: ['setup'],
       use: {
         storageState: path.resolve(
@@ -32,6 +35,14 @@ export default defineConfig({
           '.auth',
           'user.json',
         ),
+      },
+    },
+    {
+      name: 'admin',
+      testMatch: /admin\.spec\.ts/,
+      use: {
+        baseURL: 'http://localhost:8081',
+        storageState: undefined,
       },
     },
   ],
