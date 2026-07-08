@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
-import { Map, Plus, ArrowUpRight, Users } from 'lucide-react';
+import { Map, Plus, ArrowUpRight, Users, AlertCircle } from 'lucide-react';
 import { Button } from '../../../components/ui';
 import { listRoadmaps, enrollRoadmap } from '../../actions/roadmap.actions';
 import '@aejkatappaja/phantom-ui';
@@ -16,7 +16,7 @@ interface Roadmap {
 
 export default function RoadmapsPage() {
   const qc = useQueryClient();
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, error } = useQuery({
     queryKey: ['roadmaps'],
     queryFn: () => listRoadmaps({ limit: 20 }),
   });
@@ -35,6 +35,14 @@ export default function RoadmapsPage() {
           ))}
         </div>
       </phantom-ui>
+    );
+
+  if (error)
+    return (
+      <div className="flex items-start gap-2 rounded-2xl bg-red-50 border border-red-100 px-4 py-3 text-sm text-red-700">
+        <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+        <span>Lỗi tải dữ liệu</span>
+      </div>
     );
 
   const roadmaps = data?.data ?? [];

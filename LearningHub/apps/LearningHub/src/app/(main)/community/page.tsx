@@ -8,7 +8,14 @@ import { enrollRoadmap } from '../../actions/roadmap.actions';
 import { useCurrentUser } from '../../../components/hooks/use-current-user';
 import type { QuestionBank, Tag } from '@learning-hub/domain';
 import { Button } from '../../../components/ui';
-import { Search, BookOpen, Clock, ChevronDown, X } from 'lucide-react';
+import {
+  Search,
+  BookOpen,
+  Clock,
+  ChevronDown,
+  X,
+  AlertCircle,
+} from 'lucide-react';
 import Link from 'next/link';
 
 function getInitials(name: string): string {
@@ -46,12 +53,16 @@ export default function CommunityPage() {
   const [studyingId, setStudyingId] = useState<string | null>(null);
   const limit = 12;
 
-  const { data: allTags } = useQuery({
+  const { data: allTags, error: tagsError } = useQuery({
     queryKey: ['community-tags'],
     queryFn: () => getTags(),
   });
 
-  const { data: banks, isLoading } = useQuery({
+  const {
+    data: banks,
+    isLoading,
+    error: banksError,
+  } = useQuery({
     queryKey: ['community-banks', debouncedSearch, selectedTagId, page],
     queryFn: () =>
       getBanks({
@@ -133,6 +144,13 @@ export default function CommunityPage() {
         </div>
       </div>
 
+      {tagsError && (
+        <p className="text-xs text-rose-600 flex items-center gap-1">
+          <AlertCircle className="h-3 w-3" />
+          Không thể tải thẻ
+        </p>
+      )}
+
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3 flex-wrap">
           <div className="relative">
@@ -202,7 +220,17 @@ export default function CommunityPage() {
         </p>
       </div>
 
-      {isLoading ? (
+      {banksError ? (
+        <div className="flex flex-col items-center justify-center rounded-3xl border-2 border-rose-200 bg-rose-50 p-16 text-center">
+          <AlertCircle className="h-12 w-12 text-rose-300 mb-4" />
+          <h3 className="text-lg font-semibold text-slate-700">
+            Không thể tải dữ liệu
+          </h3>
+          <p className="text-slate-500 text-sm mt-1">
+            {(banksError as Error)?.message || 'Vui lòng thử lại sau.'}
+          </p>
+        </div>
+      ) : isLoading ? (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <div

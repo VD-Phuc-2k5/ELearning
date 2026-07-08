@@ -2,7 +2,13 @@
 
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
-import { CheckCircle2, XCircle, ArrowUpRight, Clock } from 'lucide-react';
+import {
+  CheckCircle2,
+  XCircle,
+  ArrowUpRight,
+  Clock,
+  AlertCircle,
+} from 'lucide-react';
 import { clsx } from 'clsx';
 import { listAttempts } from '../../actions/quiz-attempt.actions';
 import { getBankDetail } from '../../actions/quiz.actions';
@@ -33,7 +39,11 @@ interface Props {
 }
 
 export function RecentAttempts({ userId }: Props) {
-  const { data, isLoading } = useQuery({
+  const {
+    data,
+    isLoading,
+    error: attemptsError,
+  } = useQuery({
     queryKey: ['quiz-attempts-recent', userId],
     queryFn: () => listAttempts({ limit: 5 }),
   });
@@ -43,7 +53,7 @@ export function RecentAttempts({ userId }: Props) {
     ...new Set(attempts.map((a: any) => a.questionBankId as string)),
   ];
 
-  const { data: bankTitles = {} } = useQuery({
+  const { data: bankTitles = {}, error: titlesError } = useQuery({
     queryKey: ['recent-bank-titles', uniqueBankIds],
     queryFn: async (): Promise<Record<string, string>> => {
       const banks = await Promise.all(
@@ -78,7 +88,21 @@ export function RecentAttempts({ userId }: Props) {
         )}
       </div>
 
-      {isLoading ? (
+      {titlesError && (
+        <p className="text-xs text-rose-600 flex items-center gap-1">
+          <AlertCircle className="h-3 w-3" />
+          Không thể tải tiêu đề ngân hàng
+        </p>
+      )}
+
+      {attemptsError ? (
+        <div className="flex flex-col items-center justify-center py-8 rounded-2xl border border-rose-200 bg-rose-50 text-center">
+          <AlertCircle className="h-8 w-8 text-rose-400 mb-2" />
+          <p className="text-sm font-medium text-rose-700">
+            Không thể tải lịch sử làm bài
+          </p>
+        </div>
+      ) : isLoading ? (
         <phantom-ui
           loading
           animation="pulse"

@@ -2,7 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
-import { Map, BookOpen } from 'lucide-react';
+import { Map, BookOpen, AlertCircle } from 'lucide-react';
 import { getRoadmapDetail } from '../../../../actions/roadmap.actions';
 import { ProgressBar } from '../../../../../components/ui';
 import '@aejkatappaja/phantom-ui';
@@ -18,7 +18,7 @@ export function QuizProgressCard({
   bankId,
   bankTitle,
 }: QuizProgressCardProps) {
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ['roadmap', roadmapId],
     queryFn: () => getRoadmapDetail(roadmapId),
   });
@@ -31,6 +31,16 @@ export function QuizProgressCard({
         reveal={0.2}
         className="mb-4 block h-24 rounded-2xl bg-slate-100"
       />
+    );
+  }
+  if (isError) {
+    return (
+      <div className="mb-4 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-center">
+        <AlertCircle className="h-5 w-5 text-rose-400 mx-auto mb-1" />
+        <p className="text-sm font-medium text-rose-600">
+          Không thể tải thông tin roadmap
+        </p>
+      </div>
     );
   }
   if (!data) return null;

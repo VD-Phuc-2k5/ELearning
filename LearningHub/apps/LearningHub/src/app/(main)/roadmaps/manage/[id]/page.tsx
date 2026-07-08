@@ -33,14 +33,14 @@ export default function EditRoadmapPage() {
   const router = useRouter();
   const qc = useQueryClient();
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, error } = useQuery({
     queryKey: ['roadmap', id],
     queryFn: () => getRoadmapDetail(id),
   });
 
   const { user } = useCurrentUser();
 
-  const { data: allBanks } = useQuery({
+  const { data: allBanks, error: banksError } = useQuery({
     queryKey: ['banks-picker', user?.id],
     queryFn: () => getBanks({ limit: 100, uploaderId: user?.id }),
     enabled: !!user,
@@ -140,6 +140,14 @@ export default function EditRoadmapPage() {
       </div>
     );
 
+  if (error)
+    return (
+      <div className="flex items-start gap-2 rounded-2xl bg-red-50 border border-red-100 px-4 py-3 text-sm text-red-700">
+        <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+        <span>Lỗi tải dữ liệu</span>
+      </div>
+    );
+
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div className="flex items-center gap-3">
@@ -175,6 +183,13 @@ export default function EditRoadmapPage() {
           >
             <X className="h-4 w-4" />
           </button>
+        </div>
+      )}
+
+      {banksError && (
+        <div className="flex items-start gap-2 rounded-2xl bg-red-50 border border-red-100 px-4 py-3 text-sm text-red-700">
+          <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+          <span>Không thể tải dữ liệu</span>
         </div>
       )}
 

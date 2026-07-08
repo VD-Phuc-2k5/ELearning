@@ -3,7 +3,13 @@
 import { useMemo, useState } from 'react';
 import { useQuery, useQueries } from '@tanstack/react-query';
 import Link from 'next/link';
-import { Clock, CheckCircle2, XCircle, ArrowUpRight } from 'lucide-react';
+import {
+  Clock,
+  CheckCircle2,
+  XCircle,
+  ArrowUpRight,
+  AlertCircle,
+} from 'lucide-react';
 import { clsx } from 'clsx';
 import { Button } from '../../../../components/ui';
 import { listAttempts } from '../../../actions/quiz-attempt.actions';
@@ -25,7 +31,7 @@ export default function QuizHistoryPage() {
   const [page, setPage] = useState(1);
   const limit = 10;
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, error } = useQuery({
     queryKey: ['quiz-attempts', page],
     queryFn: () => listAttempts({ page, limit }),
   });
@@ -77,6 +83,20 @@ export default function QuizHistoryPage() {
         ))}
       </phantom-ui>
     );
+
+  if (isError) {
+    return (
+      <div className="flex flex-col items-center justify-center py-32 text-center">
+        <AlertCircle className="h-12 w-12 text-rose-300 mb-4" />
+        <h3 className="text-lg font-semibold text-slate-700">
+          Không thể tải lịch sử
+        </h3>
+        <p className="text-slate-500 text-sm mt-1">
+          {(error as Error)?.message || 'Vui lòng thử lại sau.'}
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

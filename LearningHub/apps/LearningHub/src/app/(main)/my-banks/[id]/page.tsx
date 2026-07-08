@@ -49,7 +49,11 @@ export default function BankDetailPage() {
   const [deleteErr, setDeleteErr] = useState('');
   const { modal: confirmModal, openConfirm } = useConfirmModal();
 
-  const { data: bank, isLoading: bankLoading } = useQuery({
+  const {
+    data: bank,
+    isLoading: bankLoading,
+    error: bankError,
+  } = useQuery({
     queryKey: ['bank', id],
     queryFn: () => getBankDetail(id),
   });
@@ -189,6 +193,26 @@ export default function BankDetailPage() {
         <div className="h-10 bg-slate-100 rounded-xl w-64" />
         <div className="h-40 bg-slate-100 rounded-3xl" />
         <div className="h-64 bg-slate-100 rounded-3xl" />
+      </div>
+    );
+  }
+
+  if (bankError) {
+    return (
+      <div className="flex flex-col items-center justify-center py-32 text-center">
+        <AlertCircle className="h-12 w-12 text-rose-300 mb-4" />
+        <h3 className="text-lg font-semibold text-slate-700">
+          Không thể tải dữ liệu
+        </h3>
+        <p className="text-slate-500 text-sm mt-1">
+          {(bankError as Error)?.message || 'Vui lòng thử lại sau.'}
+        </p>
+        <Link
+          href="/my-banks"
+          className="mt-4 text-sm text-indigo-600 hover:underline"
+        >
+          ← Quay lại danh sách
+        </Link>
       </div>
     );
   }

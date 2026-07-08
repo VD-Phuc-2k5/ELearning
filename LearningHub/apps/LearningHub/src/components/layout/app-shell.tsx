@@ -23,15 +23,15 @@ export function AppShell({ children }: AppShellProps) {
     router.push('/auth');
   };
 
+  useEffect(() => {
+    if (!isLoading && !isFetching && !user && !pathname?.startsWith('/auth')) {
+      router.replace('/auth');
+    }
+  }, [isLoading, isFetching, user, router, pathname]);
+
   if (pathname?.startsWith('/auth')) {
     return <>{children}</>;
   }
-
-  useEffect(() => {
-    if (!isLoading && !isFetching && !user) {
-      router.replace('/auth');
-    }
-  }, [isLoading, isFetching, user, router]);
 
   if (isLoading || !user) {
     return null;

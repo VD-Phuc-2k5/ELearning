@@ -1,7 +1,13 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, CheckCircle2, XCircle, Lightbulb } from 'lucide-react';
+import {
+  ArrowLeft,
+  CheckCircle2,
+  XCircle,
+  Lightbulb,
+  AlertCircle,
+} from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { clsx } from 'clsx';
 import { Button } from '../../../../../components/ui';
@@ -14,7 +20,7 @@ interface ReviewScreenProps {
 }
 
 export function ReviewScreen({ attemptId, onBack }: ReviewScreenProps) {
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, error } = useQuery({
     queryKey: ['attempt', attemptId],
     queryFn: () => getAttemptDetail(attemptId),
   });
@@ -32,6 +38,20 @@ export function ReviewScreen({ attemptId, onBack }: ReviewScreenProps) {
         ))}
       </phantom-ui>
     );
+
+  if (isError) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-center">
+        <AlertCircle className="h-12 w-12 text-rose-300 mb-4" />
+        <h3 className="text-lg font-semibold text-slate-700">
+          Không thể tải kết quả
+        </h3>
+        <p className="text-slate-500 text-sm mt-1">
+          {(error as Error)?.message || 'Vui lòng thử lại sau.'}
+        </p>
+      </div>
+    );
+  }
 
   const reviews = data?.reviewDetails ?? [];
 

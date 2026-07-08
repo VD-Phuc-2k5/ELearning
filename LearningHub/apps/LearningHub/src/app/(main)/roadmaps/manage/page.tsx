@@ -2,7 +2,14 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
-import { Plus, Map, ArrowUpRight, Edit2, Trash2 } from 'lucide-react';
+import {
+  Plus,
+  Map,
+  ArrowUpRight,
+  Edit2,
+  Trash2,
+  AlertCircle,
+} from 'lucide-react';
 import { Button, useConfirmModal } from '../../../../components/ui';
 import {
   listMyRoadmaps,
@@ -12,7 +19,7 @@ import {
 export default function ManageRoadmapsPage() {
   const qc = useQueryClient();
   const { modal: confirmModal, openConfirm } = useConfirmModal();
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, error } = useQuery({
     queryKey: ['my-roadmaps'],
     queryFn: () => listMyRoadmaps({ limit: 50 }),
   });
@@ -37,7 +44,12 @@ export default function ManageRoadmapsPage() {
         </Link>
       </div>
 
-      {isLoading ? (
+      {error ? (
+        <div className="flex items-start gap-2 rounded-2xl bg-red-50 border border-red-100 px-4 py-3 text-sm text-red-700">
+          <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+          <span>Lỗi tải dữ liệu</span>
+        </div>
+      ) : isLoading ? (
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
             <div

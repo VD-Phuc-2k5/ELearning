@@ -11,6 +11,7 @@ import {
   Circle,
   PlayCircle,
   Edit2,
+  AlertCircle,
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { Button } from '../../../../components/ui';
@@ -46,7 +47,7 @@ export default function RoadmapDetailPage() {
   const router = useRouter();
   const qc = useQueryClient();
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, error } = useQuery({
     queryKey: ['roadmap', id],
     queryFn: () => getRoadmapDetail(id),
   });
@@ -84,6 +85,14 @@ export default function RoadmapDetailPage() {
           <div key={i} className="h-16 rounded-xl bg-slate-100" />
         ))}
       </phantom-ui>
+    );
+
+  if (error)
+    return (
+      <div className="flex items-start gap-2 rounded-2xl bg-red-50 border border-red-100 px-4 py-3 text-sm text-red-700">
+        <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+        <span>Lỗi tải dữ liệu</span>
+      </div>
     );
 
   if (!data) return null;

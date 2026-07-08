@@ -6,20 +6,41 @@ import { getBanks } from '../../actions/quiz.actions';
 import type { QuestionBank } from '@learning-hub/domain';
 import { useCurrentUser } from '../../../components/hooks/use-current-user';
 import { Button } from '../../../components/ui';
-import { Plus, BookOpen, Share2, Upload, FileQuestion } from 'lucide-react';
+import {
+  Plus,
+  BookOpen,
+  Share2,
+  Upload,
+  FileQuestion,
+  AlertCircle,
+} from 'lucide-react';
 import Link from 'next/link';
 
 export default function MyBanksPage() {
   const { user } = useCurrentUser();
   const [page, setPage] = useState(1);
   const limit = 12;
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, error } = useQuery({
     queryKey: ['my-banks', page],
     queryFn: () => getBanks({ page, limit, uploaderId: user?.id }),
     enabled: !!user,
   });
   const total = data?.total ?? 0;
   const totalPages = Math.ceil(total / limit);
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center py-32 text-center">
+        <AlertCircle className="h-12 w-12 text-rose-300 mb-4" />
+        <h3 className="text-lg font-semibold text-slate-700">
+          Không thể tải dữ liệu
+        </h3>
+        <p className="text-slate-500 text-sm mt-1">
+          {(error as Error)?.message || 'Vui lòng thử lại sau.'}
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">

@@ -68,7 +68,11 @@ export default function SolveProblemPage() {
 
   const pollTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const { data: problem, isLoading: isProblemLoading } = useQuery<any>({
+  const {
+    data: problem,
+    isLoading: isProblemLoading,
+    error: problemError,
+  } = useQuery<any>({
     queryKey: ['student-problem', problemId],
     queryFn: () => getStudentProblemDetail(problemId),
   });
@@ -248,6 +252,26 @@ export default function SolveProblemPage() {
       <div className="flex flex-col items-center justify-center py-20 gap-4">
         <Loader2 className="h-8 w-8 text-indigo-600 animate-spin" />
         <p className="text-slate-500 text-sm">Đang tải đề bài...</p>
+      </div>
+    );
+  }
+
+  if (problemError) {
+    return (
+      <div className="text-center py-16 px-4">
+        <h3 className="text-slate-800 font-bold text-lg mb-1">
+          Lỗi tải đề bài
+        </h3>
+        <p className="text-slate-500 text-sm mb-6">
+          {(problemError as Error)?.message ||
+            'Không thể tải đề bài. Vui lòng thử lại sau.'}
+        </p>
+        <Link
+          href="/problems"
+          className="text-indigo-600 hover:underline text-sm"
+        >
+          Quay lại danh sách đề bài
+        </Link>
       </div>
     );
   }

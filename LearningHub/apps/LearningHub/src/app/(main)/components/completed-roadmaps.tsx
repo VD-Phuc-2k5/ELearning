@@ -2,7 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
-import { Trophy, ArrowUpRight } from 'lucide-react';
+import { Trophy, ArrowUpRight, AlertCircle } from 'lucide-react';
 import { getMyRoadmapProgress } from '../../actions/roadmap.actions';
 import { EmptyState, ProgressBar } from '../../../components/ui';
 import '@aejkatappaja/phantom-ui';
@@ -17,7 +17,7 @@ const fmtDate = (iso: string | null) =>
     : '—';
 
 export function CompletedRoadmaps() {
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, error } = useQuery({
     queryKey: ['my-roadmap-progress'],
     queryFn: () => getMyRoadmapProgress(),
   });
@@ -30,7 +30,14 @@ export function CompletedRoadmaps() {
         <Trophy className="h-5 w-5 text-amber-500" /> Completed Roadmaps
       </h3>
 
-      {isLoading ? (
+      {error ? (
+        <div className="flex flex-col items-center justify-center py-8 rounded-2xl border border-rose-200 bg-rose-50 text-center">
+          <AlertCircle className="h-8 w-8 text-rose-400 mb-2" />
+          <p className="text-sm font-medium text-rose-700">
+            Không thể tải tiến độ học tập
+          </p>
+        </div>
+      ) : isLoading ? (
         <phantom-ui
           loading
           animation="pulse"

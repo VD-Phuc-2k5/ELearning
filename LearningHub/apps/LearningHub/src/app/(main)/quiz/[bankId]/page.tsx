@@ -7,6 +7,7 @@ import gsap from 'gsap';
 import '@aejkatappaja/phantom-ui';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
+import { AlertCircle } from 'lucide-react';
 import {
   getBankDetail,
   getQuestionsForQuiz,
@@ -40,12 +41,16 @@ export default function QuizPage() {
     number | undefined
   >();
 
-  const { data: bank } = useQuery({
+  const { data: bank, error: bankError } = useQuery({
     queryKey: ['bank', bankId],
     queryFn: () => getBankDetail(bankId),
   });
 
-  const { data: rawQuestions = [], isLoading } = useQuery({
+  const {
+    data: rawQuestions = [],
+    isLoading,
+    error: questionsError,
+  } = useQuery({
     queryKey: ['quiz-questions', bankId],
     queryFn: () => getQuestionsForQuiz(bankId),
     enabled: mode !== 'select',
@@ -94,6 +99,18 @@ export default function QuizPage() {
           </div>
         </div>
       </phantom-ui>
+    );
+  }
+
+  if (bankError || questionsError) {
+    return (
+      <div className="flex flex-col items-center justify-center py-32 text-center">
+        <AlertCircle className="h-12 w-12 text-rose-300 mb-4" />
+        <h3 className="text-lg font-semibold text-slate-700">
+          Không thể tải dữ liệu
+        </h3>
+        <p className="text-slate-500 text-sm mt-1">Vui lòng thử lại sau.</p>
+      </div>
     );
   }
 
