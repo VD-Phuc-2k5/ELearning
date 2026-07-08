@@ -1,6 +1,5 @@
 'use server';
 
-import { unwrap } from '@learning-hub/core';
 import {
   GetProblemsUsecase,
   GetProblemDetailUsecase,
@@ -17,27 +16,49 @@ function getRepo() {
   return new ProblemRepositoryImpl(new ProblemRemoteDataSourceImpl());
 }
 
-export async function getStudentProblems() {
-  return unwrap(await new GetProblemsUsecase(getRepo()).execute(undefined));
+async function unwrapOrThrow<T>(
+  promise: Promise<{ type: string; value: any }>,
+): Promise<T> {
+  const result = await promise;
+  if (result.type === 'left') throw new Error(result.value.message);
+  return result.value;
 }
 
-export async function getStudentProblemDetail(id: string) {
-  return unwrap(await new GetProblemDetailUsecase(getRepo()).execute(id));
+export async function getStudentProblems(): Promise<any> {
+  return unwrapOrThrow(new GetProblemsUsecase(getRepo()).execute(undefined));
+}
+
+export async function getStudentProblemDetail(id: string): Promise<any> {
+  return unwrapOrThrow(new GetProblemDetailUsecase(getRepo()).execute(id));
 }
 
 export async function submitStudentCode(
   problemId: string,
   data: { language: string; sourceCode: string },
-) {
-  return unwrap(
-    await new SubmitCodeUsecase(getRepo()).execute(
+): Promise<{ id: string; status: string }> {
+  return unwrapOrThrow(
+    new SubmitCodeUsecase(getRepo()).execute(
       new SubmitCodeParamsWithId(problemId, data),
     ),
   );
 }
 
-export async function getSubmissionStatus(submissionId: string) {
-  return unwrap(
-    await new GetSubmissionStatusUsecase(getRepo()).execute(submissionId),
+export async function getSubmissionStatus(submissionId: string): Promise<{
+  status: string;
+  score?: number;
+  passedTestCases?: number;
+  totalTestCases?: number;
+  language?: string;
+  sourceCode?: string;
+  results?: Array<{
+    testCaseId: string;
+    input: string;
+    expectedOutput: string;
+    actualOutput: string;
+    status: string;
+  }>;
+}> {
+  return unwrapOrThrow(
+    new GetSubmissionStatusUsecase(getRepo()).execute(submissionId),
   );
 }

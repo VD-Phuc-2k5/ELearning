@@ -1,6 +1,12 @@
 'use server';
 
-import { unwrap } from '@learning-hub/core';
+async function unwrapOrThrow<T>(
+  promise: Promise<{ type: string; value: any }>,
+): Promise<T> {
+  const result = await promise;
+  if (result.type === 'left') throw new Error(result.value.message);
+  return result.value;
+}
 import {
   QuizRemoteDataSourceImpl,
   QuizRepositoryImpl,
@@ -72,10 +78,8 @@ export async function getBanks(params?: GetBanksQuizParams): Promise<BankList> {
 
 export async function getBankDetail(id: string): Promise<QuestionBank> {
   const repo = getRepo();
-  return unwrap(
-    await new GetBankDetailQuizUsecase(repo).execute(
-      new GetBankDetailQuizParams(id),
-    ),
+  return unwrapOrThrow(
+    new GetBankDetailQuizUsecase(repo).execute(new GetBankDetailQuizParams(id)),
   );
 }
 
@@ -83,7 +87,7 @@ export async function createBank(
   data: CreateBankQuizParams,
 ): Promise<QuestionBank> {
   const repo = getRepo();
-  return unwrap(await new CreateBankQuizUsecase(repo).execute(data));
+  return unwrapOrThrow(new CreateBankQuizUsecase(repo).execute(data));
 }
 
 export async function updateBank(
@@ -91,17 +95,15 @@ export async function updateBank(
   data: UpdateBankQuizParams,
 ): Promise<QuestionBank> {
   const repo = getRepo();
-  return unwrap(
-    await new UpdateBankQuizUsecase(repo).execute(
-      new UpdateBankCommand(id, data),
-    ),
+  return unwrapOrThrow(
+    new UpdateBankQuizUsecase(repo).execute(new UpdateBankCommand(id, data)),
   );
 }
 
 export async function deleteBank(id: string): Promise<void> {
   const repo = getRepo();
-  unwrap(
-    await new DeleteBankQuizUsecase(repo).execute(new DeleteBankQuizParams(id)),
+  unwrapOrThrow(
+    new DeleteBankQuizUsecase(repo).execute(new DeleteBankQuizParams(id)),
   );
 }
 
@@ -112,8 +114,8 @@ export async function uploadExcel(
 ): Promise<{ message: string }> {
   const repo = getRepo();
   const buffer = Buffer.from(await file.arrayBuffer());
-  return unwrap(
-    await new UploadExcelQuizUsecase(repo).execute(
+  return unwrapOrThrow(
+    new UploadExcelQuizUsecase(repo).execute(
       new UploadExcelQuizParams(bankId, buffer, file.name, fileHash),
     ),
   );
@@ -123,8 +125,8 @@ export async function getUploadHistory(
   bankId: string,
 ): Promise<UploadHistory[]> {
   const repo = getRepo();
-  return unwrap(
-    await new GetUploadHistoryQuizUsecase(repo).execute(
+  return unwrapOrThrow(
+    new GetUploadHistoryQuizUsecase(repo).execute(
       new GetUploadHistoryQuizParams(bankId),
     ),
   );
@@ -135,8 +137,8 @@ export async function getQuestionsForQuiz(
   showAnswers = false,
 ): Promise<Question[]> {
   const repo = getRepo();
-  return unwrap(
-    await new GetQuestionsForQuizUsecase(repo).execute(
+  return unwrapOrThrow(
+    new GetQuestionsForQuizUsecase(repo).execute(
       new GetQuestionsForQuizParams(bankId, showAnswers),
     ),
   );
@@ -147,8 +149,8 @@ export async function verifyAnswer(
   selectedOptionId: string,
 ): Promise<VerifyAnswerResult> {
   const repo = getRepo();
-  return unwrap(
-    await new VerifyAnswerQuizUsecase(repo).execute(
+  return unwrapOrThrow(
+    new VerifyAnswerQuizUsecase(repo).execute(
       new VerifyAnswerQuizParams(questionId, selectedOptionId),
     ),
   );
@@ -161,8 +163,8 @@ export async function submitQuiz(
   durationSeconds?: number,
 ): Promise<QuizSubmitResult> {
   const repo = getRepo();
-  return unwrap(
-    await new SubmitQuizUsecase(repo).execute(
+  return unwrapOrThrow(
+    new SubmitQuizUsecase(repo).execute(
       new SubmitQuizParams(bankId, answers, roadmapId, durationSeconds),
     ),
   );
@@ -173,8 +175,8 @@ export async function updateQuestion(
   data: UpdateQuestionQuizParams,
 ): Promise<Question> {
   const repo = getRepo();
-  return unwrap(
-    await new UpdateQuestionQuizUsecase(repo).execute(
+  return unwrapOrThrow(
+    new UpdateQuestionQuizUsecase(repo).execute(
       new UpdateQuestionCommand(id, data),
     ),
   );
@@ -182,8 +184,8 @@ export async function updateQuestion(
 
 export async function deleteQuestion(id: string): Promise<void> {
   const repo = getRepo();
-  unwrap(
-    await new DeleteQuestionQuizUsecase(repo).execute(
+  unwrapOrThrow(
+    new DeleteQuestionQuizUsecase(repo).execute(
       new DeleteQuestionQuizParams(id),
     ),
   );
@@ -192,7 +194,7 @@ export async function deleteQuestion(id: string): Promise<void> {
 export async function getTags(): Promise<Tag[]> {
   try {
     const repo = getRepo();
-    return unwrap(await new GetTagsQuizUsecase(repo).execute({}));
+    return unwrapOrThrow(new GetTagsQuizUsecase(repo).execute({}));
   } catch {
     return [];
   }
@@ -200,15 +202,15 @@ export async function getTags(): Promise<Tag[]> {
 
 export async function createTag(name: string): Promise<Tag> {
   const repo = getRepo();
-  return unwrap(
-    await new CreateTagQuizUsecase(repo).execute(new CreateTagQuizParams(name)),
+  return unwrapOrThrow(
+    new CreateTagQuizUsecase(repo).execute(new CreateTagQuizParams(name)),
   );
 }
 
 export async function deleteTag(id: number): Promise<void> {
   const repo = getRepo();
-  unwrap(
-    await new DeleteTagQuizUsecase(repo).execute(new DeleteTagQuizParams(id)),
+  unwrapOrThrow(
+    new DeleteTagQuizUsecase(repo).execute(new DeleteTagQuizParams(id)),
   );
 }
 
@@ -218,8 +220,8 @@ export async function parseExcel(
 ): Promise<{ questions: ParsedQuestion[] }> {
   const repo = getRepo();
   const buffer = Buffer.from(await file.arrayBuffer());
-  const result = unwrap(
-    await new ParseExcelQuizUsecase(repo).execute(
+  const result: any = await unwrapOrThrow(
+    new ParseExcelQuizUsecase(repo).execute(
       new ParseExcelQuizParams(bankId, buffer, file.name),
     ),
   );
@@ -228,8 +230,8 @@ export async function parseExcel(
 
 export async function getDerivedBanks(bankId: string): Promise<DerivedBank[]> {
   const repo = getRepo();
-  return unwrap(
-    await new GetDerivedBanksQuizUsecase(repo).execute(
+  return unwrapOrThrow(
+    new GetDerivedBanksQuizUsecase(repo).execute(
       new GetDerivedBanksQuizParams(bankId),
     ),
   );
@@ -239,8 +241,8 @@ export async function getBankRoadmaps(
   bankId: string,
 ): Promise<BankRoadmapItem[]> {
   const repo = getRepo();
-  return unwrap(
-    await new GetBankRoadmapsQuizUsecase(repo).execute(
+  return unwrapOrThrow(
+    new GetBankRoadmapsQuizUsecase(repo).execute(
       new GetBankRoadmapsQuizParams(bankId),
     ),
   );

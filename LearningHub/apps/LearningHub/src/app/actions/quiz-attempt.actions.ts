@@ -1,6 +1,12 @@
 'use server';
 
-import { unwrap } from '@learning-hub/core';
+async function unwrapOrThrow<T>(
+  promise: Promise<{ type: string; value: any }>,
+): Promise<T> {
+  const result = await promise;
+  if (result.type === 'left') throw new Error(result.value.message);
+  return result.value;
+}
 import {
   QuizRemoteDataSourceImpl,
   QuizRepositoryImpl,
@@ -42,8 +48,8 @@ export async function listAttempts(params?: {
 
 export async function getAttemptDetail(id: string): Promise<QuizAttemptDetail> {
   const repo = getRepo();
-  return unwrap(
-    await new GetAttemptDetailQuizUsecase(repo).execute(
+  return unwrapOrThrow(
+    new GetAttemptDetailQuizUsecase(repo).execute(
       new GetAttemptDetailQuizParams(id),
     ),
   );
@@ -53,8 +59,8 @@ export async function getBankProgress(
   bankId: string,
 ): Promise<UserBankProgress | null> {
   const repo = getRepo();
-  return unwrap(
-    await new GetBankProgressQuizUsecase(repo).execute(
+  return unwrapOrThrow(
+    new GetBankProgressQuizUsecase(repo).execute(
       new GetBankProgressQuizParams(bankId),
     ),
   );
