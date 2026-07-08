@@ -112,7 +112,9 @@ describe('AdminPage — LoginScreen (TC074–TC081)', () => {
   });
 
   it('TC081 — submit button is disabled while request is loading', async () => {
-    mockAdminLoginAction.mockImplementation(() => new Promise(() => {})); // never resolves
+    mockAdminLoginAction.mockImplementation(
+      () => new Promise<void>(() => undefined),
+    ); // never resolves
     renderLoginScreen();
 
     fireEvent.change(getEmailInput(), { target: { value: 'admin@gmail.com' } });

@@ -14,9 +14,11 @@ export class UploadForumImageUseCase {
     private readonly cloudinary: ICloudinaryService,
   ) {}
 
-  async execute(
-    file: Express.Multer.File,
-  ): Promise<{ url: string; publicId: string }> {
+  async execute(file: {
+    buffer: Buffer;
+    size: number;
+    mimetype: string;
+  }): Promise<{ url: string; publicId: string }> {
     if (!file) throw new BadRequestException('No file provided');
     if (file.size > MAX_FILE_SIZE) {
       throw new BadRequestException('File size exceeds 10MB limit');

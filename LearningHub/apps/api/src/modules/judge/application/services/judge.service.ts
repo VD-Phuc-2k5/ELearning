@@ -146,7 +146,7 @@ export class JudgeService {
         | 'time_limit_exceeded'
         | 'runtime_error'
         | 'memory_limit_exceeded' = 'accepted';
-      let cleanStderr = execution.stderr ? execution.stderr.trim() : '';
+      const cleanStderr = execution.stderr ? execution.stderr.trim() : '';
 
       // Determine verdict for the test case
       if (execution.status === 'timeout') {

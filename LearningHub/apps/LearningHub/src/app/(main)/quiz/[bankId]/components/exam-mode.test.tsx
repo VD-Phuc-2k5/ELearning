@@ -142,7 +142,7 @@ describe('LearningHub — ExamMode (TC144–TC145)', () => {
 
   it('TC145c — Submit button is disabled while submitting', async () => {
     jest.spyOn(window, 'confirm').mockReturnValue(true);
-    mockSubmitQuiz.mockImplementation(() => new Promise(() => {}));
+    mockSubmitQuiz.mockImplementation(() => new Promise<void>(() => undefined));
     renderExam([Q1, Q2]);
 
     fireEvent.click(screen.getByText('Next'));

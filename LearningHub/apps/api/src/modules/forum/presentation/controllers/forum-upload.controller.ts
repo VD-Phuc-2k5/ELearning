@@ -39,7 +39,17 @@ export class ForumUploadController {
   @UseInterceptors(
     FileInterceptor('file', { limits: { fileSize: 10 * 1024 * 1024 } }),
   )
-  uploadImage(@UploadedFile() file: Express.Multer.File) {
+  uploadImage(
+    @UploadedFile()
+    file: {
+      buffer: Buffer;
+      size: number;
+      mimetype: string;
+      fieldname: string;
+      originalname: string;
+      encoding: string;
+    },
+  ) {
     return this.uploadForumImageUseCase.execute(file);
   }
 }

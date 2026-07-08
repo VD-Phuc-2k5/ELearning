@@ -169,7 +169,9 @@ describe('LearningHub — Login Page (TC116–TC125)', () => {
   });
 
   it('TC124 — submit button is disabled while mutation is pending', async () => {
-    mockLoginAction.mockImplementation(() => new Promise(() => {})); // never resolves
+    mockLoginAction.mockImplementation(
+      () => new Promise<void>(() => undefined),
+    ); // never resolves
     renderPage();
 
     fireEvent.change(getEmailInput(), { target: { value: 'user@gmail.com' } });

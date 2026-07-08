@@ -24,7 +24,7 @@ export async function registerUser(
   email: string,
   username: string,
   password = 'Pass@1234',
-) {
+): Promise<request.Response> {
   return request(app.getHttpServer())
     .post('/auth/register')
     .send({ email, username, password });

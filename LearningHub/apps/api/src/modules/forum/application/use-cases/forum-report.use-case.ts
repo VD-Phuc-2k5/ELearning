@@ -74,7 +74,7 @@ export class CreateReportUseCase {
       description,
     });
 
-    this.emitReportCreated(targetType, report).catch(() => {});
+    this.emitReportCreated(targetType, report).catch(() => undefined);
 
     return report;
   }

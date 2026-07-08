@@ -1,22 +1,10 @@
 import 'reflect-metadata';
 import { JudgeService } from './judge.service';
-import {
-  ISubmissionRepository,
-  SUBMISSION_REPOSITORY,
-} from '../../domain/repositories/submission.repository.interface';
-import {
-  ICodingProblemRepository,
-  CODING_PROBLEM_REPOSITORY,
-} from '../../domain/repositories/coding-problem.repository.interface';
-import {
-  ITestCaseRepository,
-  TEST_CASE_REPOSITORY,
-} from '../../domain/repositories/test-case.repository.interface';
+import { ISubmissionRepository } from '../../domain/repositories/submission.repository.interface';
+import { ICodingProblemRepository } from '../../domain/repositories/coding-problem.repository.interface';
+import { ITestCaseRepository } from '../../domain/repositories/test-case.repository.interface';
 import { ISandboxService } from '../../../sandbox/application/interfaces/i-sandbox.service';
-import {
-  SubmissionDomain,
-  SubmissionStatus,
-} from '../../domain/entities/submission.domain';
+import { SubmissionDomain } from '../../domain/entities/submission.domain';
 import { CodingProblemDomain } from '../../domain/entities/coding-problem.domain';
 import { TestCaseDomain } from '../../domain/entities/test-case.domain';
 import { ExecutionResult } from '../../../sandbox/domain/entities/execution-result';

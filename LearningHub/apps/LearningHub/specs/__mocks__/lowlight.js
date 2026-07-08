@@ -3,7 +3,7 @@ const common = {};
 function createLowlight() {
   return {
     highlight: () => ({ children: [] }),
-    register: () => {},
+    register: () => undefined,
     registered: () => [],
   };
 }

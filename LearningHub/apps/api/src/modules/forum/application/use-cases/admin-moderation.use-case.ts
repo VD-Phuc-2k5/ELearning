@@ -91,7 +91,7 @@ export class AdminResolveReportUseCase {
         targetId: resolved.targetId,
         metadata: { note: resolutionNote, reason: resolved.reason },
       })
-      .catch(() => {});
+      .catch(() => undefined);
 
     return resolved;
   }
@@ -133,7 +133,7 @@ export class AdminDismissReportUseCase {
         targetId: dismissed.targetId,
         metadata: { note, reason: dismissed.reason },
       })
-      .catch(() => {});
+      .catch(() => undefined);
 
     return dismissed;
   }
