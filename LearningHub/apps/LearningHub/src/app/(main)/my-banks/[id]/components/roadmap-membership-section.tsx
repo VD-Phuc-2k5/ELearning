@@ -25,13 +25,20 @@ export function RoadmapMembershipSection({ bankId }: { bankId: string }) {
       const details = await Promise.all(
         items.map((i) => getRoadmapDetail(i.roadmapId)),
       );
-      return items.map((item, idx) => ({
-        roadmapId: item.roadmapId,
-        roadmapTitle: item.roadmapTitle,
-        description: details[idx].roadmap.description,
-        totalBanks: details[idx].items.length,
-        position: item.position,
-      }));
+      const result: RoadmapMembership[] = [];
+      items.forEach((item, idx) => {
+        const detail = details[idx];
+        if (detail) {
+          result.push({
+            roadmapId: item.roadmapId,
+            roadmapTitle: item.roadmapTitle,
+            description: detail.roadmap.description,
+            totalBanks: detail.items.length,
+            position: item.position,
+          });
+        }
+      });
+      return result;
     },
   });
 

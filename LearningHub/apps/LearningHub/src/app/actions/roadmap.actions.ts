@@ -44,15 +44,23 @@ function getRepo() {
 export async function listRoadmaps(
   params?: GetRoadmapsParams,
 ): Promise<RoadmapList> {
-  const repo = getRepo();
-  return unwrapOrThrow(new GetRoadmapsUsecase(repo).execute(params ?? {}));
+  try {
+    const repo = getRepo();
+    return unwrapOrThrow(new GetRoadmapsUsecase(repo).execute(params ?? {}));
+  } catch {
+    return { data: [], total: 0 };
+  }
 }
 
 export async function listMyRoadmaps(
   params?: GetRoadmapsParams,
 ): Promise<RoadmapList> {
-  const repo = getRepo();
-  return unwrapOrThrow(new GetMyRoadmapsUsecase(repo).execute(params ?? {}));
+  try {
+    const repo = getRepo();
+    return unwrapOrThrow(new GetMyRoadmapsUsecase(repo).execute(params ?? {}));
+  } catch {
+    return { data: [], total: 0 };
+  }
 }
 
 export async function createRoadmap(
@@ -62,11 +70,17 @@ export async function createRoadmap(
   return unwrapOrThrow(new CreateRoadmapUsecase(repo).execute(data));
 }
 
-export async function getRoadmapDetail(id: string): Promise<RoadmapDetail> {
-  const repo = getRepo();
-  return unwrapOrThrow(
-    new GetRoadmapDetailUsecase(repo).execute(new GetRoadmapDetailParams(id)),
-  );
+export async function getRoadmapDetail(
+  id: string,
+): Promise<RoadmapDetail | null> {
+  try {
+    const repo = getRepo();
+    return unwrapOrThrow(
+      new GetRoadmapDetailUsecase(repo).execute(new GetRoadmapDetailParams(id)),
+    );
+  } catch {
+    return null;
+  }
 }
 
 export async function updateRoadmap(

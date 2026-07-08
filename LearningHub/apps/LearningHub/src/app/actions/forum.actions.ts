@@ -38,20 +38,28 @@ export async function listForums(params?: {
   search?: string;
   categoryId?: number;
 }): Promise<PaginatedResponse<ForumListItem>> {
-  const repo = new ForumRepositoryImpl(new ForumRemoteDataSourceImpl());
-  const result = await new ListForumsUsecase(repo).execute(params ?? {});
-  if (result.type === 'right') return result.value;
-  throw new Error(result.value.message || 'Failed to load forums');
+  try {
+    const repo = new ForumRepositoryImpl(new ForumRemoteDataSourceImpl());
+    const result = await new ListForumsUsecase(repo).execute(params ?? {});
+    if (result.type === 'right') return result.value;
+    throw new Error(result.value.message || 'Failed to load forums');
+  } catch {
+    return { data: [], total: 0 };
+  }
 }
 
 export async function getForumDetail(
   slug: string,
 ): Promise<ForumDetailResponse | null> {
-  const repo = new ForumRepositoryImpl(new ForumRemoteDataSourceImpl());
-  const result = await new GetForumDetailUsecase(repo).execute(slug);
-  if (result.type === 'right') return result.value;
-  if (result.value instanceof NetworkFailure) return null;
-  throw new Error(result.value.message);
+  try {
+    const repo = new ForumRepositoryImpl(new ForumRemoteDataSourceImpl());
+    const result = await new GetForumDetailUsecase(repo).execute(slug);
+    if (result.type === 'right') return result.value;
+    if (result.value instanceof NetworkFailure) return null;
+    throw new Error(result.value.message);
+  } catch {
+    return null;
+  }
 }
 
 export async function createForum(input: {
@@ -119,13 +127,17 @@ export async function listForumPosts(
   forumId: string,
   params?: { page?: number; limit?: number; tagId?: number; search?: string },
 ): Promise<PaginatedResponse<PostListItem>> {
-  const repo = new ForumRepositoryImpl(new ForumRemoteDataSourceImpl());
-  const result = await new ListForumPostsUsecase(repo).execute({
-    forumId,
-    ...params,
-  });
-  if (result.type === 'right') return result.value;
-  throw new Error(result.value.message);
+  try {
+    const repo = new ForumRepositoryImpl(new ForumRemoteDataSourceImpl());
+    const result = await new ListForumPostsUsecase(repo).execute({
+      forumId,
+      ...params,
+    });
+    if (result.type === 'right') return result.value;
+    throw new Error(result.value.message);
+  } catch {
+    return { data: [], total: 0 };
+  }
 }
 
 export async function createPost(
@@ -153,14 +165,18 @@ export async function listComments(
   postId: string,
   params?: { page?: number; limit?: number },
 ): Promise<PaginatedResponse<CommentItem>> {
-  const repo = new ForumRepositoryImpl(new ForumRemoteDataSourceImpl());
-  const result = await new ListCommentsUsecase(repo).execute({
-    forumId,
-    postId,
-    ...params,
-  });
-  if (result.type === 'right') return result.value;
-  throw new Error(result.value.message);
+  try {
+    const repo = new ForumRepositoryImpl(new ForumRemoteDataSourceImpl());
+    const result = await new ListCommentsUsecase(repo).execute({
+      forumId,
+      postId,
+      ...params,
+    });
+    if (result.type === 'right') return result.value;
+    throw new Error(result.value.message);
+  } catch {
+    return { data: [], total: 0 };
+  }
 }
 
 export async function createComment(

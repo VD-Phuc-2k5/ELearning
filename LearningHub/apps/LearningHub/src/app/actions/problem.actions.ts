@@ -25,11 +25,19 @@ async function unwrapOrThrow<T>(
 }
 
 export async function getStudentProblems(): Promise<any> {
-  return unwrapOrThrow(new GetProblemsUsecase(getRepo()).execute(undefined));
+  try {
+    return unwrapOrThrow(new GetProblemsUsecase(getRepo()).execute(undefined));
+  } catch {
+    return { data: [], total: 0 };
+  }
 }
 
 export async function getStudentProblemDetail(id: string): Promise<any> {
-  return unwrapOrThrow(new GetProblemDetailUsecase(getRepo()).execute(id));
+  try {
+    return unwrapOrThrow(new GetProblemDetailUsecase(getRepo()).execute(id));
+  } catch {
+    return null;
+  }
 }
 
 export async function submitStudentCode(

@@ -46,22 +46,32 @@ export async function listAttempts(params?: {
   return result.type === 'right' ? result.value : { data: [], total: 0 };
 }
 
-export async function getAttemptDetail(id: string): Promise<QuizAttemptDetail> {
-  const repo = getRepo();
-  return unwrapOrThrow(
-    new GetAttemptDetailQuizUsecase(repo).execute(
-      new GetAttemptDetailQuizParams(id),
-    ),
-  );
+export async function getAttemptDetail(
+  id: string,
+): Promise<QuizAttemptDetail | null> {
+  try {
+    const repo = getRepo();
+    return unwrapOrThrow(
+      new GetAttemptDetailQuizUsecase(repo).execute(
+        new GetAttemptDetailQuizParams(id),
+      ),
+    );
+  } catch {
+    return null;
+  }
 }
 
 export async function getBankProgress(
   bankId: string,
 ): Promise<UserBankProgress | null> {
-  const repo = getRepo();
-  return unwrapOrThrow(
-    new GetBankProgressQuizUsecase(repo).execute(
-      new GetBankProgressQuizParams(bankId),
-    ),
-  );
+  try {
+    const repo = getRepo();
+    return unwrapOrThrow(
+      new GetBankProgressQuizUsecase(repo).execute(
+        new GetBankProgressQuizParams(bankId),
+      ),
+    );
+  } catch {
+    return null;
+  }
 }

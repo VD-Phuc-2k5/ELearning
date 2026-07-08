@@ -76,11 +76,17 @@ export async function getBanks(params?: GetBanksQuizParams): Promise<BankList> {
   return result.type === 'right' ? result.value : { data: [], total: 0 };
 }
 
-export async function getBankDetail(id: string): Promise<QuestionBank> {
-  const repo = getRepo();
-  return unwrapOrThrow(
-    new GetBankDetailQuizUsecase(repo).execute(new GetBankDetailQuizParams(id)),
-  );
+export async function getBankDetail(id: string): Promise<QuestionBank | null> {
+  try {
+    const repo = getRepo();
+    return unwrapOrThrow(
+      new GetBankDetailQuizUsecase(repo).execute(
+        new GetBankDetailQuizParams(id),
+      ),
+    );
+  } catch {
+    return null;
+  }
 }
 
 export async function createBank(
@@ -124,24 +130,32 @@ export async function uploadExcel(
 export async function getUploadHistory(
   bankId: string,
 ): Promise<UploadHistory[]> {
-  const repo = getRepo();
-  return unwrapOrThrow(
-    new GetUploadHistoryQuizUsecase(repo).execute(
-      new GetUploadHistoryQuizParams(bankId),
-    ),
-  );
+  try {
+    const repo = getRepo();
+    return unwrapOrThrow(
+      new GetUploadHistoryQuizUsecase(repo).execute(
+        new GetUploadHistoryQuizParams(bankId),
+      ),
+    );
+  } catch {
+    return [];
+  }
 }
 
 export async function getQuestionsForQuiz(
   bankId: string,
   showAnswers = false,
 ): Promise<Question[]> {
-  const repo = getRepo();
-  return unwrapOrThrow(
-    new GetQuestionsForQuizUsecase(repo).execute(
-      new GetQuestionsForQuizParams(bankId, showAnswers),
-    ),
-  );
+  try {
+    const repo = getRepo();
+    return unwrapOrThrow(
+      new GetQuestionsForQuizUsecase(repo).execute(
+        new GetQuestionsForQuizParams(bankId, showAnswers),
+      ),
+    );
+  } catch {
+    return [];
+  }
 }
 
 export async function verifyAnswer(
@@ -229,23 +243,31 @@ export async function parseExcel(
 }
 
 export async function getDerivedBanks(bankId: string): Promise<DerivedBank[]> {
-  const repo = getRepo();
-  return unwrapOrThrow(
-    new GetDerivedBanksQuizUsecase(repo).execute(
-      new GetDerivedBanksQuizParams(bankId),
-    ),
-  );
+  try {
+    const repo = getRepo();
+    return unwrapOrThrow(
+      new GetDerivedBanksQuizUsecase(repo).execute(
+        new GetDerivedBanksQuizParams(bankId),
+      ),
+    );
+  } catch {
+    return [];
+  }
 }
 
 export async function getBankRoadmaps(
   bankId: string,
 ): Promise<BankRoadmapItem[]> {
-  const repo = getRepo();
-  return unwrapOrThrow(
-    new GetBankRoadmapsQuizUsecase(repo).execute(
-      new GetBankRoadmapsQuizParams(bankId),
-    ),
-  );
+  try {
+    const repo = getRepo();
+    return unwrapOrThrow(
+      new GetBankRoadmapsQuizUsecase(repo).execute(
+        new GetBankRoadmapsQuizParams(bankId),
+      ),
+    );
+  } catch {
+    return [];
+  }
 }
 
 export async function checkBankHash(hash: string): Promise<BankHashResult> {

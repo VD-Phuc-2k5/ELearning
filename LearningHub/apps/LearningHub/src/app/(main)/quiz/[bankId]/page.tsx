@@ -139,7 +139,7 @@ export default function QuizPage() {
       )}
       {mode === 'select' && (
         <ModeSelect
-          bank={bank}
+          bank={bank ?? undefined}
           onSelectMode={(m, secs) => {
             setTimeLimitSeconds(secs);
             setMode(m);
