@@ -63,7 +63,7 @@ export function UploadTab({ bankId, onSuccess }: UploadTabProps) {
   const uploadMutation = useMutation({
     mutationFn: () => {
       const excelFile: File | null = preview
-        ? buildExcelFileFromPreview(preview)
+        ? await buildExcelFileFromPreview(preview)
         : file;
       if (!excelFile) {
         throw new Error('No file to upload');
