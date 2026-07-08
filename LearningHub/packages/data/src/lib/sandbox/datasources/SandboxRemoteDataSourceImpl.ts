@@ -13,7 +13,7 @@ import {
 } from '@learning-hub/core';
 import { ISandboxRemoteDataSource } from './ISandboxRemoteDataSource';
 
-const NEST_API = process.env.NEST_API_URL || 'http://localhost:8080/api';
+const NEST_API = `${process.env.NEST_API_URL || 'http://localhost:8080'}/api`;
 
 export class SandboxRemoteDataSourceImpl implements ISandboxRemoteDataSource {
   private api = axios.create({ baseURL: NEST_API });
