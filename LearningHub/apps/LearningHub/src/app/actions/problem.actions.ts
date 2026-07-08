@@ -26,7 +26,9 @@ async function unwrapOrThrow<T>(
 
 export async function getStudentProblems(): Promise<any> {
   try {
-    return unwrapOrThrow(new GetProblemsUsecase(getRepo()).execute(undefined));
+    return await unwrapOrThrow(
+      new GetProblemsUsecase(getRepo()).execute(undefined),
+    );
   } catch {
     return { data: [], total: 0 };
   }
@@ -34,7 +36,9 @@ export async function getStudentProblems(): Promise<any> {
 
 export async function getStudentProblemDetail(id: string): Promise<any> {
   try {
-    return unwrapOrThrow(new GetProblemDetailUsecase(getRepo()).execute(id));
+    return await unwrapOrThrow(
+      new GetProblemDetailUsecase(getRepo()).execute(id),
+    );
   } catch {
     return null;
   }
@@ -44,11 +48,15 @@ export async function submitStudentCode(
   problemId: string,
   data: { language: string; sourceCode: string },
 ): Promise<{ id: string; status: string }> {
-  return unwrapOrThrow(
-    new SubmitCodeUsecase(getRepo()).execute(
-      new SubmitCodeParamsWithId(problemId, data),
-    ),
-  );
+  try {
+    return unwrapOrThrow(
+      new SubmitCodeUsecase(getRepo()).execute(
+        new SubmitCodeParamsWithId(problemId, data),
+      ),
+    );
+  } catch (e: any) {
+    throw new Error(e?.message || 'Nộp bài thất bại');
+  }
 }
 
 export async function getSubmissionStatus(submissionId: string): Promise<{
@@ -66,7 +74,11 @@ export async function getSubmissionStatus(submissionId: string): Promise<{
     status: string;
   }>;
 }> {
-  return unwrapOrThrow(
-    new GetSubmissionStatusUsecase(getRepo()).execute(submissionId),
-  );
+  try {
+    return await unwrapOrThrow(
+      new GetSubmissionStatusUsecase(getRepo()).execute(submissionId),
+    );
+  } catch {
+    return { status: 'error' };
+  }
 }

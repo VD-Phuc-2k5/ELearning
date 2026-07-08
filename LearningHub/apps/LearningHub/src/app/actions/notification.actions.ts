@@ -45,36 +45,49 @@ export async function getUnreadNotificationCount(): Promise<number> {
 }
 
 export async function markNotificationRead(id: string): Promise<boolean> {
-  const repo = new NotificationRepositoryImpl(
-    new NotificationRemoteDataSourceImpl(),
-  );
-  const result = await new MarkNotificationReadUsecase(repo).execute(id);
-  if (result.type === 'left' && result.value instanceof NetworkFailure)
+  try {
+    const repo = new NotificationRepositoryImpl(
+      new NotificationRemoteDataSourceImpl(),
+    );
+    const result = await new MarkNotificationReadUsecase(repo).execute(id);
+    if (result.type === 'left' && result.value instanceof NetworkFailure)
+      return false;
+    if (result.type === 'left') throw new Error(result.value.message);
+    return true;
+  } catch {
     return false;
-  if (result.type === 'left') throw new Error(result.value.message);
-  return true;
+  }
 }
 
 export async function markAllNotificationsRead(): Promise<boolean> {
-  const repo = new NotificationRepositoryImpl(
-    new NotificationRemoteDataSourceImpl(),
-  );
-  const result = await new MarkAllNotificationsReadUsecase(repo).execute(
-    noParams,
-  );
-  if (result.type === 'left' && result.value instanceof NetworkFailure)
+  try {
+    const repo = new NotificationRepositoryImpl(
+      new NotificationRemoteDataSourceImpl(),
+    );
+    const result = await new MarkAllNotificationsReadUsecase(repo).execute(
+      noParams,
+    );
+    if (result.type === 'left' && result.value instanceof NetworkFailure)
+      return false;
+    if (result.type === 'left') throw new Error(result.value.message);
+    return true;
+  } catch {
     return false;
-  if (result.type === 'left') throw new Error(result.value.message);
-  return true;
+  }
 }
 
 export async function deleteReadNotifications(): Promise<void> {
-  const repo = new NotificationRepositoryImpl(
-    new NotificationRemoteDataSourceImpl(),
-  );
-  const result = await new DeleteReadNotificationsUsecase(repo).execute(
-    noParams,
-  );
-  if (result.type === 'left' && result.value instanceof NetworkFailure) return;
-  if (result.type === 'left') throw new Error(result.value.message);
+  try {
+    const repo = new NotificationRepositoryImpl(
+      new NotificationRemoteDataSourceImpl(),
+    );
+    const result = await new DeleteReadNotificationsUsecase(repo).execute(
+      noParams,
+    );
+    if (result.type === 'left' && result.value instanceof NetworkFailure)
+      return;
+    if (result.type === 'left') throw new Error(result.value.message);
+  } catch {
+    // silently ignore
+  }
 }
