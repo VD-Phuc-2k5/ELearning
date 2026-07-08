@@ -219,6 +219,87 @@ services:
       - loki
       - prometheus
 
+  sandbox-python:
+    build:
+      context: ./sandbox/images/python
+      dockerfile: Dockerfile
+      tags:
+        - sandbox-python:latest
+    profiles: [sandbox]
+    command: ['true']
+
+  sandbox-node:
+    build:
+      context: ./sandbox/images/node
+      dockerfile: Dockerfile
+      tags:
+        - sandbox-node:latest
+    profiles: [sandbox]
+    command: ['true']
+
+  sandbox-c:
+    build:
+      context: ./sandbox/images/c
+      dockerfile: Dockerfile
+      tags:
+        - sandbox-c:latest
+    profiles: [sandbox]
+    command: ['true']
+
+  sandbox-java:
+    build:
+      context: ./sandbox/images/java
+      dockerfile: Dockerfile
+      tags:
+        - sandbox-java:latest
+    profiles: [sandbox]
+    command: ['true']
+
+  sandbox-go:
+    build:
+      context: ./sandbox/images/go
+      dockerfile: Dockerfile
+      tags:
+        - sandbox-go:latest
+    profiles: [sandbox]
+    command: ['true']
+
+  sandbox-csharp:
+    build:
+      context: ./sandbox/images/csharp
+      dockerfile: Dockerfile
+      tags:
+        - sandbox-csharp:latest
+    profiles: [sandbox]
+    command: ['true']
+
+  sandbox-rust:
+    build:
+      context: ./sandbox/images/rust
+      dockerfile: Dockerfile
+      tags:
+        - sandbox-rust:latest
+    profiles: [sandbox]
+    command: ['true']
+
+  sandbox-typescript:
+    build:
+      context: ./sandbox/images/typescript
+      dockerfile: Dockerfile
+      tags:
+        - sandbox-typescript:latest
+    profiles: [sandbox]
+    command: ['true']
+
+  sandbox-swift:
+    build:
+      context: ./sandbox/images/swift
+      dockerfile: Dockerfile
+      tags:
+        - sandbox-swift:latest
+    profiles: [sandbox]
+    command: ['true']
+
 volumes:
   api_logs:
   postgres_data:
