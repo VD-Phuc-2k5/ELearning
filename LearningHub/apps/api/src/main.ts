@@ -39,7 +39,10 @@ async function bootstrap() {
   const globalPrefix = 'api';
   app.useGlobalFilters(new HttpExceptionFilter(appLogger));
   app.setGlobalPrefix(globalPrefix, {
-    exclude: [{ path: 'metrics', method: RequestMethod.GET }],
+    exclude: [
+      { path: 'metrics', method: RequestMethod.GET },
+      { path: 'health', method: RequestMethod.GET },
+    ],
   });
   const port = process.env.PORT || 3000;
   // Swagger

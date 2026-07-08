@@ -29,8 +29,9 @@ export class ResourceActionGuard implements CanActivate {
 
   async canActivate(ctx: ExecutionContext): Promise<boolean> {
     if (
-      ctx.getType() === 'http' &&
-      ctx.switchToHttp().getRequest().path === '/metrics'
+      (ctx.getType() === 'http' &&
+        ctx.switchToHttp().getRequest().path === '/metrics') ||
+      ctx.switchToHttp().getRequest().path === '/health'
     ) {
       return true;
     }
