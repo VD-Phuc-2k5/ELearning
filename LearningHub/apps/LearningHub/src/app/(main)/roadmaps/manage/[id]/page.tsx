@@ -42,7 +42,8 @@ export default function EditRoadmapPage() {
 
   const { data: allBanks, error: banksError } = useQuery({
     queryKey: ['banks-picker', user?.id],
-    queryFn: () => getBanks({ limit: 100, uploaderId: user?.id }),
+    queryFn: () =>
+      getBanks({ limit: 100, statusId: 'approved', uploaderId: user?.id }),
     enabled: !!user,
   });
 
@@ -54,6 +55,7 @@ export default function EditRoadmapPage() {
   const [showPicker, setShowPicker] = useState(false);
   const [pickerSearch, setPickerSearch] = useState('');
   const [deleteErr, setDeleteErr] = useState('');
+  const [saveErr, setSaveErr] = useState('');
   const { modal: confirmModal, openConfirm } = useConfirmModal();
 
   useEffect(() => {
@@ -80,6 +82,13 @@ export default function EditRoadmapPage() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['roadmap', id] });
       router.push(`/roadmaps/${id}`);
+    },
+    onError: (e: unknown) => {
+      setSaveErr(
+        e instanceof Error
+          ? e.message
+          : 'Lưu roadmap thất bại. Vui lòng thử lại.',
+      );
     },
   });
 
@@ -179,6 +188,21 @@ export default function EditRoadmapPage() {
           </div>
           <button
             onClick={() => setDeleteErr('')}
+            className="text-red-500 hover:text-red-700"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+
+      {saveErr && (
+        <div className="flex items-start justify-between rounded-2xl bg-red-50 border border-red-100 px-4 py-3">
+          <div className="flex items-start gap-2 text-sm text-red-700">
+            <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+            <span>{saveErr}</span>
+          </div>
+          <button
+            onClick={() => setSaveErr('')}
             className="text-red-500 hover:text-red-700"
           >
             <X className="h-4 w-4" />
