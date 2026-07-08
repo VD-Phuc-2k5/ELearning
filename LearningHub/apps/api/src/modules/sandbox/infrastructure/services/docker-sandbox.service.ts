@@ -209,6 +209,16 @@ export class DockerSandboxService implements ISandboxService {
     }
   }
 
+  async ping(): Promise<boolean> {
+    try {
+      await this.docker.ping();
+      return true;
+    } catch (err) {
+      this.logger.error('Docker ping failed:', err);
+      return false;
+    }
+  }
+
   /**
    * Helper to parse Docker logs multiplexed stream
    */

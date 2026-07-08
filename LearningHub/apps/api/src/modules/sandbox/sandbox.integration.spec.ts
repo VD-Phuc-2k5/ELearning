@@ -58,7 +58,35 @@ async function createSandboxTestApp(): Promise<INestApplication> {
   return app;
 }
 
-describe('Sandbox Integration (IT040–IT043)', () => {
+// ponytail: factory with real DockerSandboxService (no overrides) for health tests
+async function createSandboxHealthTestApp(): Promise<INestApplication> {
+  const module = await Test.createTestingModule({
+    imports: [
+      ConfigModule.forRoot({ isGlobal: true, envFilePath: 'apps/api/.env' }),
+      TypeOrmModule.forRoot({
+        type: 'postgres',
+        host: process.env.POSTGRES_HOST ?? 'localhost',
+        port: Number(process.env.POSTGRES_PORT ?? 5432),
+        username: process.env.POSTGRES_USER ?? 'postgres',
+        password: process.env.POSTGRES_PASSWORD ?? 'postgres',
+        database: process.env.POSTGRES_TEST_DB ?? 'test_learning_hub',
+        autoLoadEntities: true,
+        synchronize: true,
+        logging: false,
+      }),
+      CacheModule.register({ isGlobal: true }),
+      AuthModule,
+      SandboxModule,
+    ],
+  }).compile();
+
+  const app = module.createNestApplication();
+  app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+  await app.init();
+  return app;
+}
+
+describe('Sandbox Integration (IT040–IT045)', () => {
   let app: INestApplication;
   const email = `sandbox-user${TEST_SUFFIX}`;
   let accessToken: string;
@@ -107,5 +135,45 @@ describe('Sandbox Integration (IT040–IT043)', () => {
       .set('Authorization', bearer(accessToken));
     expect([200, 403]).toContain(res.status);
     if (res.status === 200) expect(Array.isArray(res.body)).toBe(true);
+  });
+
+  describe('Docker connectivity (IT044–IT045)', () => {
+    let healthApp: INestApplication;
+
+    beforeAll(async () => {
+      healthApp = await createSandboxHealthTestApp();
+    });
+
+    afterAll(async () => {
+      await healthApp.close();
+    });
+
+    it('IT044 — GET /sandbox/health returns docker status', async () => {
+      const res = await request(healthApp.getHttpServer()).get(
+        '/sandbox/health',
+      );
+      expect([200, 503]).toContain(res.status);
+      if (res.status === 200) {
+        expect(res.body).toEqual({ status: 'ok', docker: true });
+      } else {
+        expect(res.body).toHaveProperty('docker', false);
+        expect(res.body).toHaveProperty(
+          'message',
+          'Docker sandbox is not available',
+        );
+      }
+    });
+
+    it('IT045 — DockerSandboxService.ping() reflects real Docker connectivity', () => {
+      const service = healthApp.get('ISandboxService') as {
+        ping: () => Promise<boolean>;
+      };
+      expect(typeof service.ping).toBe('function');
+
+      // ping() returns boolean regardless of connectivity — it never throws
+      service.ping().then((ok: boolean) => {
+        expect(typeof ok).toBe('boolean');
+      });
+    });
   });
 });

@@ -106,6 +106,7 @@ describe('JudgeService', () => {
     };
     sandboxService = {
       execute: jest.fn(),
+      ping: jest.fn(),
     };
 
     service = new JudgeService(

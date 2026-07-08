@@ -149,4 +149,17 @@ test.describe('Playground flow — code execution', () => {
     }
     await page.unroute('**/api/sandbox/execute');
   });
+
+  test('sandbox health endpoint reports Docker status', async ({ page }) => {
+    const res = await page.request.get('/api/sandbox/health');
+    expect([200, 503]).toContain(res.status());
+    const body = await res.json();
+    expect(body).toHaveProperty('docker');
+    if (res.status() === 200) {
+      expect(body).toEqual({ status: 'ok', docker: true });
+    } else {
+      expect(body.docker).toBe(false);
+      expect(body.message).toBe('Docker sandbox is not available');
+    }
+  });
 });

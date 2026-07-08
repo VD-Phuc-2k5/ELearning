@@ -1,6 +1,9 @@
 import 'reflect-metadata';
 import { Test, TestingModule } from '@nestjs/testing';
-import { BadRequestException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { SandboxController } from './sandbox.controller';
 import { ExecuteCodeUseCase } from '../../application/use-cases/execute-code.use-case';
 import { GetExecutionHistoryUseCase } from '../../application/use-cases/get-execution-history.use-case';
@@ -11,11 +14,13 @@ const left = (value: unknown) => ({ type: 'left' as const, value });
 
 const mockUser = { id: 'user-1' } as any;
 const mockFn = () => ({ execute: jest.fn() });
+const mockSandboxService = () => ({ ping: jest.fn() });
 
-describe('SandboxController (TC069–TC073)', () => {
+describe('SandboxController (TC069–TC075)', () => {
   let controller: SandboxController;
   let executeUseCase: { execute: jest.Mock };
   let historyUseCase: { execute: jest.Mock };
+  let sandboxService: { ping: jest.Mock };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -23,12 +28,14 @@ describe('SandboxController (TC069–TC073)', () => {
       providers: [
         { provide: ExecuteCodeUseCase, useValue: mockFn() },
         { provide: GetExecutionHistoryUseCase, useValue: mockFn() },
+        { provide: 'ISandboxService', useValue: mockSandboxService() },
       ],
     }).compile();
 
     controller = module.get<SandboxController>(SandboxController);
     executeUseCase = module.get(ExecuteCodeUseCase);
     historyUseCase = module.get(GetExecutionHistoryUseCase);
+    sandboxService = module.get('ISandboxService');
   });
 
   describe('POST /sandbox/execute', () => {
@@ -99,6 +106,24 @@ describe('SandboxController (TC069–TC073)', () => {
       const result = await controller.getHistory(mockUser);
 
       expect(result).toEqual(history);
+    });
+  });
+
+  describe('GET /sandbox/health', () => {
+    it('TC074 — should return ok when Docker is reachable', async () => {
+      sandboxService.ping.mockResolvedValue(true);
+
+      const result = await controller.health();
+
+      expect(result).toEqual({ status: 'ok', docker: true });
+    });
+
+    it('TC075 — should throw ServiceUnavailableException when Docker is unreachable', async () => {
+      sandboxService.ping.mockResolvedValue(false);
+
+      await expect(controller.health()).rejects.toThrow(
+        ServiceUnavailableException,
+      );
     });
   });
 });

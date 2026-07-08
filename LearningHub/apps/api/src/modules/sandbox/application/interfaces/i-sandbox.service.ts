@@ -8,4 +8,6 @@ export interface ISandboxService {
     timeoutMs?: number;
     memoryLimitMb?: number;
   }): Promise<ExecutionResult>;
+
+  ping(): Promise<boolean>;
 }
