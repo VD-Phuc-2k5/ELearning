@@ -23,9 +23,15 @@ pipeline {
       }
     }
 
-    stage('Test') {
+    stage('Test (API)') {
       steps {
         sh 'pnpm nx run-many --target=test --projects=api'
+      }
+    }
+
+    stage('Test (Frontend)') {
+      steps {
+        sh 'pnpm nx run-many --target=test --projects=LearningHub,AdminPage'
       }
     }
 
@@ -44,6 +50,13 @@ pipeline {
           docker build -f apps/AdminPage/Dockerfile   -t learninghub-admin:latest .
           docker compose -f ${COMPOSE_FILE} up -d --scale api=3
         """
+      }
+    }
+
+    stage('E2E Tests') {
+      when { branch 'main' }
+      steps {
+        sh 'pnpm test:e2e'
       }
     }
   }

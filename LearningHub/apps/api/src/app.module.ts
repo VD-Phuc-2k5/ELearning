@@ -46,6 +46,7 @@ import { AddRejectReasonToQuestionBanks1785000000002 } from './migrations/178500
 import { DropBrokenForumPostSearchTrigger1785000000003 } from './migrations/1785000000003-DropBrokenForumPostSearchTrigger';
 import { SandboxModule } from './modules/sandbox/sandbox.module';
 import { JudgeModule } from './modules/judge/judge.module';
+import { HealthController } from './health.controller';
 
 @Module({
   imports: [
@@ -136,7 +137,7 @@ import { JudgeModule } from './modules/judge/judge.module';
     SandboxModule,
     JudgeModule,
   ],
-  controllers: [],
+  controllers: [HealthController],
   providers: [],
 })
 // Trigger watcher rebuild

@@ -1,10 +1,10 @@
-import * as XLSX from 'xlsx';
+import * as ExcelJS from 'exceljs';
 import type { ParsedQuestion } from '@learning-hub/domain';
 
-export function buildExcelFileFromPreview(
+export async function buildExcelFileFromPreview(
   questions: ParsedQuestion[],
   fileName = 'cau_hoi_bo_sung.xlsx',
-): File {
+): Promise<File> {
   const optionCount = Math.max(
     2,
     ...questions.map((q) => q.answerOptions.length),
@@ -34,13 +34,15 @@ export function buildExcelFileFromPreview(
     ];
   });
 
-  const worksheet = XLSX.utils.aoa_to_sheet([headers, ...rows]);
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, 'Quiz Questions');
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet('Quiz Questions');
 
-  const arrayBuffer = XLSX.write(workbook, { type: 'array', bookType: 'xlsx' });
+  worksheet.addRow(headers);
+  worksheet.addRows(rows);
 
-  return new File([arrayBuffer], fileName, {
+  const buffer = await workbook.xlsx.writeBuffer();
+
+  return new File([buffer], fileName, {
     type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   });
 }
