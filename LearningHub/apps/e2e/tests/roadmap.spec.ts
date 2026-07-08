@@ -11,7 +11,7 @@ test.describe('Roadmap flow', () => {
   test('roadmap list has create button', async ({ page }) => {
     await page.goto('/roadmaps');
     await expect(
-      page.getByRole('button', { name: 'Create Roadmap' }),
+      page.getByRole('button', { name: 'Create Roadmap' }).first(),
     ).toBeVisible();
   });
 

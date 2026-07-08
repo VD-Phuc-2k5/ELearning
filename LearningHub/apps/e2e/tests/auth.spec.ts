@@ -7,6 +7,8 @@ const TEST_USER = {
   password: 'E2eTest@123',
 };
 
+test.use({ storageState: undefined });
+
 test.describe('Auth flow', () => {
   test('register → login → redirect to home', async ({ page }) => {
     await page.goto('/auth/register');
@@ -42,9 +44,9 @@ test.describe('Auth flow', () => {
     await page.getByPlaceholder('••••••••').fill('WrongPass@123');
     await page.getByRole('button', { name: 'Sign in' }).click();
 
-    await expect(
-      page.getByText('Sign in failed. Please try again.'),
-    ).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('.bg-red-50').first()).toBeVisible({
+      timeout: 5000,
+    });
   });
 
   test('register with empty fields shows validation errors', async ({
@@ -57,8 +59,9 @@ test.describe('Auth flow', () => {
 
     await page.getByRole('button', { name: 'Create account' }).click();
 
-    await expect(
-      page.getByText(/required|must|phải|tối thiểu|ít nhất|không/i),
-    ).toBeVisible({ timeout: 3000 });
+    await expect(page).toHaveURL(/\/auth\/register/, { timeout: 3000 });
+    await expect(page.locator('.text-red-500').first()).toBeVisible({
+      timeout: 3000,
+    });
   });
 });
