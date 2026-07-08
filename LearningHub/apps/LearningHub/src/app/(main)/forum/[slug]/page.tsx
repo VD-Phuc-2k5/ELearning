@@ -269,7 +269,7 @@ export default function ForumDetailPage({ params }: ForumDetailPageProps) {
       'Are you sure you want to delete this forum? This action cannot be undone.',
       () => {
         mutations.deleteForumMutation.mutate(undefined, {
-          onSuccess: () => router.push('/'),
+          onSuccess: () => router.push('/forums'),
           onError: (e: Error) => setError(e.message),
         });
       },

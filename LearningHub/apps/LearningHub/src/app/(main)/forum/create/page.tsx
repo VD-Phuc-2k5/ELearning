@@ -10,9 +10,7 @@ export default function CreateForumPage() {
   const router = useRouter();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [visibility, setVisibility] = useState<'public' | 'private' | 'hidden'>(
-    'public',
-  );
+  const [visibility, setVisibility] = useState<'public' | 'private'>('public');
   const [error, setError] = useState<string | null>(null);
 
   const createMutation = useMutation({
@@ -76,7 +74,7 @@ export default function CreateForumPage() {
             Visibility
           </span>
           <div className="flex gap-2">
-            {(['public', 'private', 'hidden'] as const).map((v) => (
+            {(['public', 'private'] as const).map((v) => (
               <button
                 key={v}
                 type="button"
