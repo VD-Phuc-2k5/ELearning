@@ -1,7 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { ModeSelect, ModeCard } from './mode-select';
-import type { QuizMode } from './types';
 
 jest.mock('@aejkatappaja/phantom-ui', () => ({}), { virtual: true });
 
