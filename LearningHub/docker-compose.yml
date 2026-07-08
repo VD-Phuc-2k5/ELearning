@@ -16,8 +16,6 @@ services:
     build:
       context: .
       dockerfile: apps/api/Dockerfile
-      args:
-        DOCKER_GROUP_ID: ${DOCKER_GROUP_ID:-65534}
     env_file:
       - apps/api/.env
     secrets:
