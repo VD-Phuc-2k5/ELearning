@@ -33,6 +33,8 @@ import { UpdateQuizAttemptsBankFkCascade1783000000006 } from './migrations/17830
 import { FixQuizAttemptAnswerOptionFk1783000000007 } from './migrations/1783000000007-FixQuizAttemptAnswerOptionFk';
 import { CascadeAllQuestionFks1783000000011 } from './migrations/1783000000011-CascadeAllQuestionFks';
 import { CreateForumTables1784000000001 } from './migrations/1784000000001-CreateForumTables';
+import { CreateCodeExecutionsTable1783100000001 } from './migrations/1783100000001-CreateCodeExecutionsTable';
+import { CreateCodeJudgeTables1783200000001 } from './migrations/1783200000001-CreateCodeJudgeTables';
 import { SeedForumPermissions1784000000002 } from './migrations/1784000000002-SeedForumPermissions';
 import { CascadeAllQuestionBankFks1784000000003 } from './migrations/1784000000003-CascadeAllQuestionBankFks';
 import { AddForumPostTags1784000000004 } from './migrations/1784000000004-AddForumPostTags';
@@ -92,6 +94,8 @@ import { HealthController } from './health.controller';
           UpdateQuizAttemptsBankFkCascade1783000000006,
           FixQuizAttemptAnswerOptionFk1783000000007,
           CascadeAllQuestionFks1783000000011,
+          CreateCodeExecutionsTable1783100000001,
+          CreateCodeJudgeTables1783200000001,
           CreateForumTables1784000000001,
           SeedForumPermissions1784000000002,
           CascadeAllQuestionBankFks1784000000003,
