@@ -56,7 +56,11 @@ export function ForumInvitePanel({ forumId }: ForumInvitePanelProps) {
   const [createError, setCreateError] = useState<string | null>(null);
 
   const createMutation = useMutation({
-    mutationFn: () => createInvite(forumId),
+    mutationFn: async () => {
+      const result = await createInvite(forumId);
+      if (!result.success) throw new Error(result.message);
+      return result.data;
+    },
     onSuccess: () => {
       setCreateError(null);
       qc.invalidateQueries({ queryKey: ['forum-invites', forumId] });

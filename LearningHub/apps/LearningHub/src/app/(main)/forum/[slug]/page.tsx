@@ -269,7 +269,7 @@ export default function ForumDetailPage({ params }: ForumDetailPageProps) {
       'Are you sure you want to delete this forum? This action cannot be undone.',
       () => {
         mutations.deleteForumMutation.mutate(undefined, {
-          onSuccess: () => router.push('/forums'),
+          onSuccess: () => router.push('/forum'),
           onError: (e: Error) => setError(e.message),
         });
       },
@@ -428,7 +428,7 @@ export default function ForumDetailPage({ params }: ForumDetailPageProps) {
           onJoin={() => mutations.join.mutate()}
           onLeave={() =>
             mutations.leave.mutate(undefined, {
-              onSuccess: () => router.push('/forums'),
+              onSuccess: () => router.push('/forum'),
             })
           }
           isDeletingForum={mutations.deleteForumMutation.isPending}

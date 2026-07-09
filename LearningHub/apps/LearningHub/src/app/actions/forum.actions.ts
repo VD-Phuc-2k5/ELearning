@@ -408,11 +408,20 @@ export async function searchForumMembers(
 export async function createInvite(
   forumId: string,
   inviteeId?: string,
-): Promise<ForumInvite> {
-  const repo = new ForumRepositoryImpl(new ForumRemoteDataSourceImpl());
-  const result = await repo.createInvite(forumId, inviteeId);
-  if (result.type === 'right') return result.value;
-  throw new Error(result.value.message);
+): Promise<
+  { success: true; data: ForumInvite } | { success: false; message: string }
+> {
+  try {
+    const repo = new ForumRepositoryImpl(new ForumRemoteDataSourceImpl());
+    const result = await repo.createInvite(forumId, inviteeId);
+    if (result.type === 'right') return { success: true, data: result.value };
+    return { success: false, message: result.value.message };
+  } catch (e) {
+    return {
+      success: false,
+      message: e instanceof Error ? e.message : 'Failed to create invite',
+    };
+  }
 }
 
 export async function getInvites(
@@ -436,15 +445,26 @@ export async function revokeInvite(
   throw new Error(result.value.message);
 }
 
-export async function acceptInvite(token: string): Promise<{
-  member: { forumId: string };
-  forumId: string;
-  forumSlug: string;
-}> {
-  const repo = new ForumRepositoryImpl(new ForumRemoteDataSourceImpl());
-  const result = await repo.acceptInvite(token);
-  if (result.type === 'right') return result.value;
-  throw new Error(result.value.message);
+export async function acceptInvite(token: string): Promise<
+  | {
+      success: true;
+      member: { forumId: string };
+      forumId: string;
+      forumSlug: string;
+    }
+  | { success: false; message: string }
+> {
+  try {
+    const repo = new ForumRepositoryImpl(new ForumRemoteDataSourceImpl());
+    const result = await repo.acceptInvite(token);
+    if (result.type === 'right') return { success: true, ...result.value };
+    return { success: false, message: result.value.message };
+  } catch (e) {
+    return {
+      success: false,
+      message: e instanceof Error ? e.message : 'Failed to accept invite',
+    };
+  }
 }
 
 export async function createReport(params: {

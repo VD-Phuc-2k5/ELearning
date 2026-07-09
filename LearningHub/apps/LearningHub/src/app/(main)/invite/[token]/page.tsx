@@ -31,26 +31,22 @@ export default function InviteAcceptPage({ params }: InviteAcceptPageProps) {
     processedTokens.add(token);
 
     async function doAccept() {
-      try {
-        const result = await acceptInvite(token);
-        if (!mounted.current) return;
+      const result = await acceptInvite(token);
+      if (!mounted.current) return;
+      if (result.success) {
         setState({
           status: 'success',
           forumSlug: result.forumSlug,
           forumName: result.forumSlug,
         });
-      } catch (e) {
-        if (!mounted.current) return;
-        const msg = e instanceof Error ? e.message : 'Failed to accept invite';
-        if (msg === 'Already a member') {
-          setState({
-            status: 'success',
-            forumSlug: '',
-            forumName: '',
-          });
-        } else {
-          setState({ status: 'error', message: msg });
-        }
+      } else if (result.message === 'Already a member') {
+        setState({
+          status: 'success',
+          forumSlug: '',
+          forumName: '',
+        });
+      } else {
+        setState({ status: 'error', message: result.message });
       }
     }
     doAccept();
