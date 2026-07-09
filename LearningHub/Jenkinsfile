@@ -13,9 +13,9 @@ pipeline {
     POSTGRES_DB       = 'dev_learning_hub'
     POSTGRES_TEST_DB  = 'test_learning_hub'
     POSTGRES_HOST     = 'localhost'
-    POSTGRES_PORT     = '5432'
+    POSTGRES_PORT     = '5433'
     REDIS_HOST        = 'localhost'
-    REDIS_PORT        = '6379'
+    REDIS_PORT        = '6380'
   }
 
   stages {

@@ -9,4 +9,6 @@ if [ -S /var/run/docker.sock ]; then
   fi
 fi
 
-exec /usr/local/bin/jenkins.sh "$@"
+chown -R jenkins:jenkins /var/jenkins_home 2>/dev/null || true
+
+exec gosu jenkins /usr/local/bin/jenkins.sh "$@"
