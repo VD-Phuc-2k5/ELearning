@@ -36,7 +36,8 @@ export class DockerSandboxService implements ISandboxService {
     let setup = `echo ${codeB64} | base64 -d > ${codePath} && `;
 
     if (hasStdin) {
-      const stdinB64 = Buffer.from(params.stdin!, 'utf-8').toString('base64');
+      const stdin = params.stdin ?? '';
+      const stdinB64 = Buffer.from(stdin, 'utf-8').toString('base64');
       setup += `echo ${stdinB64} | base64 -d > ${stdinPath} && `;
     }
 
@@ -54,7 +55,11 @@ export class DockerSandboxService implements ISandboxService {
     } else if (language === 'go') {
       runCmd = `cp -r /home/sandbox/go-cache /tmp/go-cache && mkdir -p /tmp/go-path && GOCACHE=/tmp/go-cache GOPATH=/tmp/go-path GO111MODULE=off go build -o /tmp/main ${codePath} && /tmp/main${stdinRedirect}`;
     } else if (language === 'csharp') {
-      runCmd = `cp -r /home/sandbox/project /tmp/project && cp ${codePath} /tmp/project/Program.cs && dotnet build --nologo --no-restore -c Release -o /tmp/out /tmp/project && dotnet /tmp/out/project.dll${stdinRedirect}`;
+      // dotnet build prints a "Build succeeded" summary to stdout even with
+      // --nologo; redirect it to a log file so program stdout stays clean,
+      // but replay the log to stderr on failure so compile errors still
+      // surface for isCompileError() to detect.
+      runCmd = `cp -r /home/sandbox/project /tmp/project && cp ${codePath} /tmp/project/Program.cs && (dotnet build --nologo --no-restore -c Release -o /tmp/out /tmp/project > /tmp/build.log 2>&1 || (cat /tmp/build.log >&2; exit 1)) && dotnet /tmp/out/project.dll${stdinRedirect}`;
     } else if (language === 'cpp') {
       runCmd = `g++ ${codePath} -o /tmp/main.out && /tmp/main.out${stdinRedirect}`;
     } else if (language === 'rust') {
@@ -128,8 +133,9 @@ export class DockerSandboxService implements ISandboxService {
 
       try {
         await Promise.race([container.wait(), timeoutPromise]);
-      } catch (err: any) {
-        if (err.message === 'timeout') {
+      } catch (err: unknown) {
+        const error = err as Error;
+        if (error.message === 'timeout') {
           status = 'timeout';
           try {
             if (container) {
@@ -187,12 +193,13 @@ export class DockerSandboxService implements ISandboxService {
         executionTimeMs,
         memoryUsedBytes: oomKilled ? memoryLimitMb * 1024 * 1024 : null,
       };
-    } catch (err: any) {
-      this.logger.error('Sandbox execution error:', err);
+    } catch (err: unknown) {
+      const error = err as Error;
+      this.logger.error('Sandbox execution error:', error);
       return {
         status: 'error',
         stdout: '',
-        stderr: err.message || 'Execution failed due to server error.',
+        stderr: error.message || 'Execution failed due to server error.',
         exitCode: 1,
         executionTimeMs: Date.now() - startTime,
         memoryUsedBytes: null,
