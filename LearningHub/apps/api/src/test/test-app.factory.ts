@@ -4,16 +4,25 @@ import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CacheModule } from '@nestjs/cache-manager';
 import { BullModule } from '@nestjs/bullmq';
+import { existsSync } from 'fs';
 import { AuthModule } from '../modules/auth/auth.module';
 import { QuizModule } from '../modules/quiz/quiz.module';
 import { RoadmapModule } from '../modules/roadmap/roadmap.module';
+
+function resolveEnvPath(): string | undefined {
+  const candidates = ['.env', 'apps/api/.env', '../../.env'];
+  for (const p of candidates) {
+    if (existsSync(p)) return p;
+  }
+  return undefined;
+}
 
 export async function createTestApp(
   extraModules: Type[] = [],
 ): Promise<INestApplication> {
   const module: TestingModule = await Test.createTestingModule({
     imports: [
-      ConfigModule.forRoot({ isGlobal: true, envFilePath: 'apps/api/.env' }),
+      ConfigModule.forRoot({ isGlobal: true, envFilePath: resolveEnvPath() }),
       TypeOrmModule.forRoot({
         type: 'postgres',
         host: process.env.POSTGRES_HOST ?? 'localhost',

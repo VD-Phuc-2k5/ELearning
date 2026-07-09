@@ -5,6 +5,7 @@ import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CacheModule } from '@nestjs/cache-manager';
 import { ValidationPipe } from '@nestjs/common';
+import { existsSync } from 'fs';
 import { AuthModule } from '../auth/auth.module';
 import { SandboxModule } from './sandbox.module';
 import { ExecuteCodeUseCase } from './application/use-cases/execute-code.use-case';
@@ -18,11 +19,19 @@ import {
   cleanupTestData,
 } from '../../test/test-helpers';
 
+function resolveEnvPath(): string | undefined {
+  const candidates = ['.env', 'apps/api/.env', '../../.env'];
+  for (const p of candidates) {
+    if (existsSync(p)) return p;
+  }
+  return undefined;
+}
+
 // ponytail: custom factory to override ExecuteCodeUseCase with a mock
 async function createSandboxTestApp(): Promise<INestApplication> {
   const module = await Test.createTestingModule({
     imports: [
-      ConfigModule.forRoot({ isGlobal: true, envFilePath: 'apps/api/.env' }),
+      ConfigModule.forRoot({ isGlobal: true, envFilePath: resolveEnvPath() }),
       TypeOrmModule.forRoot({
         type: 'postgres',
         host: process.env.POSTGRES_HOST ?? 'localhost',
@@ -62,7 +71,7 @@ async function createSandboxTestApp(): Promise<INestApplication> {
 async function createSandboxHealthTestApp(): Promise<INestApplication> {
   const module = await Test.createTestingModule({
     imports: [
-      ConfigModule.forRoot({ isGlobal: true, envFilePath: 'apps/api/.env' }),
+      ConfigModule.forRoot({ isGlobal: true, envFilePath: resolveEnvPath() }),
       TypeOrmModule.forRoot({
         type: 'postgres',
         host: process.env.POSTGRES_HOST ?? 'localhost',
