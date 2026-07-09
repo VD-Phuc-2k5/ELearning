@@ -53,21 +53,44 @@ interface ConfirmModalProps {
   message: string;
   onConfirm: () => void;
   onCancel: () => void;
+  confirmLabel?: string;
+  cancelLabel?: string;
+  variant?: 'danger' | 'primary' | 'info';
 }
 
-function ConfirmModal({ message, onConfirm, onCancel }: ConfirmModalProps) {
+function ConfirmModal({
+  message,
+  onConfirm,
+  onCancel,
+  confirmLabel = 'Xóa',
+  cancelLabel = 'Hủy',
+  variant = 'danger',
+}: ConfirmModalProps) {
+  const title =
+    variant === 'info'
+      ? 'Thông báo'
+      : variant === 'primary'
+        ? 'Xác nhận'
+        : 'Xác nhận xóa';
+
+  const confirmClass =
+    variant === 'primary'
+      ? 'flex-1 py-3 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 transition'
+      : variant === 'info'
+        ? 'flex-1 py-3 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 transition'
+        : 'flex-1 py-3 rounded-xl bg-red-600 text-white text-sm font-bold hover:bg-red-700 transition';
+
   return (
-    <Modal title="Xác nhận xóa" onClose={onCancel}>
+    <Modal title={title} onClose={onCancel}>
       <p className="text-slate-600 text-sm mb-6">{message}</p>
       <div className="flex gap-3">
-        <button className={btnSecondary} onClick={onCancel}>
-          Hủy
-        </button>
-        <button
-          className="flex-1 py-3 rounded-xl bg-red-600 text-white text-sm font-bold hover:bg-red-700 transition"
-          onClick={onConfirm}
-        >
-          Xóa
+        {cancelLabel ? (
+          <button className={btnSecondary} onClick={onCancel}>
+            {cancelLabel}
+          </button>
+        ) : null}
+        <button className={confirmClass} onClick={onConfirm}>
+          {confirmLabel}
         </button>
       </div>
     </Modal>
@@ -76,21 +99,34 @@ function ConfirmModal({ message, onConfirm, onCancel }: ConfirmModalProps) {
 
 interface ConfirmState {
   message: string;
-  onConfirm: () => void;
+  onConfirm?: () => void;
+  confirmLabel?: string;
+  cancelLabel?: string;
+  variant?: 'danger' | 'primary' | 'info';
 }
 
 export function useConfirmModal() {
   const [state, setState] = useState<ConfirmState | null>(null);
-  const openConfirm = (message: string, onConfirm: () => void) =>
-    setState({ message, onConfirm });
+  const openConfirm = (
+    message: string,
+    onConfirm?: () => void,
+    opts?: {
+      confirmLabel?: string;
+      cancelLabel?: string;
+      variant?: 'danger' | 'primary' | 'info';
+    },
+  ) => setState({ message, onConfirm, ...opts });
   const modal = state ? (
     <ConfirmModal
       message={state.message}
       onConfirm={() => {
-        state.onConfirm();
+        state.onConfirm?.();
         setState(null);
       }}
       onCancel={() => setState(null)}
+      confirmLabel={state.confirmLabel}
+      cancelLabel={state.cancelLabel}
+      variant={state.variant}
     />
   ) : null;
   return { modal, openConfirm };
