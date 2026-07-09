@@ -51,6 +51,13 @@ jest.mock('../../components/admin/edit-problem-modal', () => ({
   ),
 }));
 
+const mockOpenConfirm = jest.fn();
+
+jest.mock('../../components/admin/modal', () => ({
+  useConfirmModal: () => ({ modal: null, openConfirm: mockOpenConfirm }),
+  Modal: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+}));
+
 const mockGetProblems = getProblems as jest.MockedFunction<typeof getProblems>;
 const mockDeleteProblem = deleteProblem as jest.MockedFunction<
   typeof deleteProblem
@@ -93,7 +100,6 @@ function renderTab() {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
-  window.confirm = jest.fn().mockReturnValue(true);
   return render(
     <QueryClientProvider client={client}>
       <ProblemsTab />
@@ -173,9 +179,18 @@ describe('AdminPage — ProblemsTab', () => {
     expect(deleteButtons.length).toBeGreaterThan(0);
     const button = deleteButtons[0].closest('button');
     if (!button) throw new Error('Delete button not found');
+    mockOpenConfirm.mockClear();
     fireEvent.click(button);
     await waitFor(() => {
-      expect(window.confirm).toHaveBeenCalled();
+      expect(mockOpenConfirm).toHaveBeenCalledWith(
+        expect.stringContaining('Bạn chắc chắn muốn xóa đề bài'),
+        expect.any(Function),
+      );
+    });
+    // Simulate confirm callback
+    const confirmCallback = mockOpenConfirm.mock.calls[0][1];
+    confirmCallback();
+    await waitFor(() => {
       expect(mockDeleteProblem).toHaveBeenCalled();
     });
   });

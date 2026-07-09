@@ -23,6 +23,7 @@ import {
 } from '../actions/problem.actions';
 import { ManageTestCasesModal } from '../../components/admin/manage-test-cases-modal';
 import { EditProblemModal } from '../../components/admin/edit-problem-modal';
+import { useConfirmModal } from '../../components/admin/modal';
 
 interface ProblemItem {
   id: string;
@@ -50,13 +51,19 @@ export function ProblemsTab() {
   );
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
+  const { modal: confirmModal, openConfirm } = useConfirmModal();
+
   const deleteMut = useMutation({
     mutationFn: (id: string) => deleteProblem(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['admin-problems'] });
     },
     onError: (e: Error) => {
-      alert(e.message || 'Xóa đề bài thất bại');
+      openConfirm(e.message || 'Xóa đề bài thất bại', undefined, {
+        confirmLabel: 'Đóng',
+        cancelLabel: '',
+        variant: 'info',
+      });
     },
   });
 
@@ -67,18 +74,19 @@ export function ProblemsTab() {
       qc.invalidateQueries({ queryKey: ['admin-problems'] });
     },
     onError: (e: Error) => {
-      alert(e.message || 'Cập nhật trạng thái thất bại');
+      openConfirm(e.message || 'Cập nhật trạng thái thất bại', undefined, {
+        confirmLabel: 'Đóng',
+        cancelLabel: '',
+        variant: 'info',
+      });
     },
   });
 
   const handleDelete = (id: string, title: string) => {
-    if (
-      confirm(
-        `Bạn chắc chắn muốn xóa đề bài "${title}"? Tất cả test cases và lịch sử nộp bài cũng sẽ bị xóa vĩnh viễn.`,
-      )
-    ) {
-      deleteMut.mutate(id);
-    }
+    openConfirm(
+      `Bạn chắc chắn muốn xóa đề bài "${title}"? Tất cả test cases và lịch sử nộp bài cũng sẽ bị xóa vĩnh viễn.`,
+      () => deleteMut.mutate(id),
+    );
   };
 
   const { data, isLoading, isError, error, refetch } = useQuery<{
@@ -360,6 +368,8 @@ export function ProblemsTab() {
           onClose={() => setEditingProblem(null)}
         />
       )}
+
+      {confirmModal}
     </>
   );
 }
