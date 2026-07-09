@@ -236,6 +236,24 @@ describe('JudgeService', () => {
       );
     });
 
+    it('should treat outputs as equal after normalizing all whitespace', async () => {
+      submissionRepo.findById.mockResolvedValue(makeSubmission());
+      problemRepo.findById.mockResolvedValue(makeProblem());
+      testCaseRepo.findByProblemId.mockResolvedValue([
+        makeTestCase({ expectedOutput: '[ 0, 1 ]' }),
+      ]);
+      sandboxService.execute.mockResolvedValue(
+        makeExecution({ stdout: '[0, 1]\n' }),
+      );
+
+      await service.judge('sub-1');
+
+      expect(submissionRepo.updateResult).toHaveBeenCalledWith(
+        'sub-1',
+        expect.objectContaining({ status: 'accepted', passedTestCases: 1 }),
+      );
+    });
+
     it('should set verdict to time_limit_exceeded on timeout', async () => {
       submissionRepo.findById.mockResolvedValue(makeSubmission());
       problemRepo.findById.mockResolvedValue(makeProblem());

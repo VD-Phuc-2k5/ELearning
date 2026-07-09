@@ -182,8 +182,13 @@ export class JudgeService {
         status = 'runtime_error';
       } else {
         // Successful execution, compare stdout
-        const expected = tc.expectedOutput.replace(/\r\n/g, '\n').trim();
-        const actual = execution.stdout.replace(/\r\n/g, '\n').trim();
+        // Normalize all whitespace (including internal spaces) so that outputs
+        // like "[0, 1]" and "[ 0, 1 ]" are treated as equal.
+        const normalizeOutput = (s: string): string =>
+          s.replace(/\r\n/g, '\n').replace(/\s+/g, '');
+
+        const expected = normalizeOutput(tc.expectedOutput);
+        const actual = normalizeOutput(execution.stdout);
 
         if (expected !== actual) {
           status = 'wrong_answer';
