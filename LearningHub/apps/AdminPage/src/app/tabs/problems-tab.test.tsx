@@ -157,7 +157,7 @@ describe('AdminPage — ProblemsTab', () => {
 
   it('clicking Xóa triggers confirm dialog', async () => {
     mockDeleteProblem.mockResolvedValue(
-      {} as Awaited<ReturnType<typeof deleteProblem>>,
+      {} as unknown as Awaited<ReturnType<typeof deleteProblem>>,
     );
     renderTab();
     await waitFor(() => screen.getAllByText('Xóa'));

@@ -112,22 +112,22 @@ describe('AdminPage — ForumModerationTab', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockGetAdminReports.mockResolvedValue(
-      mockReports as Awaited<ReturnType<typeof getAdminReports>>,
+      mockReports as unknown as Awaited<ReturnType<typeof getAdminReports>>,
     );
     mockAdminResolveReport.mockResolvedValue(
-      {} as Awaited<ReturnType<typeof adminResolveReport>>,
+      {} as unknown as Awaited<ReturnType<typeof adminResolveReport>>,
     );
     mockAdminDismissReport.mockResolvedValue(
-      {} as Awaited<ReturnType<typeof adminDismissReport>>,
+      {} as unknown as Awaited<ReturnType<typeof adminDismissReport>>,
     );
     mockAdminHidePost.mockResolvedValue(
-      {} as Awaited<ReturnType<typeof adminHidePost>>,
+      {} as unknown as Awaited<ReturnType<typeof adminHidePost>>,
     );
     mockAdminRestorePost.mockResolvedValue(
-      {} as Awaited<ReturnType<typeof adminRestorePost>>,
+      {} as unknown as Awaited<ReturnType<typeof adminRestorePost>>,
     );
     mockGetPostDetail.mockResolvedValue(
-      {} as Awaited<ReturnType<typeof getPostDetail>>,
+      {} as unknown as Awaited<ReturnType<typeof getPostDetail>>,
     );
   });
 
@@ -197,9 +197,10 @@ describe('AdminPage — ForumModerationTab', () => {
   });
 
   it('renders empty state message when no reports', async () => {
-    mockGetAdminReports.mockResolvedValue({ data: [] } as Awaited<
-      ReturnType<typeof getAdminReports>
-    >);
+    mockGetAdminReports.mockResolvedValue({
+      data: [],
+      total: 0,
+    } as unknown as Awaited<ReturnType<typeof getAdminReports>>);
     renderTab();
     await waitFor(() => {
       expect(screen.getByText('Không có báo cáo nào.')).toBeTruthy();

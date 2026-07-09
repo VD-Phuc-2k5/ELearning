@@ -64,7 +64,7 @@ describe('AdminPage — QuizReviewTab (TC104–TC109)', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockGetPendingBanks.mockResolvedValue(
-      mockBanks as Awaited<ReturnType<typeof getPendingBanks>>,
+      mockBanks as unknown as Awaited<ReturnType<typeof getPendingBanks>>,
     );
     mockGetBankQuestions.mockResolvedValue([]);
   });
@@ -79,7 +79,7 @@ describe('AdminPage — QuizReviewTab (TC104–TC109)', () => {
 
   it('TC105 — clicking Duyệt calls approveBank with bankId', async () => {
     mockApproveBank.mockResolvedValue(
-      {} as Awaited<ReturnType<typeof approveBank>>,
+      {} as unknown as Awaited<ReturnType<typeof approveBank>>,
     );
     renderTab();
     await waitFor(() => screen.getByText('Duyệt'));
@@ -89,7 +89,7 @@ describe('AdminPage — QuizReviewTab (TC104–TC109)', () => {
 
   it('TC106 — reject without reason calls rejectBank with undefined', async () => {
     mockRejectBank.mockResolvedValue(
-      {} as Awaited<ReturnType<typeof rejectBank>>,
+      {} as unknown as Awaited<ReturnType<typeof rejectBank>>,
     );
     renderTab();
     await waitFor(() => screen.getByText('Từ chối'));
@@ -103,7 +103,7 @@ describe('AdminPage — QuizReviewTab (TC104–TC109)', () => {
 
   it('TC107 — reject with reason passes reason string to rejectBank', async () => {
     mockRejectBank.mockResolvedValue(
-      {} as Awaited<ReturnType<typeof rejectBank>>,
+      {} as unknown as Awaited<ReturnType<typeof rejectBank>>,
     );
     renderTab();
     await waitFor(() => screen.getByText('Từ chối'));
@@ -123,7 +123,7 @@ describe('AdminPage — QuizReviewTab (TC104–TC109)', () => {
 
   it('TC108 — clicking expand button triggers getBankQuestions', async () => {
     mockGetBankQuestions.mockResolvedValue(
-      [] as Awaited<ReturnType<typeof getBankQuestions>>,
+      [] as unknown as Awaited<ReturnType<typeof getBankQuestions>>,
     );
     renderTab();
     await waitFor(() => screen.getByText('JavaScript Basics'));

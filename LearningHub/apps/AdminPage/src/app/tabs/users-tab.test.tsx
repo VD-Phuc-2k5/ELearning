@@ -65,7 +65,7 @@ describe('AdminPage — UsersTab (TC110, TC112)', () => {
 
   it('TC112 — clicking delete triggers openConfirm then calls deleteAdmin', async () => {
     mockDeleteAdmin.mockResolvedValue(
-      {} as Awaited<ReturnType<typeof deleteAdmin>>,
+      {} as unknown as Awaited<ReturnType<typeof deleteAdmin>>,
     );
     const { openConfirm } = renderTab();
     await waitFor(() => screen.getByText('admin1'));

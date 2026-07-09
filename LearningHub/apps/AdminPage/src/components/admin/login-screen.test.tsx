@@ -107,9 +107,10 @@ describe('AdminPage — LoginScreen (TC074–TC081)', () => {
     const toggleButton = buttons.find(
       (b) => (b as HTMLButtonElement).type === 'button',
     );
-    if (toggleButton) {
-      fireEvent.click(toggleButton);
-    }
+    expect(toggleButton).toBeTruthy();
+    if (!toggleButton) throw new Error('toggle button not found');
+
+    fireEvent.click(toggleButton);
     expect(pwInput.type).toBe('text');
 
     fireEvent.click(toggleButton);

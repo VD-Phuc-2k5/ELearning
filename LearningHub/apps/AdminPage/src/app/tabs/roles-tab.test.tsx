@@ -85,7 +85,7 @@ describe('AdminPage — RolesTab (TC098–TC103)', () => {
 
   it('TC099 — clicking an unassigned cell calls assignPermissionToRole', async () => {
     mockAssign.mockResolvedValue(
-      {} as Awaited<ReturnType<typeof assignPermissionToRole>>,
+      {} as unknown as Awaited<ReturnType<typeof assignPermissionToRole>>,
     );
     renderTab();
 
@@ -107,7 +107,7 @@ describe('AdminPage — RolesTab (TC098–TC103)', () => {
 
   it('TC100 — clicking an assigned cell calls removePermissionFromRole', async () => {
     mockRemove.mockResolvedValue(
-      {} as Awaited<ReturnType<typeof removePermissionFromRole>>,
+      {} as unknown as Awaited<ReturnType<typeof removePermissionFromRole>>,
     );
     renderTab();
 
@@ -127,7 +127,7 @@ describe('AdminPage — RolesTab (TC098–TC103)', () => {
 
   it('TC103 — openConfirm is called when delete role button clicked; deleteRole called on confirm', async () => {
     mockDeleteRole.mockResolvedValue(
-      {} as Awaited<ReturnType<typeof deleteRole>>,
+      {} as unknown as Awaited<ReturnType<typeof deleteRole>>,
     );
     const openConfirm = jest.fn((_msg: string, cb: () => void) => cb());
     renderTab(openConfirm);

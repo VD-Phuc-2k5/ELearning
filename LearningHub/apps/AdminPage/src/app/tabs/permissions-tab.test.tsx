@@ -115,7 +115,7 @@ describe('AdminPage — PermissionsTab', () => {
 
   it('deletePermission is called after confirm', async () => {
     mockDeletePermission.mockResolvedValue(
-      {} as Awaited<ReturnType<typeof deletePermission>>,
+      {} as unknown as Awaited<ReturnType<typeof deletePermission>>,
     );
     const openConfirm = jest.fn((_msg: string, cb: () => void) => cb());
     renderTab(openConfirm);
