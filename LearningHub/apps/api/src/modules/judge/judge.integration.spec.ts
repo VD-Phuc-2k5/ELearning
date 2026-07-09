@@ -26,7 +26,7 @@ describe('Judge Integration (IT035–IT039)', () => {
 
   afterAll(async () => {
     await cleanupTestData(app);
-    await app.close();
+    await app?.close();
   });
 
   it('IT035 — GET /problems returns list', async () => {

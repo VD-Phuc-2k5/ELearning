@@ -27,7 +27,7 @@ describe('Roadmap — Integration (IT017–IT019)', () => {
 
   afterAll(async () => {
     await cleanupTestData(app);
-    await app.close();
+    await app?.close();
   });
 
   it('IT017 — POST /roadmaps → 201, roadmap saved in DB', async () => {

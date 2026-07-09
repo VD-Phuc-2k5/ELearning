@@ -20,7 +20,7 @@ describe('Auth — Integration (IT001–IT011)', () => {
 
   afterAll(async () => {
     await cleanupTestData(app);
-    await app.close();
+    await app?.close();
   });
 
   // ── Registration ──────────────────────────────────────────────

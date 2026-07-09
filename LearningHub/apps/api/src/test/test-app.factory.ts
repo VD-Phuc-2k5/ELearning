@@ -34,13 +34,18 @@ export async function createTestApp(
         synchronize: true,
         logging: false,
         dropSchema: false,
+        retryAttempts: 10,
+        retryDelay: 1000,
       }),
       CacheModule.register({ isGlobal: true }),
       // QuizModule transitively imports ForumModule (queue processors), so
       // Bull is always needed regardless of extraModules — requires a live
       // Redis (see docker-compose.yml postgres+redis services).
       BullModule.forRoot({
-        connection: { host: 'localhost', port: 6379 },
+        connection: {
+          host: process.env.REDIS_HOST ?? 'localhost',
+          port: Number(process.env.REDIS_PORT ?? 6379),
+        },
       }),
       AuthModule,
       QuizModule,

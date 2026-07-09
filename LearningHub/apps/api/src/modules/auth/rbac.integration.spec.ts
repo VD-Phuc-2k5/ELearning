@@ -23,7 +23,7 @@ describe('RBAC Integration (IT020–IT024)', () => {
 
   afterAll(async () => {
     await cleanupTestData(app);
-    await app.close();
+    await app?.close();
   });
 
   it('IT020 — GET /admin/roles returns role list', async () => {

@@ -42,6 +42,8 @@ async function createSandboxTestApp(): Promise<INestApplication> {
         autoLoadEntities: true,
         synchronize: true,
         logging: false,
+        retryAttempts: 10,
+        retryDelay: 1000,
       }),
       CacheModule.register({ isGlobal: true }),
       AuthModule,
@@ -82,6 +84,8 @@ async function createSandboxHealthTestApp(): Promise<INestApplication> {
         autoLoadEntities: true,
         synchronize: true,
         logging: false,
+        retryAttempts: 10,
+        retryDelay: 1000,
       }),
       CacheModule.register({ isGlobal: true }),
       AuthModule,
@@ -109,7 +113,7 @@ describe('Sandbox Integration (IT040–IT045)', () => {
 
   afterAll(async () => {
     await cleanupTestData(app);
-    await app.close();
+    await app?.close();
   });
 
   it('IT040 — POST /sandbox/execute with valid payload returns execution result', async () => {
@@ -154,7 +158,7 @@ describe('Sandbox Integration (IT040–IT045)', () => {
     });
 
     afterAll(async () => {
-      await healthApp.close();
+      await healthApp?.close();
     });
 
     it('IT044 — GET /sandbox/health returns docker status', async () => {

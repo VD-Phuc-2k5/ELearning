@@ -89,7 +89,10 @@ export function bearer(token: string): string {
   return `Bearer ${token}`;
 }
 
-export async function cleanupTestData(app: INestApplication): Promise<void> {
+export async function cleanupTestData(
+  app: INestApplication | undefined,
+): Promise<void> {
+  if (!app) return;
   const db = getDb(app);
   // roadmaps.creator_id and question_banks.uploader_id have no ON DELETE
   // CASCADE to users — drop dependents first (question_banks cascades to

@@ -40,7 +40,7 @@ describe('Quiz — Integration (IT012–IT016)', () => {
 
   afterAll(async () => {
     await cleanupTestData(app);
-    await app.close();
+    await app?.close();
   });
 
   it('IT012 — POST /quiz/banks → 201, bank saved in DB', async () => {
