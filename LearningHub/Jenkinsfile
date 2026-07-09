@@ -8,55 +8,70 @@ pipeline {
   environment {
     IMAGE_NAME   = 'learninghub-api'
     COMPOSE_FILE = 'docker-compose.yml'
+    PROJECT_DIR  = 'LearningHub'
   }
 
   stages {
     stage('Install') {
       steps {
-        sh 'pnpm install --frozen-lockfile'
+        dir(PROJECT_DIR) {
+          sh 'pnpm install --frozen-lockfile'
+        }
       }
     }
 
     stage('Lint') {
       steps {
-        sh 'pnpm nx run-many --target=lint --projects=api,LearningHub,AdminPage --parallel=3'
+        dir(PROJECT_DIR) {
+          sh 'pnpm nx run-many --target=lint --projects=api,LearningHub,AdminPage --parallel=3'
+        }
       }
     }
 
     stage('Test (API)') {
       steps {
-        sh 'pnpm nx run-many --target=test --projects=api'
+        dir(PROJECT_DIR) {
+          sh 'pnpm nx run-many --target=test --projects=api'
+        }
       }
     }
 
     stage('Test (Frontend)') {
       steps {
-        sh 'pnpm nx run-many --target=test --projects=LearningHub,AdminPage'
+        dir(PROJECT_DIR) {
+          sh 'pnpm nx run-many --target=test --projects=LearningHub,AdminPage'
+        }
       }
     }
 
     stage('Build') {
       steps {
-        sh 'pnpm nx run-many --target=build --projects=api,LearningHub,AdminPage --parallel=3'
+        dir(PROJECT_DIR) {
+          sh 'pnpm nx run-many --target=build --projects=api,LearningHub,AdminPage --parallel=3'
+        }
       }
     }
 
     stage('Docker Build & Deploy') {
       when { branch 'main' }
       steps {
-        sh """
-          docker build -f apps/api/Dockerfile         -t learninghub-api:latest .
-          docker build -f apps/LearningHub/Dockerfile -t learninghub-web:latest .
-          docker build -f apps/AdminPage/Dockerfile   -t learninghub-admin:latest .
-          docker compose -f ${COMPOSE_FILE} up -d --scale api=3
-        """
+        dir(PROJECT_DIR) {
+          sh """
+            docker build -f apps/api/Dockerfile         -t learninghub-api:latest .
+            docker build -f apps/LearningHub/Dockerfile -t learninghub-web:latest .
+            docker build -f apps/AdminPage/Dockerfile   -t learninghub-admin:latest .
+            docker compose -f ${COMPOSE_FILE} up -d --scale api=3
+          """
+        }
       }
     }
 
     stage('E2E Tests') {
       when { branch 'main' }
       steps {
-        sh 'pnpm test:e2e'
+        dir(PROJECT_DIR) {
+          sh 'pnpm test:e2e'
+        }
       }
     }
   }
