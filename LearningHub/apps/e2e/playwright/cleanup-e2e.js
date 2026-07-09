@@ -4,7 +4,7 @@ const pool = new Pool({
   port: 5432,
   user: 'postgres',
   password: 'postgres123',
-  database: 'dev_learning_hub',
+  database: process.env.POSTGRES_TEST_DB || 'test_learning_hub',
 });
 (async () => {
   const users = await pool.query(

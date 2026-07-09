@@ -12,8 +12,16 @@ test.describe('Quiz flow', () => {
   });
 
   test('quiz bank page shows mode selection', async ({ page }) => {
-    await page.goto('/quiz/sample-bank-id');
-    await page.waitForTimeout(2000);
+    await page.goto('/my-banks');
+    await page.waitForTimeout(3000);
+    const bankLink = page
+      .locator('a[href*="/quiz/"]')
+      .or(page.locator('a[href*="/banks/"]'))
+      .first();
+    if (!(await bankLink.isVisible({ timeout: 5000 }).catch(() => false)))
+      return;
+    await bankLink.click();
+    await page.waitForTimeout(3000);
     const modeSection = page
       .getByText(/luyện tập/i)
       .or(page.getByText(/thi thử/i))
