@@ -51,6 +51,7 @@ out
 logs/
 
 test-output
+test-results
 
 .env
 .env.local
