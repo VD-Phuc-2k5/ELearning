@@ -110,9 +110,6 @@ export default function InviteAcceptPage({ params }: InviteAcceptPageProps) {
             <XCircle className="h-10 w-10 text-red-400 mx-auto" />
             <p className="text-lg font-semibold text-slate-700">Invite Error</p>
             <p className="text-sm text-red-500">{state.message}</p>
-            <Link href="/forum">
-              <Button variant="secondary">Go to Forums</Button>
-            </Link>
           </div>
         )}
       </div>
