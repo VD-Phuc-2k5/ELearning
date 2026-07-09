@@ -36,8 +36,8 @@ export function ExamMode({
   const cardRef = useRef<HTMLDivElement>(null);
 
   const submitMutation = useMutation({
-    mutationFn: () =>
-      submitQuiz(
+    mutationFn: async () => {
+      const result = await submitQuiz(
         bankId,
         questions
           .filter((q) => answers[q.id])
@@ -47,7 +47,10 @@ export function ExamMode({
           })),
         roadmapId,
         Math.round((Date.now() - startTimeRef.current) / 1000),
-      ),
+      );
+      if (!result.success) throw new Error(result.message);
+      return result.data;
+    },
     onSuccess: onFinish,
   });
 

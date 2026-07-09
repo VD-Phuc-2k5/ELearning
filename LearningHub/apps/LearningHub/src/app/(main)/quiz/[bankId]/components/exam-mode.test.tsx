@@ -93,9 +93,12 @@ describe('LearningHub — ExamMode (TC144–TC145)', () => {
 
   it('TC144c — submit with all questions answered calls submitQuiz without confirm', async () => {
     mockSubmitQuiz.mockResolvedValue({
-      correctCount: 1,
-      totalQuestions: 1,
-      scorePercent: 100,
+      success: true,
+      data: {
+        correctCount: 1,
+        totalQuestions: 1,
+        scorePercent: 100,
+      },
     } as any);
     renderExam([Q1]);
 
@@ -125,9 +128,12 @@ describe('LearningHub — ExamMode (TC144–TC145)', () => {
   it('TC145b — calls submitQuiz when user confirms submission with unanswered questions', async () => {
     jest.spyOn(window, 'confirm').mockReturnValue(true);
     mockSubmitQuiz.mockResolvedValue({
-      correctCount: 0,
-      totalQuestions: 2,
-      scorePercent: 0,
+      success: true,
+      data: {
+        correctCount: 0,
+        totalQuestions: 2,
+        scorePercent: 0,
+      },
     } as any);
     renderExam([Q1, Q2]);
 

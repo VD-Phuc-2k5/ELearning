@@ -74,9 +74,12 @@ describe('LearningHub — PracticeMode (TC141–TC145)', () => {
 
   it('TC142 — selecting an option calls verifyAnswer with question and option ids', async () => {
     mockVerifyAnswer.mockResolvedValue({
-      isCorrect: true,
-      correctOptionIds: ['opt-b'],
-      explanation: null,
+      success: true,
+      data: {
+        isCorrect: true,
+        correctOptionIds: ['opt-b'],
+        explanation: null,
+      },
     } as any);
     renderPractice();
 
@@ -89,9 +92,12 @@ describe('LearningHub — PracticeMode (TC141–TC145)', () => {
 
   it('TC143 — shows correct feedback icon when answer is correct', async () => {
     mockVerifyAnswer.mockResolvedValue({
-      isCorrect: true,
-      correctOptionIds: ['opt-b'],
-      explanation: null,
+      success: true,
+      data: {
+        isCorrect: true,
+        correctOptionIds: ['opt-b'],
+        explanation: null,
+      },
     } as any);
     renderPractice();
 
@@ -104,9 +110,12 @@ describe('LearningHub — PracticeMode (TC141–TC145)', () => {
 
   it('TC143b — shows wrong feedback icon and explanation when answer is incorrect', async () => {
     mockVerifyAnswer.mockResolvedValue({
-      isCorrect: false,
-      correctOptionIds: ['opt-b'],
-      explanation: 'Hint: try adding more carefully',
+      success: true,
+      data: {
+        isCorrect: false,
+        correctOptionIds: ['opt-b'],
+        explanation: 'Hint: try adding more carefully',
+      },
     } as any);
     renderPractice();
 
@@ -120,9 +129,12 @@ describe('LearningHub — PracticeMode (TC141–TC145)', () => {
 
   it('TC144 — answer options are disabled after submitting', async () => {
     mockVerifyAnswer.mockResolvedValue({
-      isCorrect: true,
-      correctOptionIds: ['opt-b'],
-      explanation: null,
+      success: true,
+      data: {
+        isCorrect: true,
+        correctOptionIds: ['opt-b'],
+        explanation: null,
+      },
     } as any);
     renderPractice();
 

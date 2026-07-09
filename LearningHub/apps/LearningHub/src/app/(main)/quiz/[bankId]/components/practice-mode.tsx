@@ -33,7 +33,11 @@ export function PracticeMode({ questions, onExit }: PracticeModeProps) {
   const feedback = feedbackMap[question?.id];
 
   const verifyMutation = useMutation({
-    mutationFn: (optionId: string) => verifyAnswer(question.id, optionId),
+    mutationFn: async (optionId: string) => {
+      const result = await verifyAnswer(question.id, optionId);
+      if (!result.success) throw new Error(result.message);
+      return result.data;
+    },
     onSuccess: (data) =>
       setFeedbackMap((prev) => ({ ...prev, [question.id]: data })),
   });

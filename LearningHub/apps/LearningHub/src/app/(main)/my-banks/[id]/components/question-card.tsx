@@ -42,13 +42,16 @@ export function QuestionCard({
   const [explanation, setExplanation] = useState(question.explanation ?? '');
 
   const deleteMutation = useMutation({
-    mutationFn: () => deleteQuestion(question.id),
+    mutationFn: async () => {
+      const result = await deleteQuestion(question.id);
+      if (!result.success) throw new Error(result.message);
+    },
     onSuccess: onDeleted,
   });
 
   const updateMutation = useMutation({
-    mutationFn: () =>
-      updateQuestion(question.id, {
+    mutationFn: async () => {
+      const result = await updateQuestion(question.id, {
         content,
         explanation,
         answerOptions: options.map((o) => ({
@@ -56,7 +59,10 @@ export function QuestionCard({
           content: o.content,
         })),
         correctOptionLabels: correctLabels,
-      }),
+      });
+      if (!result.success) throw new Error(result.message);
+      return result.data;
+    },
     onSuccess: () => {
       setEditing(false);
       onUpdated();

@@ -87,12 +87,18 @@ export default function BankDetailPage() {
   };
 
   const updateTagsMutation = useMutation({
-    mutationFn: (tagIds: number[]) => updateBank(id, { tagIds }),
+    mutationFn: async (tagIds: number[]) => {
+      const result = await updateBank(id, { tagIds });
+      if (!result.success) throw new Error(result.message);
+    },
     onSuccess: invalidateBank,
   });
 
   const publishMutation = useMutation({
-    mutationFn: (statusId: string) => updateBank(id, { statusId }),
+    mutationFn: async (statusId: string) => {
+      const result = await updateBank(id, { statusId });
+      if (!result.success) throw new Error(result.message);
+    },
     onSuccess: invalidateBank,
   });
 
@@ -106,15 +112,21 @@ export default function BankDetailPage() {
   }, [bank]);
 
   const updateInfoMutation = useMutation({
-    mutationFn: (data: { title?: string; description?: string }) =>
-      updateBank(id, data),
+    mutationFn: async (data: { title?: string; description?: string }) => {
+      const result = await updateBank(id, data);
+      if (!result.success) throw new Error(result.message);
+    },
     onSuccess: invalidateBank,
   });
 
   const [newTagName, setNewTagName] = useState('');
   const [tagSearch, setTagSearch] = useState('');
   const createTagMutation = useMutation({
-    mutationFn: (name: string) => createTag(name),
+    mutationFn: async (name: string) => {
+      const result = await createTag(name);
+      if (!result.success) throw new Error(result.message);
+      return result.data;
+    },
     onSuccess: (tag) => {
       queryClient.invalidateQueries({ queryKey: ['tags'] });
       updateTagsMutation.mutate([
@@ -125,7 +137,10 @@ export default function BankDetailPage() {
     },
   });
   const deleteTagMutation = useMutation({
-    mutationFn: (tagId: number) => deleteTag(tagId),
+    mutationFn: async (tagId: number) => {
+      const result = await deleteTag(tagId);
+      if (!result.success) throw new Error(result.message);
+    },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['tags'] }),
   });
 
@@ -166,7 +181,10 @@ export default function BankDetailPage() {
   }, [id, queryClient]);
 
   const deleteBankMutation = useMutation({
-    mutationFn: () => deleteBank(id),
+    mutationFn: async () => {
+      const result = await deleteBank(id);
+      if (!result.success) throw new Error(result.message);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['my-banks'] });
       router.push('/my-banks');

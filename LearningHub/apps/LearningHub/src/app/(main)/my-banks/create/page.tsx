@@ -69,9 +69,16 @@ export default function CreateBankPage() {
 
   const createMutation = useMutation({
     mutationFn: async (data: CreateBankInput) => {
-      const bank = await createBank(data);
+      const bankResult = await createBank(data);
+      if (!bankResult.success) throw new Error(bankResult.message);
+      const bank = bankResult.data;
       if (file) {
-        await uploadExcel(bank.id, file, fileHash ?? undefined);
+        const uploadResult = await uploadExcel(
+          bank.id,
+          file,
+          fileHash ?? undefined,
+        );
+        if (!uploadResult.success) throw new Error(uploadResult.message);
       }
       return bank;
     },

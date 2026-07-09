@@ -43,9 +43,11 @@ export function UploadTab({ bankId, onSuccess }: UploadTabProps) {
   });
 
   const parseMutation = useMutation({
-    mutationFn: () => {
+    mutationFn: async () => {
       if (!file) throw new Error('No file selected');
-      return parseExcel(bankId, file);
+      const result = await parseExcel(bankId, file);
+      if (!result.success) throw new Error(result.message);
+      return result.data;
     },
     onSuccess: (data) => {
       setParseError(null);
@@ -68,7 +70,13 @@ export function UploadTab({ bankId, onSuccess }: UploadTabProps) {
       if (!excelFile) {
         throw new Error('No file to upload');
       }
-      return uploadExcel(bankId, excelFile, fileHash ?? undefined);
+      const result = await uploadExcel(
+        bankId,
+        excelFile,
+        fileHash ?? undefined,
+      );
+      if (!result.success) throw new Error(result.message);
+      return result.data;
     },
     onSuccess: () => {
       setFile(null);
