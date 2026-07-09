@@ -93,7 +93,7 @@ export default function CommunityPage() {
         const roadmaps = await getBankRoadmaps(bank.id);
         const firstRoadmap = roadmaps?.[0];
         if (firstRoadmap) {
-          await enrollRoadmap(firstRoadmap.roadmapId).catch(() => undefined);
+          await enrollRoadmap(firstRoadmap.roadmapId);
           router.push(`/quiz/${bank.id}?roadmapId=${firstRoadmap.roadmapId}`);
         } else {
           router.push(`/quiz/${bank.id}`);

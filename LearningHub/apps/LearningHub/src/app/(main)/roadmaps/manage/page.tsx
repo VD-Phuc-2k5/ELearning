@@ -25,7 +25,10 @@ export default function ManageRoadmapsPage() {
   });
 
   const del = useMutation({
-    mutationFn: (id: string) => deleteRoadmap(id),
+    mutationFn: async (id: string) => {
+      const result = await deleteRoadmap(id);
+      if (!result.success) throw new Error(result.message);
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['my-roadmaps'] }),
   });
 

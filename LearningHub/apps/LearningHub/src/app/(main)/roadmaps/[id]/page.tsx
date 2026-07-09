@@ -53,7 +53,10 @@ export default function RoadmapDetailPage() {
   });
 
   const enroll = useMutation({
-    mutationFn: () => enrollRoadmap(id),
+    mutationFn: async () => {
+      const result = await enrollRoadmap(id);
+      if (!result.success) throw new Error(result.message);
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['roadmap', id] }),
   });
 

@@ -7,6 +7,31 @@ async function unwrapOrThrow<T>(
   if (result.type === 'left') throw new Error(result.value.message);
   return result.value;
 }
+
+type ActionResult<T> =
+  | { success: true; data: T }
+  | { success: false; message: string };
+
+async function unwrapOrResult<T>(
+  promise: Promise<{ type: string; value: any }>,
+  fallbackMessage = 'Something went wrong',
+): Promise<ActionResult<T>> {
+  try {
+    const result = await promise;
+    if (result.type === 'left') {
+      return {
+        success: false,
+        message: result.value?.message || fallbackMessage,
+      };
+    }
+    return { success: true, data: result.value };
+  } catch (e) {
+    return {
+      success: false,
+      message: e instanceof Error ? e.message : fallbackMessage,
+    };
+  }
+}
 import {
   RoadmapRemoteDataSourceImpl,
   RoadmapRepositoryImpl,
@@ -65,9 +90,9 @@ export async function listMyRoadmaps(
 
 export async function createRoadmap(
   data: CreateRoadmapParams,
-): Promise<Roadmap> {
+): Promise<ActionResult<Roadmap>> {
   const repo = getRepo();
-  return unwrapOrThrow(new CreateRoadmapUsecase(repo).execute(data));
+  return unwrapOrResult(new CreateRoadmapUsecase(repo).execute(data));
 }
 
 export async function getRoadmapDetail(
@@ -86,18 +111,18 @@ export async function getRoadmapDetail(
 export async function updateRoadmap(
   id: string,
   data: UpdateRoadmapParams,
-): Promise<Roadmap> {
+): Promise<ActionResult<Roadmap>> {
   const repo = getRepo();
-  return unwrapOrThrow(
+  return unwrapOrResult(
     new UpdateRoadmapUsecase(repo).execute(
       new UpdateRoadmapUsecaseParams(id, data),
     ),
   );
 }
 
-export async function deleteRoadmap(id: string): Promise<void> {
+export async function deleteRoadmap(id: string): Promise<ActionResult<void>> {
   const repo = getRepo();
-  unwrapOrThrow(
+  return unwrapOrResult(
     new DeleteRoadmapUsecase(repo).execute(new DeleteRoadmapParams(id)),
   );
 }
@@ -105,18 +130,20 @@ export async function deleteRoadmap(id: string): Promise<void> {
 export async function setRoadmapItems(
   id: string,
   bankIds: string[],
-): Promise<RoadmapItem[]> {
+): Promise<ActionResult<RoadmapItem[]>> {
   const repo = getRepo();
-  return unwrapOrThrow(
+  return unwrapOrResult(
     new SetRoadmapItemsUsecase(repo).execute(
       new SetRoadmapItemsParams(id, bankIds),
     ),
   );
 }
 
-export async function enrollRoadmap(id: string): Promise<UserRoadmapProgress> {
+export async function enrollRoadmap(
+  id: string,
+): Promise<ActionResult<UserRoadmapProgress>> {
   const repo = getRepo();
-  return unwrapOrThrow(
+  return unwrapOrResult(
     new EnrollRoadmapUsecase(repo).execute(new EnrollRoadmapParams(id)),
   );
 }

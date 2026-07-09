@@ -21,7 +21,10 @@ export default function RoadmapsPage() {
     queryFn: () => listRoadmaps({ limit: 20 }),
   });
   const enroll = useMutation({
-    mutationFn: (id: string) => enrollRoadmap(id),
+    mutationFn: async (id: string) => {
+      const result = await enrollRoadmap(id);
+      if (!result.success) throw new Error(result.message);
+    },
     onSuccess: () =>
       qc.invalidateQueries({ queryKey: ['my-roadmap-progress'] }),
   });

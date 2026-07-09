@@ -73,11 +73,13 @@ export default function EditRoadmapPage() {
 
   const save = useMutation({
     mutationFn: async () => {
-      await updateRoadmap(id, { title, description });
-      await setRoadmapItems(
+      const r1 = await updateRoadmap(id, { title, description });
+      if (!r1.success) throw new Error(r1.message);
+      const r2 = await setRoadmapItems(
         id,
         items.map((i) => i.bankId),
       );
+      if (!r2.success) throw new Error(r2.message);
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['roadmap', id] });
@@ -93,7 +95,10 @@ export default function EditRoadmapPage() {
   });
 
   const delRoadmap = useMutation({
-    mutationFn: () => deleteRoadmap(id),
+    mutationFn: async () => {
+      const result = await deleteRoadmap(id);
+      if (!result.success) throw new Error(result.message);
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['my-roadmaps'] });
       router.push('/roadmaps/manage');
