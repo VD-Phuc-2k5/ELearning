@@ -111,12 +111,16 @@ export function ExamMode({
 
   const handleSubmit = () => {
     if (answered < questions.length) {
-      if (
-        !confirm(
-          `Còn ${questions.length - answered} câu chưa trả lời. Nộp bài?`,
-        )
-      )
-        return;
+      openConfirm(
+        `Còn ${questions.length - answered} câu chưa trả lời. Nộp bài?`,
+        () => {
+          if (!submitMutation.isPending && !submitMutation.isSuccess) {
+            submitMutation.mutate();
+          }
+        },
+        { confirmLabel: 'Nộp bài', cancelLabel: 'Hủy', variant: 'primary' },
+      );
+      return;
     }
     if (!submitMutation.isPending && !submitMutation.isSuccess) {
       submitMutation.mutate();

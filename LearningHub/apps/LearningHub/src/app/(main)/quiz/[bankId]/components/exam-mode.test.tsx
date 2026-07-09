@@ -14,8 +14,10 @@ jest.mock('../../../../../components/ui', () => ({
   ),
 }));
 
+const mockOpenConfirm = jest.fn();
+
 jest.mock('../../../../../components/ui/confirm-modal', () => ({
-  useConfirmModal: () => ({ modal: null, openConfirm: jest.fn() }),
+  useConfirmModal: () => ({ modal: null, openConfirm: mockOpenConfirm }),
 }));
 
 jest.mock('../../../../actions/quiz.actions', () => ({
@@ -110,23 +112,21 @@ describe('LearningHub — ExamMode (TC144–TC145)', () => {
     });
   });
 
-  it('TC145 — submit with unanswered questions shows browser confirm', () => {
-    const confirmSpy = jest.spyOn(window, 'confirm').mockReturnValue(false);
+  it('TC145 — submit with unanswered questions shows confirm modal', () => {
     renderExam([Q1, Q2]);
 
-    // Navigate to last question without answering
     fireEvent.click(screen.getByText('Next'));
     fireEvent.click(screen.getByText('Submit'));
 
-    expect(confirmSpy).toHaveBeenCalledWith(
+    expect(mockOpenConfirm).toHaveBeenCalledWith(
       expect.stringContaining('chưa trả lời'),
+      expect.any(Function),
+      expect.objectContaining({ confirmLabel: 'Nộp bài' }),
     );
     expect(mockSubmitQuiz).not.toHaveBeenCalled();
-    confirmSpy.mockRestore();
   });
 
   it('TC145b — calls submitQuiz when user confirms submission with unanswered questions', async () => {
-    jest.spyOn(window, 'confirm').mockReturnValue(true);
     mockSubmitQuiz.mockResolvedValue({
       success: true,
       data: {
@@ -140,19 +140,25 @@ describe('LearningHub — ExamMode (TC144–TC145)', () => {
     fireEvent.click(screen.getByText('Next'));
     fireEvent.click(screen.getByText('Submit'));
 
+    // Simulate confirm callback
+    const confirmCallback = mockOpenConfirm.mock.calls[0][1];
+    confirmCallback();
+
     await waitFor(() => {
       expect(mockSubmitQuiz).toHaveBeenCalled();
     });
-    jest.restoreAllMocks();
   });
 
   it('TC145c — Submit button is disabled while submitting', async () => {
-    jest.spyOn(window, 'confirm').mockReturnValue(true);
     mockSubmitQuiz.mockImplementation(() => new Promise<any>(() => undefined));
     renderExam([Q1, Q2]);
 
     fireEvent.click(screen.getByText('Next'));
     fireEvent.click(screen.getByText('Submit'));
+
+    // Simulate confirm callback
+    const confirmCallback = mockOpenConfirm.mock.calls[0][1];
+    confirmCallback();
 
     await waitFor(() => {
       const submitBtn = screen
@@ -160,6 +166,5 @@ describe('LearningHub — ExamMode (TC144–TC145)', () => {
         .closest('button') as HTMLButtonElement;
       expect(submitBtn.disabled).toBe(true);
     });
-    jest.restoreAllMocks();
   });
 });
