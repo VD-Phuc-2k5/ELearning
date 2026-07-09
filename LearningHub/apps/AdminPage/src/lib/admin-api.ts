@@ -16,7 +16,8 @@ interface ApiError {
   };
 }
 export function getAxiosMessage(e: unknown, fallback: string): string {
-  const data = (e as ApiError).response?.data;
+  const axiosErr = e as ApiError;
+  const data = axiosErr.response?.data;
   if (data?.errors && Array.isArray(data.errors)) {
     return data.errors.map((err) => `${err.field}: ${err.message}`).join(', ');
   }
@@ -24,5 +25,7 @@ export function getAxiosMessage(e: unknown, fallback: string): string {
   if (Array.isArray(message)) {
     return message.join(', ');
   }
-  return message ?? fallback;
+  if (message) return message;
+  const plainMessage = (e as Error).message;
+  return plainMessage && plainMessage !== fallback ? plainMessage : fallback;
 }

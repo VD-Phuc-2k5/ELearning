@@ -6,6 +6,16 @@ import { getProblems, deleteProblem } from '../actions/problem.actions';
 
 jest.mock('@aejkatappaja/phantom-ui', () => ({}), { virtual: true });
 
+jest.mock('react-markdown', () => ({
+  __esModule: true,
+  default: ({ children }: { children: string }) => <div>{children}</div>,
+}));
+
+jest.mock('remark-gfm', () => ({
+  __esModule: true,
+  default: jest.fn(),
+}));
+
 jest.mock('../actions/problem.actions', () => ({
   getProblems: jest.fn(),
   deleteProblem: jest.fn(),
@@ -111,17 +121,17 @@ describe('AdminPage — ProblemsTab', () => {
   it('renders difficulty badges', async () => {
     renderTab();
     await waitFor(() => {
-      expect(screen.getByText('Dễ (Easy)')).toBeTruthy();
-      expect(screen.getByText('Trung bình (Medium)')).toBeTruthy();
-      expect(screen.getByText('Khó (Hard)')).toBeTruthy();
+      expect(screen.getByText('Dễ')).toBeTruthy();
+      expect(screen.getByText('Trung bình')).toBeTruthy();
+      expect(screen.getByText('Khó')).toBeTruthy();
     });
   });
 
   it('renders time and memory limits', async () => {
     renderTab();
     await waitFor(() => {
-      expect(screen.getByText('1000 ms')).toBeTruthy();
-      expect(screen.getByText('256 MB RAM')).toBeTruthy();
+      expect(screen.getByText('1000ms')).toBeTruthy();
+      expect(screen.getByText('256MB')).toBeTruthy();
     });
   });
 
@@ -133,36 +143,37 @@ describe('AdminPage — ProblemsTab', () => {
     });
   });
 
-  it('renders Sửa, Test Cases, Xóa buttons', async () => {
+  it('renders Sửa, Tests dropdown buttons', async () => {
     renderTab();
     await waitFor(() => {
       const suaButtons = screen.getAllByText('Sửa');
-      const testCaseButtons = screen.getAllByText('Test Cases');
-      const xoaButtons = screen.getAllByText('Xóa');
+      const testsButtons = screen.getAllByText('Tests');
       expect(suaButtons.length).toBe(3);
-      expect(testCaseButtons.length).toBe(3);
-      expect(xoaButtons.length).toBe(3);
+      expect(testsButtons.length).toBe(3);
     });
   });
 
-  it('clicking Test Cases shows the modal', async () => {
+  it('clicking Tests shows the modal', async () => {
     renderTab();
-    await waitFor(() => screen.getAllByText('Test Cases'));
-    const testCaseButtons = screen.getAllByText('Test Cases');
-    fireEvent.click(testCaseButtons[0]);
+    await waitFor(() => screen.getAllByText('Tests'));
+    const testsButtons = screen.getAllByText('Tests');
+    fireEvent.click(testsButtons[0]);
     await waitFor(() => {
       expect(screen.getByText('Close Modal')).toBeTruthy();
     });
   });
 
-  it('clicking Xóa triggers confirm dialog', async () => {
+  it('clicking delete icon triggers confirm dialog', async () => {
     mockDeleteProblem.mockResolvedValue(
       {} as unknown as Awaited<ReturnType<typeof deleteProblem>>,
     );
     renderTab();
-    await waitFor(() => screen.getAllByText('Xóa'));
-    const deleteButtons = screen.getAllByText('Xóa');
-    fireEvent.click(deleteButtons[0]);
+    await waitFor(() => screen.getAllByText('Sửa'));
+    const deleteButtons = document.querySelectorAll('.lucide-trash2');
+    expect(deleteButtons.length).toBeGreaterThan(0);
+    const button = deleteButtons[0].closest('button');
+    if (!button) throw new Error('Delete button not found');
+    fireEvent.click(button);
     await waitFor(() => {
       expect(window.confirm).toHaveBeenCalled();
       expect(mockDeleteProblem).toHaveBeenCalled();

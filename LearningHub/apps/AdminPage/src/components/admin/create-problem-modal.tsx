@@ -41,6 +41,7 @@ export function CreateProblemModal({ onClose }: CreateProblemModalProps) {
   const [createdProblem, setCreatedProblem] = useState<{
     id: string;
     title: string;
+    status: 'draft' | 'public';
   } | null>(null);
 
   const availableLanguages = [
@@ -133,7 +134,11 @@ export function CreateProblemModal({ onClose }: CreateProblemModalProps) {
       }),
     onSuccess: (created: { id: string; title: string }) => {
       qc.invalidateQueries({ queryKey: ['admin-problems'] });
-      setCreatedProblem({ id: created.id, title: created.title });
+      setCreatedProblem({
+        id: created.id,
+        title: created.title,
+        status: 'draft',
+      });
     },
     onError: (e: unknown) => setErr(getAxiosMessage(e, 'Tạo đề bài thất bại')),
   });
@@ -163,6 +168,7 @@ export function CreateProblemModal({ onClose }: CreateProblemModalProps) {
       <ManageTestCasesModal
         problemId={createdProblem.id}
         problemTitle={createdProblem.title}
+        problemStatus={createdProblem.status}
         onClose={onClose}
       />
     );

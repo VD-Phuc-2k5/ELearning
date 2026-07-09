@@ -10,8 +10,17 @@ import {
   Cpu,
   AlertCircle,
   CheckCircle2,
+  RefreshCw,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
-import { getProblems, deleteProblem } from '../actions/problem.actions';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import {
+  getProblems,
+  deleteProblem,
+  toggleProblemStatus,
+} from '../actions/problem.actions';
 import { ManageTestCasesModal } from '../../components/admin/manage-test-cases-modal';
 import { EditProblemModal } from '../../components/admin/edit-problem-modal';
 
@@ -34,6 +43,7 @@ export function ProblemsTab() {
   const [activeProblem, setActiveProblem] = useState<{
     id: string;
     title: string;
+    status: 'draft' | 'public';
   } | null>(null);
   const [editingProblem, setEditingProblem] = useState<ProblemItem | null>(
     null,
@@ -50,6 +60,17 @@ export function ProblemsTab() {
     },
   });
 
+  const toggleStatusMut = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: 'draft' | 'public' }) =>
+      toggleProblemStatus(id, status),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin-problems'] });
+    },
+    onError: (e: Error) => {
+      alert(e.message || 'Cập nhật trạng thái thất bại');
+    },
+  });
+
   const handleDelete = (id: string, title: string) => {
     if (
       confirm(
@@ -60,49 +81,33 @@ export function ProblemsTab() {
     }
   };
 
-  const { data, isLoading } = useQuery<{ data: ProblemItem[]; total: number }>({
+  const { data, isLoading, isError, error, refetch } = useQuery<{
+    data: ProblemItem[];
+    total: number;
+  }>({
     queryKey: ['admin-problems'],
     queryFn: getProblems,
   });
 
-  const getDifficultyBadge = (difficulty: string) => {
-    switch (difficulty) {
-      case 'easy':
-        return (
-          <span className="inline-flex items-center bg-emerald-50 text-emerald-700 text-xs font-bold px-2.5 py-0.5 rounded-full">
-            Dễ (Easy)
-          </span>
-        );
-      case 'medium':
-        return (
-          <span className="inline-flex items-center bg-amber-50 text-amber-700 text-xs font-bold px-2.5 py-0.5 rounded-full">
-            Trung bình (Medium)
-          </span>
-        );
-      case 'hard':
-        return (
-          <span className="inline-flex items-center bg-rose-50 text-rose-700 text-xs font-bold px-2.5 py-0.5 rounded-full">
-            Khó (Hard)
-          </span>
-        );
-      default:
-        return null;
-    }
-  };
-
-  const getStatusBadge = (status: string) => {
-    if (status === 'public') {
-      return (
-        <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
-          <CheckCircle2 className="h-3 w-3" /> Công khai
-        </span>
-      );
-    }
-    return (
-      <span className="inline-flex items-center gap-1 bg-amber-50 text-amber-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
-        <AlertCircle className="h-3 w-3" /> Bản nháp
-      </span>
-    );
+  const difficultyConfig = {
+    easy: {
+      bg: 'bg-emerald-50',
+      text: 'text-emerald-700',
+      border: 'border-emerald-100',
+      label: 'Dễ',
+    },
+    medium: {
+      bg: 'bg-amber-50',
+      text: 'text-amber-700',
+      border: 'border-amber-100',
+      label: 'Trung bình',
+    },
+    hard: {
+      bg: 'bg-rose-50',
+      text: 'text-rose-700',
+      border: 'border-rose-100',
+      label: 'Khó',
+    },
   };
 
   if (isLoading)
@@ -114,27 +119,63 @@ export function ProblemsTab() {
         className="block bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden"
       >
         <div className="h-12 bg-slate-50 border-b border-slate-200" />
-        {[0, 1, 2].map((i) => (
-          <div
-            key={i}
-            className="flex items-center justify-between px-6 py-4 border-b border-slate-100"
-          >
-            <div className="space-y-2">
-              <div className="h-4 w-36 rounded bg-slate-200" />
-              <div className="h-3 w-56 rounded bg-slate-100" />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6">
+          {[0, 1, 2].map((i) => (
+            <div
+              key={i}
+              className="h-64 rounded-3xl bg-slate-50/50 p-6 animate-pulse space-y-4 border border-slate-100"
+            >
+              <div className="flex justify-between">
+                <div className="h-5 w-16 rounded-full bg-slate-200" />
+                <div className="h-5 w-12 rounded-full bg-slate-200" />
+              </div>
+              <div className="h-6 w-3/4 rounded bg-slate-200" />
+              <div className="space-y-2">
+                <div className="h-3 w-full rounded bg-slate-100" />
+                <div className="h-3 w-5/6 rounded bg-slate-100" />
+              </div>
+              <div className="flex gap-2 pt-4">
+                <div className="h-8 w-16 rounded-xl bg-slate-200" />
+                <div className="h-8 w-20 rounded-xl bg-slate-200" />
+                <div className="h-8 w-12 rounded-xl bg-slate-200" />
+              </div>
             </div>
-            <div className="h-8 w-24 rounded bg-slate-200" />
-          </div>
-        ))}
+          ))}
+        </div>
       </phantom-ui>
     );
 
   const problems = data?.data ?? [];
 
+  if (isError) {
+    return (
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="text-center py-16 px-4">
+          <AlertCircle className="h-12 w-12 text-rose-400 mx-auto mb-4" />
+          <h3 className="text-slate-800 font-bold text-lg mb-1">
+            Không thể tải danh sách đề bài
+          </h3>
+          <p className="text-slate-500 text-sm max-w-md mx-auto mb-6">
+            {error instanceof Error
+              ? error.message
+              : 'Lỗi không xác định khi tải dữ liệu từ máy chủ.'}
+          </p>
+          <button
+            type="button"
+            onClick={() => refetch()}
+            className="inline-flex items-center gap-2 bg-indigo-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-indigo-700 transition cursor-pointer"
+          >
+            <RefreshCw className="h-4 w-4" /> Thử lại
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        {problems.length === 0 ? (
+      {problems.length === 0 ? (
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
           <div className="text-center py-16 px-4">
             <BookOpen className="h-12 w-12 text-slate-300 mx-auto mb-4" />
             <h3 className="text-slate-800 font-bold text-lg mb-1">
@@ -145,129 +186,167 @@ export function ProblemsTab() {
               hệ thống.
             </p>
           </div>
-        ) : (
-          <table className="w-full text-left border-collapse">
-            <thead className="bg-slate-50 border-b border-slate-200">
-              <tr>
-                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">
-                  Tên đề bài
-                </th>
-                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">
-                  Trạng thái
-                </th>
-                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">
-                  Độ khó
-                </th>
-                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">
-                  Giới hạn (Time / Memory)
-                </th>
-                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">
-                  Ngôn ngữ hỗ trợ
-                </th>
-                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest text-right">
-                  Cấu hình
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {problems.map((p: ProblemItem) => (
-                <tr key={p.id} className="hover:bg-slate-50 transition">
-                  <td className="px-6 py-4">
-                    <div className="font-bold text-slate-900">{p.title}</div>
-                    <div className="text-xs text-slate-500 truncate max-w-[250px] mt-1">
-                      {p.description
-                        ?.replace(/[#*`>\]]/g, '')
-                        .substring(0, 100) || ''}
-                    </div>
-                    <button
-                      onClick={() =>
-                        setExpandedId(expandedId === p.id ? null : p.id)
-                      }
-                      className="mt-1 inline-flex items-center gap-1 text-[10px] font-bold text-indigo-600 hover:text-indigo-800 transition cursor-pointer"
-                    >
-                      <FileText className="h-3 w-3" />
-                      {expandedId === p.id ? 'Ẩn mô tả' : 'Xem mô tả'}
-                    </button>
-                    {expandedId === p.id && (
-                      <div className="mt-3 p-4 bg-slate-50 border border-slate-200 rounded-xl max-h-[300px] overflow-y-auto">
-                        <div className="prose prose-sm max-w-none text-slate-700 whitespace-pre-wrap font-mono text-xs leading-relaxed">
-                          {p.description}
-                        </div>
-                      </div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {problems.map((p: ProblemItem) => {
+            const diff = difficultyConfig[p.difficulty];
+            const isExpanded = expandedId === p.id;
+
+            return (
+              <div
+                key={p.id}
+                className="group bg-white border border-slate-200 hover:border-indigo-200 hover:shadow-lg hover:shadow-indigo-50/50 rounded-3xl p-6 transition flex flex-col"
+              >
+                {/* Header: status + difficulty */}
+                <div className="flex items-center justify-between gap-2 mb-3">
+                  <span
+                    className={`inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${
+                      p.status === 'public'
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                        : 'bg-amber-50 text-amber-700 border-amber-100'
+                    }`}
+                  >
+                    {p.status === 'public' ? (
+                      <>
+                        <CheckCircle2 className="h-3 w-3" /> Công khai
+                      </>
+                    ) : (
+                      <>
+                        <AlertCircle className="h-3 w-3" /> Bản nháp
+                      </>
                     )}
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="space-y-1">
-                      {getStatusBadge(p.status || 'draft')}
-                      {p.testCaseCount !== undefined && (
-                        <div className="text-[10px] text-slate-400 font-medium">
-                          {p.testCaseCount} test case
-                          {p.testCaseCount !== 1 ? 's' : ''}
-                        </div>
-                      )}
+                  </span>
+                  <span
+                    className={`inline-flex items-center text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${diff.bg} ${diff.text} ${diff.border}`}
+                  >
+                    {diff.label}
+                  </span>
+                </div>
+
+                {/* Title */}
+                <h3 className="font-bold text-slate-900 text-lg mb-2 line-clamp-2">
+                  {p.title}
+                </h3>
+
+                {/* Description preview */}
+                <div className="prose prose-sm max-w-none text-slate-500 text-xs line-clamp-3 mb-2 leading-relaxed">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {p.description || ''}
+                  </ReactMarkdown>
+                </div>
+
+                {/* Expand toggle */}
+                <button
+                  onClick={() => setExpandedId(isExpanded ? null : p.id)}
+                  className="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-600 hover:text-indigo-800 transition mb-3 cursor-pointer self-start"
+                >
+                  <FileText className="h-3.5 w-3.5" />
+                  {isExpanded ? 'Ẩn mô tả' : 'Xem mô tả'}
+                  {isExpanded ? (
+                    <ChevronUp className="h-3.5 w-3.5" />
+                  ) : (
+                    <ChevronDown className="h-3.5 w-3.5" />
+                  )}
+                </button>
+
+                {/* Expanded full description */}
+                {isExpanded && (
+                  <div className="mb-4 p-4 bg-slate-50 border border-slate-200 rounded-2xl max-h-[300px] overflow-y-auto">
+                    <div className="prose prose-sm max-w-none text-slate-700">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {p.description || ''}
+                      </ReactMarkdown>
                     </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    {getDifficultyBadge(p.difficulty)}
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-1 text-sm font-medium text-slate-700">
-                      <Clock className="h-3 w-3 text-slate-400" />
-                      {p.timeLimitMs} ms
-                    </div>
-                    <div className="flex items-center gap-1 text-xs text-slate-500 mt-0.5">
-                      <Cpu className="h-3 w-3 text-slate-400" />
-                      {p.memoryLimitMb} MB RAM
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex flex-wrap gap-1">
-                      {p.languages.map((l: string) => (
-                        <span
-                          key={l}
-                          className="inline-flex text-[10px] font-bold bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-md uppercase"
-                        >
-                          {l}
-                        </span>
-                      ))}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <button
-                      onClick={() => setEditingProblem(p)}
-                      className="inline-flex items-center gap-1.5 bg-slate-50 text-slate-700 hover:bg-slate-100 px-3 py-1.5 rounded-xl text-xs font-bold transition border border-slate-200 mr-2 cursor-pointer"
-                      title="Sửa đề bài"
+                  </div>
+                )}
+
+                {/* Stats row */}
+                <div className="flex items-center gap-4 mb-3 text-[11px] font-medium text-slate-500">
+                  <span className="inline-flex items-center gap-1">
+                    <Clock className="h-3.5 w-3.5 text-slate-400" />
+                    {p.timeLimitMs}ms
+                  </span>
+                  <span className="inline-flex items-center gap-1">
+                    <Cpu className="h-3.5 w-3.5 text-slate-400" />
+                    {p.memoryLimitMb}MB
+                  </span>
+                  {p.testCaseCount !== undefined && (
+                    <span className="inline-flex items-center gap-1">
+                      <Terminal className="h-3.5 w-3.5 text-slate-400" />
+                      {p.testCaseCount} test{p.testCaseCount !== 1 ? 's' : ''}
+                    </span>
+                  )}
+                </div>
+
+                {/* Language tags */}
+                <div className="flex flex-wrap gap-1 mb-4">
+                  {p.languages.map((l: string) => (
+                    <span
+                      key={l}
+                      className="inline-flex text-[9px] font-bold bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-md uppercase border border-indigo-100"
                     >
-                      <Edit3 className="h-3.5 w-3.5" /> Sửa
-                    </button>
-                    <button
-                      onClick={() =>
-                        setActiveProblem({ id: p.id, title: p.title })
-                      }
-                      className="inline-flex items-center gap-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 px-3.5 py-1.5 rounded-xl text-xs font-bold transition shadow-sm border border-indigo-100 mr-2 cursor-pointer"
-                      title="Quản lý Test Cases"
-                    >
-                      <Terminal className="h-3.5 w-3.5" /> Test Cases
-                    </button>
-                    <button
-                      onClick={() => handleDelete(p.id, p.title)}
-                      className="inline-flex items-center gap-1.5 bg-rose-50 text-rose-700 hover:bg-rose-100 px-3 py-1.5 rounded-xl text-xs font-bold transition border border-rose-100 cursor-pointer"
-                      title="Xóa đề bài"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" /> Xóa
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+                      {l}
+                    </span>
+                  ))}
+                </div>
+
+                {/* Actions */}
+                <div className="mt-auto pt-4 border-t border-slate-100 flex items-center gap-2">
+                  <button
+                    onClick={() => setEditingProblem(p)}
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 bg-slate-50 text-slate-700 hover:bg-slate-100 px-3 py-2 rounded-xl text-xs font-bold transition border border-slate-200 cursor-pointer"
+                  >
+                    <Edit3 className="h-3.5 w-3.5" /> Sửa
+                  </button>
+                  <button
+                    onClick={() =>
+                      setActiveProblem({
+                        id: p.id,
+                        title: p.title,
+                        status: p.status || 'draft',
+                      })
+                    }
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 bg-indigo-600 text-white hover:bg-indigo-700 px-3 py-2 rounded-xl text-xs font-bold transition cursor-pointer"
+                  >
+                    <Terminal className="h-3.5 w-3.5" /> Tests
+                  </button>
+                  <button
+                    onClick={() => handleDelete(p.id, p.title)}
+                    className="flex-shrink-0 inline-flex items-center justify-center gap-1.5 bg-white text-rose-600 hover:bg-rose-50 px-3 py-2 rounded-xl text-xs font-bold transition border border-rose-200 cursor-pointer"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+                <button
+                  onClick={() =>
+                    toggleStatusMut.mutate({
+                      id: p.id,
+                      status: p.status === 'public' ? 'draft' : 'public',
+                    })
+                  }
+                  disabled={toggleStatusMut.isPending}
+                  className={`mt-2 w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition border cursor-pointer disabled:opacity-60 ${
+                    p.status === 'public'
+                      ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100'
+                      : 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+                  }`}
+                >
+                  {p.status === 'public'
+                    ? 'Đưa về bản nháp'
+                    : 'Công khai đề bài'}
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {activeProblem && (
         <ManageTestCasesModal
           problemId={activeProblem.id}
           problemTitle={activeProblem.title}
+          problemStatus={activeProblem.status}
           onClose={() => {
             setActiveProblem(null);
             qc.invalidateQueries({ queryKey: ['admin-problems'] });

@@ -77,6 +77,20 @@ export async function deleteTestCase(problemId: string, id: string) {
   );
 }
 
+export async function updateTestCase(
+  problemId: string,
+  id: string,
+  data: {
+    input?: string;
+    expectedOutput?: string;
+    isHidden?: boolean;
+    points?: number;
+    orderIndex?: number;
+  },
+) {
+  return unwrap(await getRepo().updateTestCase(problemId, id, data));
+}
+
 export async function updateProblem(
   id: string,
   data: {
@@ -101,6 +115,17 @@ export async function updateProblem(
 
 export async function deleteProblem(id: string) {
   return unwrap(await new DeleteProblemUsecase(getRepo()).execute(id));
+}
+
+export async function toggleProblemStatus(
+  id: string,
+  status: 'draft' | 'public',
+) {
+  return unwrap(
+    await new UpdateProblemUsecase(getRepo()).execute(
+      new UpdateProblemParamsWithId(id, { status }),
+    ),
+  );
 }
 
 export async function importTestCases(problemId: string, formData: FormData) {
