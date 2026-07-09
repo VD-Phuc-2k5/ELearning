@@ -100,6 +100,7 @@ export class DockerSandboxService implements ISandboxService {
           'DOTNET_CLI_TELEMETRY_OPTOUT=1',
           'DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1',
           'DOTNET_CLI_WORKLOAD_UPDATE_NOTIFY_DISABLE=1',
+          'DOTNET_SKIP_WORKLOAD_INTEGRITY_CHECK=true',
         ],
         HostConfig: {
           Memory: memoryLimitMb * 1024 * 1024,
