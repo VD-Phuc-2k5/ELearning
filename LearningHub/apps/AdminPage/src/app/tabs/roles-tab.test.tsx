@@ -68,7 +68,9 @@ function renderTab(openConfirm = jest.fn()) {
 describe('AdminPage — RolesTab (TC098–TC103)', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockGetMatrix.mockResolvedValue(mockMatrix as any);
+    mockGetMatrix.mockResolvedValue(
+      mockMatrix as Awaited<ReturnType<typeof getMatrix>>,
+    );
   });
 
   it('TC098 — renders matrix with role columns and permission rows', async () => {
@@ -82,7 +84,9 @@ describe('AdminPage — RolesTab (TC098–TC103)', () => {
   });
 
   it('TC099 — clicking an unassigned cell calls assignPermissionToRole', async () => {
-    mockAssign.mockResolvedValue({} as any);
+    mockAssign.mockResolvedValue(
+      {} as Awaited<ReturnType<typeof assignPermissionToRole>>,
+    );
     renderTab();
 
     await waitFor(() => screen.getByText('EDITOR'));
@@ -95,13 +99,16 @@ describe('AdminPage — RolesTab (TC098–TC103)', () => {
         !b.className.includes('emerald'),
     );
     expect(unassigned).toBeTruthy();
-    fireEvent.click(unassigned!);
+    if (!unassigned) throw new Error('unassigned button not found');
+    fireEvent.click(unassigned);
 
     await waitFor(() => expect(mockAssign).toHaveBeenCalled());
   });
 
   it('TC100 — clicking an assigned cell calls removePermissionFromRole', async () => {
-    mockRemove.mockResolvedValue({} as any);
+    mockRemove.mockResolvedValue(
+      {} as Awaited<ReturnType<typeof removePermissionFromRole>>,
+    );
     renderTab();
 
     await waitFor(() => screen.getByText('ADMIN'));
@@ -112,13 +119,16 @@ describe('AdminPage — RolesTab (TC098–TC103)', () => {
       b.className.includes('bg-emerald-500'),
     );
     expect(assigned).toBeTruthy();
-    fireEvent.click(assigned!);
+    if (!assigned) throw new Error('assigned button not found');
+    fireEvent.click(assigned);
 
     await waitFor(() => expect(mockRemove).toHaveBeenCalled());
   });
 
   it('TC103 — openConfirm is called when delete role button clicked; deleteRole called on confirm', async () => {
-    mockDeleteRole.mockResolvedValue({} as any);
+    mockDeleteRole.mockResolvedValue(
+      {} as Awaited<ReturnType<typeof deleteRole>>,
+    );
     const openConfirm = jest.fn((_msg: string, cb: () => void) => cb());
     renderTab(openConfirm);
 
@@ -130,7 +140,8 @@ describe('AdminPage — RolesTab (TC098–TC103)', () => {
     // Delete role buttons have hover:text-rose-600; edit buttons have hover:text-indigo-600
     const deleteBtn = allButtons.find((b) => b.className.includes('rose'));
     expect(deleteBtn).toBeTruthy();
-    fireEvent.click(deleteBtn!);
+    if (!deleteBtn) throw new Error('delete button not found');
+    fireEvent.click(deleteBtn);
 
     await waitFor(() => expect(openConfirm).toHaveBeenCalled());
   });

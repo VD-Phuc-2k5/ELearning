@@ -44,8 +44,12 @@ function renderTab() {
 describe('AdminPage — UserAdminTab (TC113–TC115)', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockSearchUsers.mockResolvedValue([activeUser] as any);
-    mockToggleUserLock.mockResolvedValue({} as any);
+    mockSearchUsers.mockResolvedValue([activeUser] as Awaited<
+      ReturnType<typeof searchUsers>
+    >);
+    mockToggleUserLock.mockResolvedValue(
+      {} as Awaited<ReturnType<typeof toggleUserLock>>,
+    );
   });
 
   it('TC113 — typing email and clicking search calls searchUsers with that email', async () => {
@@ -63,7 +67,9 @@ describe('AdminPage — UserAdminTab (TC113–TC115)', () => {
   });
 
   it('TC114 — active user shows Khóa button; clicking calls toggleUserLock with false', async () => {
-    mockSearchUsers.mockResolvedValue([activeUser] as any);
+    mockSearchUsers.mockResolvedValue([activeUser] as Awaited<
+      ReturnType<typeof searchUsers>
+    >);
     renderTab();
     await waitFor(() => screen.getByText('jdoe'));
     fireEvent.click(screen.getByText('Khóa'));
@@ -73,7 +79,9 @@ describe('AdminPage — UserAdminTab (TC113–TC115)', () => {
   });
 
   it('TC115 — locked user shows Mở khóa button; clicking calls toggleUserLock with true', async () => {
-    mockSearchUsers.mockResolvedValue([lockedUser] as any);
+    mockSearchUsers.mockResolvedValue([lockedUser] as Awaited<
+      ReturnType<typeof searchUsers>
+    >);
     renderTab();
     await waitFor(() => screen.getByText('locked'));
     fireEvent.click(screen.getByText('Mở khóa'));

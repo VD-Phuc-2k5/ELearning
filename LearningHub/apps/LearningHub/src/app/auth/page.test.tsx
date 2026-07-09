@@ -21,7 +21,7 @@ jest.mock('../../components/ui', () => ({
   ),
   // ponytail: type="email" in JSDOM blocks native form validation before zodResolver runs;
   // convert to "text" so zod validates instead of the browser.
-  Input: ({ error, label, type, ...props }: any) => (
+  Input: ({ error, label: _label, type, ...props }: any) => (
     <>
       <input {...props} type={type === 'email' ? 'text' : type} />
       {error && <span>{error}</span>}

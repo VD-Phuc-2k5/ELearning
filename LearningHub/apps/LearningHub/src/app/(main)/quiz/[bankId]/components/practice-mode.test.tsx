@@ -160,8 +160,10 @@ describe('LearningHub — PracticeMode (TC141–TC145)', () => {
 
   it('TC145b — Previous button is disabled on first question', () => {
     renderPractice();
-    const prevBtn = screen.getByText('Previous').closest('button')!;
-    expect((prevBtn as HTMLButtonElement).disabled).toBe(true);
+    const prevBtn = screen
+      .getByText('Previous')
+      .closest('button') as HTMLButtonElement;
+    expect(prevBtn.disabled).toBe(true);
   });
 
   it('TC145c — clicking Exit calls onExit', () => {

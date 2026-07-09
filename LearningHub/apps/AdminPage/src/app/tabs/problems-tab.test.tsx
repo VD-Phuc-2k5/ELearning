@@ -12,7 +12,13 @@ jest.mock('../actions/problem.actions', () => ({
 }));
 
 jest.mock('../../components/admin/manage-test-cases-modal', () => ({
-  ManageTestCasesModal: ({ problemTitle, onClose }: any) => (
+  ManageTestCasesModal: ({
+    problemTitle,
+    onClose,
+  }: {
+    problemTitle: string;
+    onClose: () => void;
+  }) => (
     <div data-testid="test-cases-modal">
       <p>{problemTitle}</p>
       <button onClick={onClose}>Close Modal</button>
@@ -21,7 +27,13 @@ jest.mock('../../components/admin/manage-test-cases-modal', () => ({
 }));
 
 jest.mock('../../components/admin/edit-problem-modal', () => ({
-  EditProblemModal: ({ problem, onClose }: any) => (
+  EditProblemModal: ({
+    problem,
+    onClose,
+  }: {
+    problem: { title: string };
+    onClose: () => void;
+  }) => (
     <div data-testid="edit-problem-modal">
       <p>{problem.title}</p>
       <button onClick={onClose}>Close Edit</button>
@@ -82,7 +94,9 @@ function renderTab() {
 describe('AdminPage — ProblemsTab', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockGetProblems.mockResolvedValue(mockProblems as any);
+    mockGetProblems.mockResolvedValue(
+      mockProblems as Awaited<ReturnType<typeof getProblems>>,
+    );
   });
 
   it('renders problem titles', async () => {
@@ -142,7 +156,9 @@ describe('AdminPage — ProblemsTab', () => {
   });
 
   it('clicking Xóa triggers confirm dialog', async () => {
-    mockDeleteProblem.mockResolvedValue({} as any);
+    mockDeleteProblem.mockResolvedValue(
+      {} as Awaited<ReturnType<typeof deleteProblem>>,
+    );
     renderTab();
     await waitFor(() => screen.getAllByText('Xóa'));
     const deleteButtons = screen.getAllByText('Xóa');
@@ -163,7 +179,9 @@ describe('AdminPage — ProblemsTab', () => {
   });
 
   it('renders empty state when no problems', async () => {
-    mockGetProblems.mockResolvedValue({ data: [], total: 0 } as any);
+    mockGetProblems.mockResolvedValue({ data: [], total: 0 } as Awaited<
+      ReturnType<typeof getProblems>
+    >);
     renderTab();
     await waitFor(() => {
       expect(screen.getByText('Chưa có đề bài lập trình nào')).toBeTruthy();

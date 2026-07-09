@@ -63,7 +63,9 @@ function renderTab() {
 describe('AdminPage — QuizReviewTab (TC104–TC109)', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockGetPendingBanks.mockResolvedValue(mockBanks as any);
+    mockGetPendingBanks.mockResolvedValue(
+      mockBanks as Awaited<ReturnType<typeof getPendingBanks>>,
+    );
     mockGetBankQuestions.mockResolvedValue([]);
   });
 
@@ -76,7 +78,9 @@ describe('AdminPage — QuizReviewTab (TC104–TC109)', () => {
   });
 
   it('TC105 — clicking Duyệt calls approveBank with bankId', async () => {
-    mockApproveBank.mockResolvedValue({} as any);
+    mockApproveBank.mockResolvedValue(
+      {} as Awaited<ReturnType<typeof approveBank>>,
+    );
     renderTab();
     await waitFor(() => screen.getByText('Duyệt'));
     fireEvent.click(screen.getByText('Duyệt'));
@@ -84,7 +88,9 @@ describe('AdminPage — QuizReviewTab (TC104–TC109)', () => {
   });
 
   it('TC106 — reject without reason calls rejectBank with undefined', async () => {
-    mockRejectBank.mockResolvedValue({} as any);
+    mockRejectBank.mockResolvedValue(
+      {} as Awaited<ReturnType<typeof rejectBank>>,
+    );
     renderTab();
     await waitFor(() => screen.getByText('Từ chối'));
     fireEvent.click(screen.getByText('Từ chối'));
@@ -96,7 +102,9 @@ describe('AdminPage — QuizReviewTab (TC104–TC109)', () => {
   });
 
   it('TC107 — reject with reason passes reason string to rejectBank', async () => {
-    mockRejectBank.mockResolvedValue({} as any);
+    mockRejectBank.mockResolvedValue(
+      {} as Awaited<ReturnType<typeof rejectBank>>,
+    );
     renderTab();
     await waitFor(() => screen.getByText('Từ chối'));
     fireEvent.click(screen.getByText('Từ chối'));
@@ -114,13 +122,16 @@ describe('AdminPage — QuizReviewTab (TC104–TC109)', () => {
   });
 
   it('TC108 — clicking expand button triggers getBankQuestions', async () => {
-    mockGetBankQuestions.mockResolvedValue([] as any);
+    mockGetBankQuestions.mockResolvedValue(
+      [] as Awaited<ReturnType<typeof getBankQuestions>>,
+    );
     renderTab();
     await waitFor(() => screen.getByText('JavaScript Basics'));
     const buttons = screen.getAllByRole('button');
     const toggleBtn = buttons.find((b) => b.className.includes('bg-slate-100'));
     expect(toggleBtn).toBeTruthy();
-    fireEvent.click(toggleBtn!);
+    if (!toggleBtn) throw new Error('toggle button not found');
+    fireEvent.click(toggleBtn);
     await waitFor(() =>
       expect(mockGetBankQuestions).toHaveBeenCalledWith('bank-1'),
     );

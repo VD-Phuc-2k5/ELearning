@@ -155,8 +155,10 @@ describe('LearningHub — ExamMode (TC144–TC145)', () => {
     fireEvent.click(screen.getByText('Submit'));
 
     await waitFor(() => {
-      const submitBtn = screen.getByText('Submit').closest('button')!;
-      expect((submitBtn as HTMLButtonElement).disabled).toBe(true);
+      const submitBtn = screen
+        .getByText('Submit')
+        .closest('button') as HTMLButtonElement;
+      expect(submitBtn.disabled).toBe(true);
     });
     jest.restoreAllMocks();
   });

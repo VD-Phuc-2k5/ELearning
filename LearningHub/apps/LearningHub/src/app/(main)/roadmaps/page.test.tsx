@@ -25,12 +25,12 @@ jest.mock('next/link', () => {
 });
 
 jest.mock('../../../components/ui', () => ({
-  Button: ({ children, isLoading, icon, ...props }: any) => (
+  Button: ({ children, isLoading, icon: _icon, ...props }: any) => (
     <button {...props} disabled={isLoading || props.disabled}>
       {children}
     </button>
   ),
-  Input: ({ error, label, ...props }: any) => (
+  Input: ({ error, label: _label, ...props }: any) => (
     <>
       <input {...props} />
       {error && <span>{error}</span>}

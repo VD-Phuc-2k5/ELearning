@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import 'reflect-metadata';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ForumNotificationController } from './forum-notification.controller';

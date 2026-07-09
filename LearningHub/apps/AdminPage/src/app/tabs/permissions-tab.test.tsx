@@ -56,7 +56,9 @@ function renderTab(openConfirm = jest.fn()) {
 describe('AdminPage — PermissionsTab', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockGetPermissions.mockResolvedValue(mockPermissions as any);
+    mockGetPermissions.mockResolvedValue(
+      mockPermissions as Awaited<ReturnType<typeof getPermissions>>,
+    );
   });
 
   it('renders permission codes', async () => {
@@ -103,7 +105,8 @@ describe('AdminPage — PermissionsTab', () => {
     const delBtns = screen.getAllByRole('button');
     const delBtn = delBtns.find((b) => b.className.includes('top-4'));
     expect(delBtn).toBeTruthy();
-    fireEvent.click(delBtn!);
+    if (!delBtn) throw new Error('delete button not found');
+    fireEvent.click(delBtn);
 
     await waitFor(() => {
       expect(openConfirm).toHaveBeenCalled();
@@ -111,7 +114,9 @@ describe('AdminPage — PermissionsTab', () => {
   });
 
   it('deletePermission is called after confirm', async () => {
-    mockDeletePermission.mockResolvedValue({} as any);
+    mockDeletePermission.mockResolvedValue(
+      {} as Awaited<ReturnType<typeof deletePermission>>,
+    );
     const openConfirm = jest.fn((_msg: string, cb: () => void) => cb());
     renderTab(openConfirm);
     await waitFor(() => screen.getByText('users:get'));
@@ -119,7 +124,8 @@ describe('AdminPage — PermissionsTab', () => {
     const delBtns = screen.getAllByRole('button');
     const delBtn = delBtns.find((b) => b.className.includes('top-4'));
     expect(delBtn).toBeTruthy();
-    fireEvent.click(delBtn!);
+    if (!delBtn) throw new Error('delete button not found');
+    fireEvent.click(delBtn);
 
     await waitFor(() => {
       expect(mockDeletePermission).toHaveBeenCalled();

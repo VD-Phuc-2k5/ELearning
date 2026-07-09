@@ -38,7 +38,7 @@ jest.mock('../../lib/admin-api', () => ({
 }));
 
 jest.mock('../../components/ui/tiptap-viewer', () => ({
-  TiptapViewer: ({ content }: any) => (
+  TiptapViewer: ({ content }: { content: Record<string, unknown> }) => (
     <div data-testid="tiptap-viewer">{JSON.stringify(content)}</div>
   ),
 }));
@@ -111,12 +111,24 @@ function renderTab() {
 describe('AdminPage — ForumModerationTab', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockGetAdminReports.mockResolvedValue(mockReports as any);
-    mockAdminResolveReport.mockResolvedValue({} as any);
-    mockAdminDismissReport.mockResolvedValue({} as any);
-    mockAdminHidePost.mockResolvedValue({} as any);
-    mockAdminRestorePost.mockResolvedValue({} as any);
-    mockGetPostDetail.mockResolvedValue({} as any);
+    mockGetAdminReports.mockResolvedValue(
+      mockReports as Awaited<ReturnType<typeof getAdminReports>>,
+    );
+    mockAdminResolveReport.mockResolvedValue(
+      {} as Awaited<ReturnType<typeof adminResolveReport>>,
+    );
+    mockAdminDismissReport.mockResolvedValue(
+      {} as Awaited<ReturnType<typeof adminDismissReport>>,
+    );
+    mockAdminHidePost.mockResolvedValue(
+      {} as Awaited<ReturnType<typeof adminHidePost>>,
+    );
+    mockAdminRestorePost.mockResolvedValue(
+      {} as Awaited<ReturnType<typeof adminRestorePost>>,
+    );
+    mockGetPostDetail.mockResolvedValue(
+      {} as Awaited<ReturnType<typeof getPostDetail>>,
+    );
   });
 
   it('renders heading with report count', async () => {
@@ -185,7 +197,9 @@ describe('AdminPage — ForumModerationTab', () => {
   });
 
   it('renders empty state message when no reports', async () => {
-    mockGetAdminReports.mockResolvedValue({ data: [] } as any);
+    mockGetAdminReports.mockResolvedValue({ data: [] } as Awaited<
+      ReturnType<typeof getAdminReports>
+    >);
     renderTab();
     await waitFor(() => {
       expect(screen.getByText('Không có báo cáo nào.')).toBeTruthy();

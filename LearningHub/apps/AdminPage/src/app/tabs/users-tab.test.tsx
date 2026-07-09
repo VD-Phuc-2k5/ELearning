@@ -50,7 +50,9 @@ function renderTab() {
 describe('AdminPage — UsersTab (TC110, TC112)', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockGetUsers.mockResolvedValue(mockUsers as any);
+    mockGetUsers.mockResolvedValue(
+      mockUsers as Awaited<ReturnType<typeof getUsers>>,
+    );
   });
 
   it('TC110 — renders admin users table with username and email', async () => {
@@ -62,7 +64,9 @@ describe('AdminPage — UsersTab (TC110, TC112)', () => {
   });
 
   it('TC112 — clicking delete triggers openConfirm then calls deleteAdmin', async () => {
-    mockDeleteAdmin.mockResolvedValue({} as any);
+    mockDeleteAdmin.mockResolvedValue(
+      {} as Awaited<ReturnType<typeof deleteAdmin>>,
+    );
     const { openConfirm } = renderTab();
     await waitFor(() => screen.getByText('admin1'));
 
