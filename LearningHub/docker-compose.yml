@@ -202,6 +202,8 @@ services:
     volumes:
       - jenkins_data:/var/jenkins_home
       - /var/run/docker.sock:/var/run/docker.sock
+    group_add:
+      - '${DOCKER_GID:-998}'
 
   grafana:
     image: grafana/grafana:latest
