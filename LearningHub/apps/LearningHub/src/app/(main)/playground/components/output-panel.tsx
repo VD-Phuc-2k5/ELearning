@@ -2,7 +2,6 @@ import { Terminal, Clock, AlertCircle } from 'lucide-react';
 import { StatusBadge } from './status-badge';
 
 interface OutputPanelProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   mutation: any;
 }
 

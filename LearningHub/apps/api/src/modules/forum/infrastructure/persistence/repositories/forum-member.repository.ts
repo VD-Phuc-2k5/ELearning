@@ -85,9 +85,9 @@ export class ForumMemberRepository implements IForumMemberRepository {
       .orderBy('u.username', 'ASC')
       .limit(limit)
       .getRawMany();
-    return rows.map((row: any) => ({
-      userId: row.m_user_id ?? row.userId,
-      username: row.u_username ?? row.username,
+    return rows.map((row: Record<string, unknown>) => ({
+      userId: (row.m_user_id ?? row.userId) as string,
+      username: (row.u_username ?? row.username) as string,
       avatarUrl: (row.u_avatarUrl ?? row.avatarUrl) as string | null,
     }));
   }

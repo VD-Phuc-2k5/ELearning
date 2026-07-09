@@ -25,8 +25,9 @@ export async function adminLoginAction(
       accessToken: result.accessToken,
       refreshToken: result.refreshToken,
     };
-  } catch (e: any) {
-    return { success: false, error: e?.message || 'Login failed' };
+  } catch (e: unknown) {
+    const err = e as Error;
+    return { success: false, error: err?.message || 'Login failed' };
   }
 }
 
@@ -41,8 +42,9 @@ export async function refreshAdminTokenAction(): Promise<
       accessToken: result.accessToken,
       refreshToken: result.refreshToken,
     };
-  } catch (e: any) {
-    return { success: false, error: e?.message || 'Refresh failed' };
+  } catch (e: unknown) {
+    const err = e as Error;
+    return { success: false, error: err?.message || 'Refresh failed' };
   }
 }
 

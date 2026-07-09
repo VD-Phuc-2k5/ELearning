@@ -32,7 +32,7 @@ export class JoinForumUseCase {
   async execute(
     forumId: string,
     userId: string,
-    message?: string,
+    _message?: string,
   ): Promise<JoinForumResult> {
     const forum = await this.forumRepo.findById(forumId);
     if (!forum) throw new NotFoundException('Forum not found');

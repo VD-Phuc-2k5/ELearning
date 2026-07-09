@@ -33,14 +33,12 @@ const REASON_LABELS: Record<string, string> = {
 
 function ReportItem({
   report,
-  forumId,
   onResolve,
   onDismiss,
   resolving,
   dismissing,
 }: {
   report: ForumReport;
-  forumId: string;
   onResolve: (reportId: string, note: string) => void;
   onDismiss: (reportId: string) => void;
   resolving: boolean;
@@ -135,7 +133,6 @@ function ReportItem({
 function ReportGroup({
   groupKey,
   reports,
-  forumId,
   onResolve,
   onDismiss,
   resolving,
@@ -143,7 +140,6 @@ function ReportGroup({
 }: {
   groupKey: string;
   reports: ForumReport[];
-  forumId: string;
   onResolve: (reportId: string, note: string) => void;
   onDismiss: (reportId: string) => void;
   resolving: boolean;
@@ -185,7 +181,6 @@ function ReportGroup({
             <ReportItem
               key={r.id}
               report={r}
-              forumId={forumId}
               onResolve={onResolve}
               onDismiss={onDismiss}
               resolving={resolving}
@@ -238,7 +233,8 @@ export function ForumReportsPanel({
   for (const r of reports) {
     const key = `${r.targetType}:${r.targetId}`;
     if (!groups.has(key)) groups.set(key, []);
-    groups.get(key)!.push(r);
+    const group = groups.get(key);
+    if (group) group.push(r);
   }
   const sortedGroups = Array.from(groups.entries()).sort(
     ([, a], [, b]) => b.length - a.length,
@@ -288,7 +284,6 @@ export function ForumReportsPanel({
               key={key}
               groupKey={key}
               reports={groupReports}
-              forumId={forumId}
               onResolve={(reportId, note) =>
                 resolveMutation.mutate({ reportId, note })
               }

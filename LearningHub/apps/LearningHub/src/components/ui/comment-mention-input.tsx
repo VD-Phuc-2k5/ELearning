@@ -154,7 +154,7 @@ export function CommentMentionInput({
           }
         });
     },
-    [forumId],
+    [forumId, currentUserId],
   );
 
   const detectMention = useCallback(() => {
@@ -272,7 +272,7 @@ export function CommentMentionInput({
       editor.textContent = initialValue;
       setIsEmpty(false);
     }
-  }, []);
+  }, [initialValue]);
 
   useEffect(() => {
     return () => abortRef.current?.abort();

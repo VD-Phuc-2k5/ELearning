@@ -241,7 +241,10 @@ export function ForumModerationTab() {
     if (!groups.has(key)) {
       groups.set(key, { post: r, reports: [] });
     }
-    groups.get(key)!.reports.push(r);
+    const group = groups.get(key);
+    if (group) {
+      group.reports.push(r);
+    }
   }
 
   const toggleGroup = (key: string) => {

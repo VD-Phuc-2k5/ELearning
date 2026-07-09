@@ -113,7 +113,6 @@ export function useTiptapEditor({
   }, []);
 
   const insertImageAtSelection = useCallback(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (file: File, view: { state: any; dispatch: (tr: any) => void }) => {
       if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
         showToast('Only PNG, JPEG, GIF, or WEBP images are supported.');
@@ -206,7 +205,6 @@ export function useTiptapEditor({
       const json = editor.getJSON();
       onChange(json as Record<string, unknown>);
       const currentBlobUrls = new Set<string>();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       editor.state.doc.descendants((node: any) => {
         if (
           node.type.name === 'image' &&

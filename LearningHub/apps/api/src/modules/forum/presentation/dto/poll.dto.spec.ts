@@ -21,6 +21,7 @@ describe('PollDto validation', () => {
   });
 
   it('should fail when question is missing', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { question: _question, ...rest } = valid;
     const errors = await getErrors(rest);
     expect(errors.length).toBeGreaterThan(0);

@@ -57,9 +57,11 @@ export class SetRoadmapItemsUseCase {
       const banks = await Promise.all(
         bankIds.map((id) => this.questionBankRepo.findById(id)),
       );
-      const approvedIds = new Set(
-        banks.filter((b) => b?.statusId === 'approved').map((b) => b!.id),
+      const approvedBanks = banks.filter(
+        (b): b is NonNullable<typeof b> =>
+          b !== null && b.statusId === 'approved',
       );
+      const approvedIds = new Set(approvedBanks.map((b) => b.id));
       const nonApproved = bankIds.filter((id) => !approvedIds.has(id));
       if (nonApproved.length > 0) {
         throw new BadRequestException(

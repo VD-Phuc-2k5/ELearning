@@ -72,9 +72,9 @@ export class ForumController {
     @Query('search') search?: string,
     @Request() req?: AuthReq,
   ) {
-    const authHeader = (req as any)?.headers?.authorization as
-      | string
-      | undefined;
+    const authHeader = (
+      req as unknown as { headers?: { authorization?: string } }
+    )?.headers?.authorization as string | undefined;
     return this.getForumListUseCase.execute(
       {
         page,
@@ -90,9 +90,9 @@ export class ForumController {
   @Get(':slug')
   @ApiOperation({ summary: 'Chi tiết diễn đàn theo slug' })
   detail(@Param('slug') slug: string, @Request() req: AuthReq) {
-    const authHeader = (req as any).headers?.authorization as
-      | string
-      | undefined;
+    const authHeader = (
+      req as unknown as { headers?: { authorization?: string } }
+    ).headers?.authorization as string | undefined;
     return this.getForumDetailUseCase.execute(slug, req.user?.id, authHeader);
   }
 

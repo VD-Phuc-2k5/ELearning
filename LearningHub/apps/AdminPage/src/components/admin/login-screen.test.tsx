@@ -106,8 +106,10 @@ describe('AdminPage — LoginScreen (TC074–TC081)', () => {
     const buttons = screen.getAllByRole('button');
     const toggleButton = buttons.find(
       (b) => (b as HTMLButtonElement).type === 'button',
-    )!;
-    fireEvent.click(toggleButton);
+    );
+    if (toggleButton) {
+      fireEvent.click(toggleButton);
+    }
     expect(pwInput.type).toBe('text');
 
     fireEvent.click(toggleButton);
