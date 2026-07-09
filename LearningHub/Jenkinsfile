@@ -39,21 +39,21 @@ pipeline {
     stage('Setup Test DB') {
       steps {
         sh '''
-          docker rm -f test-postgres test-redis 2>/dev/null || true
-          docker run -d --name test-postgres \
+          sudo docker rm -f test-postgres test-redis 2>/dev/null || true
+          sudo docker run -d --name test-postgres \
             -e POSTGRES_USER="${POSTGRES_USER}" \
             -e POSTGRES_PASSWORD="${POSTGRES_PASSWORD}" \
             -e POSTGRES_DB="${POSTGRES_DB}" \
             -p "${POSTGRES_PORT}:5432" \
             postgres:17
-          docker run -d --name test-redis \
+          sudo docker run -d --name test-redis \
             -p "${REDIS_PORT}:6379" \
             redis:8-alpine
           for i in $(seq 1 30); do
-            if docker exec test-postgres pg_isready -U "${POSTGRES_USER}" -d "${POSTGRES_DB}"; then break; fi
+            if sudo docker exec test-postgres pg_isready -U "${POSTGRES_USER}" -d "${POSTGRES_DB}"; then break; fi
             echo "Waiting for PostgreSQL..." && sleep 2
           done
-          docker exec test-postgres psql -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" -c "CREATE DATABASE ${POSTGRES_TEST_DB}" 2>/dev/null || true
+          sudo docker exec test-postgres psql -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" -c "CREATE DATABASE ${POSTGRES_TEST_DB}" 2>/dev/null || true
         '''
       }
     }
@@ -87,10 +87,10 @@ pipeline {
       steps {
         dir(PROJECT_DIR) {
           sh """
-            docker build -f apps/api/Dockerfile         -t learninghub-api:latest .
-            docker build -f apps/LearningHub/Dockerfile -t learninghub-web:latest .
-            docker build -f apps/AdminPage/Dockerfile   -t learninghub-admin:latest .
-            docker compose -f ${COMPOSE_FILE} up -d --scale api=3
+            sudo docker build -f apps/api/Dockerfile         -t learninghub-api:latest .
+            sudo docker build -f apps/LearningHub/Dockerfile -t learninghub-web:latest .
+            sudo docker build -f apps/AdminPage/Dockerfile   -t learninghub-admin:latest .
+            sudo docker compose -f ${COMPOSE_FILE} up -d --scale api=3
           """
         }
       }
@@ -108,7 +108,7 @@ pipeline {
 
   post {
     always {
-      sh 'docker rm -f test-postgres test-redis 2>/dev/null || true'
+      sh 'sudo docker rm -f test-postgres test-redis 2>/dev/null || true'
     }
     failure { echo 'Pipeline FAILED' }
     success { echo 'Pipeline PASSED' }
