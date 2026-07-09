@@ -73,10 +73,36 @@ export class JudgeService {
     // 1. Update status to 'running'
     await this.submissionRepo.updateStatus(submissionId, 'running');
 
-    const problem = await this.problemRepo.findById(submission.problemId);
+    try {
+      await this.runJudge(
+        submissionId,
+        submission.problemId,
+        submission.sourceCode,
+        submission.language,
+      );
+    } catch (err) {
+      this.logger.error(
+        `Unexpected error during judge for submission ${submissionId}`,
+        (err as Error).stack,
+      );
+      await this.submissionRepo.updateStatus(
+        submissionId,
+        'runtime_error',
+        `Internal judge error: ${(err as Error).message}`,
+      );
+    }
+  }
+
+  private async runJudge(
+    submissionId: string,
+    problemId: string,
+    sourceCode: string,
+    language: string,
+  ): Promise<void> {
+    const problem = await this.problemRepo.findById(problemId);
     if (!problem) {
       this.logger.error(
-        `Problem not found: ${submission.problemId} for submission ${submissionId}`,
+        `Problem not found: ${problemId} for submission ${submissionId}`,
       );
       await this.submissionRepo.updateStatus(
         submissionId,
@@ -86,13 +112,9 @@ export class JudgeService {
       return;
     }
 
-    const testCases = await this.testCaseRepo.findByProblemId(
-      submission.problemId,
-    );
+    const testCases = await this.testCaseRepo.findByProblemId(problemId);
     if (testCases.length === 0) {
-      this.logger.error(
-        `No test cases found for problem: ${submission.problemId}`,
-      );
+      this.logger.error(`No test cases found for problem: ${problemId}`);
       await this.submissionRepo.updateStatus(
         submissionId,
         'compilation_error',
@@ -119,21 +141,18 @@ export class JudgeService {
       const tc = testCases[i];
 
       // Get the driver wrapper code if configured
-      let finalCode = submission.sourceCode;
-      const wrapperCode = problem.wrappers?.[submission.language];
+      let finalCode = sourceCode;
+      const wrapperCode = problem.wrappers?.[language];
       if (wrapperCode) {
         if (wrapperCode.includes('{{STUDENT_CODE}}')) {
-          finalCode = wrapperCode.replace(
-            '{{STUDENT_CODE}}',
-            submission.sourceCode,
-          );
+          finalCode = wrapperCode.replace('{{STUDENT_CODE}}', sourceCode);
         } else {
-          finalCode = `${submission.sourceCode}\n\n${wrapperCode}`;
+          finalCode = `${sourceCode}\n\n${wrapperCode}`;
         }
       }
 
       const execution = await this.sandboxService.execute({
-        language: submission.language,
+        language,
         sourceCode: finalCode,
         stdin: tc.input,
         timeoutMs: problem.timeLimitMs,
@@ -155,10 +174,7 @@ export class JudgeService {
         status = 'memory_limit_exceeded';
       } else if (execution.status === 'error') {
         // If it's a compiler language and compilation failed (first test case)
-        if (
-          i === 0 &&
-          this.isCompileError(submission.language, execution.stderr)
-        ) {
+        if (i === 0 && this.isCompileError(language, execution.stderr)) {
           compileErrorMessage = execution.stderr;
           finalVerdict = 'compilation_error';
           break; // Stop execution on compilation error

@@ -6,6 +6,7 @@ import {
   CreateProblemParams,
   UpdateProblemParams,
   CreateTestCaseParams,
+  UpdateTestCaseParams,
   SubmitCodeParams,
   SampleTestCase,
 } from '../entities/entities';
@@ -41,6 +42,11 @@ export interface IProblemRepository {
   createTestCase(
     problemId: string,
     params: CreateTestCaseParams,
+  ): Promise<Either<Failure, TestCase>>;
+  updateTestCase(
+    problemId: string,
+    id: string,
+    params: UpdateTestCaseParams,
   ): Promise<Either<Failure, TestCase>>;
   deleteTestCase(problemId: string, id: string): Promise<Either<Failure, void>>;
   importTestCases(

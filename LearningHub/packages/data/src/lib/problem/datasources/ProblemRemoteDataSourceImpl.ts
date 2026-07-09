@@ -1,4 +1,5 @@
 import axios from 'axios';
+import FormData from 'form-data';
 import { handleAxiosError } from '@learning-hub/core';
 import { getServerCookies } from '../../serverCookies';
 import {
@@ -8,6 +9,7 @@ import {
   CreateProblemParams,
   UpdateProblemParams,
   CreateTestCaseParams,
+  UpdateTestCaseParams,
   SubmitCodeParams,
   ProblemList,
   SampleTestCase,
@@ -116,6 +118,22 @@ export class ProblemRemoteDataSourceImpl implements IProblemRemoteDataSource {
     }
   }
 
+  async updateTestCase(
+    problemId: string,
+    id: string,
+    params: UpdateTestCaseParams,
+  ): Promise<TestCase> {
+    try {
+      const res = await this.api.patch(
+        `/problems/${problemId}/test-cases/${id}`,
+        params,
+      );
+      return res.data;
+    } catch (e) {
+      return handleAxiosError(e);
+    }
+  }
+
   async deleteTestCase(problemId: string, id: string): Promise<void> {
     try {
       await this.api.delete(`/problems/${problemId}/test-cases/${id}`);
@@ -131,10 +149,11 @@ export class ProblemRemoteDataSourceImpl implements IProblemRemoteDataSource {
   ): Promise<any> {
     try {
       const form = new FormData();
-      form.append('file', new Blob([file as any]), fileName);
+      form.append('file', file, { filename: fileName });
       const res = await this.api.post(
         `/problems/${problemId}/test-cases/import-excel`,
         form,
+        { headers: form.getHeaders() },
       );
       return res.data;
     } catch (e) {

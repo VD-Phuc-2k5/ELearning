@@ -4,6 +4,7 @@ import {
   ForbiddenException,
   NotFoundException,
   BadRequestException,
+  Logger,
 } from '@nestjs/common';
 import * as ExcelJS from 'exceljs';
 import {
@@ -19,6 +20,8 @@ import { IUserRoleRepository } from '../../../auth/domain/repositories/i-user-ro
 
 @Injectable()
 export class ManageTestCasesUseCase {
+  private readonly logger = new Logger(ManageTestCasesUseCase.name);
+
   constructor(
     @Inject(TEST_CASE_REPOSITORY)
     private readonly testCaseRepo: ITestCaseRepository,
@@ -54,11 +57,6 @@ export class ManageTestCasesUseCase {
       problemId,
     });
 
-    const testCaseCount = await this.problemRepo.countByProblemId(problemId);
-    if (testCaseCount === 1 && problem.status === 'draft') {
-      await this.problemRepo.update(problemId, { status: 'public' });
-    }
-
     return result;
   }
 
@@ -91,13 +89,29 @@ export class ManageTestCasesUseCase {
     const testCase = await this.testCaseRepo.findById(id);
     if (!testCase) throw new NotFoundException('TestCase not found');
 
-    const problemId = testCase.problemId;
     await this.testCaseRepo.delete(id);
+  }
 
-    const remainingCount = await this.problemRepo.countByProblemId(problemId);
-    if (remainingCount === 0) {
-      await this.problemRepo.update(problemId, { status: 'draft' });
-    }
+  async updateTestCase(
+    userId: string,
+    problemId: string,
+    id: string,
+    params: {
+      input?: string;
+      expectedOutput?: string;
+      isHidden?: boolean;
+      points?: number;
+      orderIndex?: number;
+    },
+  ): Promise<TestCaseDomain> {
+    await this.checkAdmin(userId);
+    const problem = await this.problemRepo.findById(problemId);
+    if (!problem) throw new NotFoundException('Coding problem not found');
+
+    const testCase = await this.testCaseRepo.findById(id);
+    if (!testCase) throw new NotFoundException('TestCase not found');
+
+    return this.testCaseRepo.update(id, params);
   }
 
   async importTestCasesExcel(
@@ -112,7 +126,11 @@ export class ManageTestCasesUseCase {
     const workbook = new ExcelJS.Workbook();
     try {
       await workbook.xlsx.load(fileBuffer as unknown as ArrayBuffer);
-    } catch {
+    } catch (err) {
+      this.logger.error(
+        'Failed to parse Excel file for test case import',
+        (err as Error).stack,
+      );
       throw new BadRequestException(
         'Không thể đọc file Excel. File có thể bị hỏng hoặc sai định dạng.',
       );
@@ -281,10 +299,6 @@ export class ManageTestCasesUseCase {
         isHidden: tc.isHidden,
         orderIndex: tc.orderIndex,
       });
-    }
-
-    if (problem.status === 'draft') {
-      await this.problemRepo.update(problemId, { status: 'public' });
     }
 
     return {

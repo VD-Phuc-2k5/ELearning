@@ -36,6 +36,7 @@ import { CreateForumTables1784000000001 } from './migrations/1784000000001-Creat
 import { CreateCodeExecutionsTable1783100000001 } from './migrations/1783100000001-CreateCodeExecutionsTable';
 import { CreateCodeJudgeTables1783200000001 } from './migrations/1783200000001-CreateCodeJudgeTables';
 import { AddTemplatesAndWrappersToCodingProblems1783200000002 } from './migrations/1783200000002-AddTemplatesAndWrappersToCodingProblems';
+import { AddStatusToCodingProblems1783200000003 } from './migrations/1783200000003-AddStatusToCodingProblems';
 import { SeedForumPermissions1784000000002 } from './migrations/1784000000002-SeedForumPermissions';
 import { CascadeAllQuestionBankFks1784000000003 } from './migrations/1784000000003-CascadeAllQuestionBankFks';
 import { AddForumPostTags1784000000004 } from './migrations/1784000000004-AddForumPostTags';
@@ -99,6 +100,7 @@ import { HealthController } from './health.controller';
           CreateCodeExecutionsTable1783100000001,
           CreateCodeJudgeTables1783200000001,
           AddTemplatesAndWrappersToCodingProblems1783200000002,
+          AddStatusToCodingProblems1783200000003,
           CreateForumTables1784000000001,
           SeedForumPermissions1784000000002,
           CascadeAllQuestionBankFks1784000000003,

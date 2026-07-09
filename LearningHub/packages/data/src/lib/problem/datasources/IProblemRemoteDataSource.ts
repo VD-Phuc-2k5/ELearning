@@ -5,6 +5,7 @@ import {
   CreateProblemParams,
   UpdateProblemParams,
   CreateTestCaseParams,
+  UpdateTestCaseParams,
   SubmitCodeParams,
   ProblemList,
   SampleTestCase,
@@ -29,6 +30,11 @@ export interface IProblemRemoteDataSource {
   createTestCase(
     problemId: string,
     params: CreateTestCaseParams,
+  ): Promise<TestCase>;
+  updateTestCase(
+    problemId: string,
+    id: string,
+    params: UpdateTestCaseParams,
   ): Promise<TestCase>;
   deleteTestCase(problemId: string, id: string): Promise<void>;
   importTestCases(

@@ -148,8 +148,8 @@ export class CodingProblemController {
 
   @Get(':id')
   @ApiOperation({ summary: 'Xem chi tiết đề bài coding' })
-  findOne(@Param('id') id: string) {
-    return this.listProblemsUseCase.getById(id);
+  findOne(@Request() req: AuthenticatedRequest, @Param('id') id: string) {
+    return this.listProblemsUseCase.getById(id, req.user.id);
   }
 
   @Get(':id/test-cases/samples')
@@ -213,6 +213,29 @@ export class CodingProblemController {
     return this.manageTestCasesUseCase.deleteTestCase(req.user.id, id);
   }
 
+  @Patch(':problemId/test-cases/:id')
+  @ApiOperation({ summary: 'Cập nhật test case (Admin)' })
+  updateTestCase(
+    @Request() req: AuthenticatedRequest,
+    @Param('problemId') problemId: string,
+    @Param('id') id: string,
+    @Body()
+    dto: {
+      input?: string;
+      expectedOutput?: string;
+      isHidden?: boolean;
+      points?: number;
+      orderIndex?: number;
+    },
+  ) {
+    return this.manageTestCasesUseCase.updateTestCase(
+      req.user.id,
+      problemId,
+      id,
+      dto,
+    );
+  }
+
   @Patch(':id')
   @ApiOperation({ summary: 'Cập nhật đề bài coding (Admin)' })
   update(
@@ -231,6 +254,7 @@ export class CodingProblemController {
       languages: dto.languages,
       templates: dto.templates,
       wrappers: dto.wrappers,
+      status: dto.status,
     });
   }
 

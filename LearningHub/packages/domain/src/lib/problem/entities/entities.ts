@@ -77,11 +77,20 @@ export interface UpdateProblemParams {
   readonly languages?: string[];
   readonly templates?: Record<string, string>;
   readonly wrappers?: Record<string, string>;
+  readonly status?: 'draft' | 'public';
 }
 
 export interface CreateTestCaseParams {
   readonly input: string;
   readonly expectedOutput: string;
+  readonly isHidden?: boolean;
+  readonly points?: number;
+  readonly orderIndex?: number;
+}
+
+export interface UpdateTestCaseParams {
+  readonly input?: string;
+  readonly expectedOutput?: string;
   readonly isHidden?: boolean;
   readonly points?: number;
   readonly orderIndex?: number;

@@ -21,6 +21,7 @@ import {
   CreateProblemParams,
   UpdateProblemParams,
   CreateTestCaseParams,
+  UpdateTestCaseParams,
   SubmitCodeParams,
   ProblemList,
   IProblemRepository,
@@ -114,6 +115,18 @@ export class ProblemRepositoryImpl implements IProblemRepository {
   ): Promise<Either<Failure, TestCase>> {
     try {
       return right(await this.dataSource.createTestCase(problemId, params));
+    } catch (e) {
+      return left(toFailure(e));
+    }
+  }
+
+  async updateTestCase(
+    problemId: string,
+    id: string,
+    params: UpdateTestCaseParams,
+  ): Promise<Either<Failure, TestCase>> {
+    try {
+      return right(await this.dataSource.updateTestCase(problemId, id, params));
     } catch (e) {
       return left(toFailure(e));
     }

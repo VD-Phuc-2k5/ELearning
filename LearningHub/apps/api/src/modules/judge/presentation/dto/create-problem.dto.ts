@@ -157,4 +157,11 @@ export class UpdateProblemDto {
   @IsOptional()
   @IsObject()
   wrappers?: Record<string, string>;
+
+  @ApiPropertyOptional({ enum: ['draft', 'public'] })
+  @IsOptional()
+  @IsIn(['draft', 'public'], {
+    message: 'Trạng thái phải là draft hoặc public',
+  })
+  status?: 'draft' | 'public';
 }
