@@ -21,8 +21,6 @@ const config = {
 
 const jestConfig = createJestConfig(config);
 
-const PKG = 'lowlight|fault|@tiptap';
-
 module.exports = async () => {
   const resolved = await jestConfig();
   for (const value of Object.values(resolved.transform)) {
@@ -33,5 +31,6 @@ module.exports = async () => {
   if (!resolved.moduleNameMapper) resolved.moduleNameMapper = {};
   resolved.moduleNameMapper['^lowlight$'] = '<rootDir>/specs/__mocks__/lowlight.js';
   resolved.moduleNameMapper['^react-markdown$'] = '<rootDir>/specs/__mocks__/react-markdown.js';
+  resolved.moduleNameMapper['^remark-gfm$'] = '<rootDir>/specs/__mocks__/remark-gfm.js';
   return resolved;
 };
