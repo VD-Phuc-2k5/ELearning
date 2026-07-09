@@ -15,6 +15,7 @@ import { executeCodeAction } from '../../../actions/sandbox.actions';
 import { CodeEditor } from '../../playground/components/code-editor';
 import { DEFAULT_TEMPLATES } from '../../playground/constants/templates';
 import { useConfirmModal } from '../../../../components/ui/confirm-modal';
+import { useCelebrate } from '../../../../components/effects/celebration';
 import {
   ArrowLeft,
   Play,
@@ -32,6 +33,7 @@ export default function SolveProblemPage() {
   const problemId = params.id as string;
 
   const { modal: confirmModal, openConfirm } = useConfirmModal();
+  const celebrate = useCelebrate();
 
   const getLanguageLabel = (lang: string) => {
     switch (lang) {
@@ -178,6 +180,7 @@ export default function SolveProblemPage() {
           if (pollTimerRef.current) clearInterval(pollTimerRef.current);
           setSubmission(res);
           setIsSubmitting(false);
+          if (res.status === 'accepted') celebrate();
         } else {
           setSubmission(res); // Keep updating for running status
         }

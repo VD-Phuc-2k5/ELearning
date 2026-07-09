@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { Map, Plus, ArrowUpRight, Users, AlertCircle } from 'lucide-react';
 import { Button } from '../../../components/ui';
+import { RevealGroup } from '../../../components/effects/reveal';
 import { listRoadmaps, enrollRoadmap } from '../../actions/roadmap.actions';
 import '@aejkatappaja/phantom-ui';
 
@@ -78,7 +79,7 @@ export default function RoadmapsPage() {
           </Link>
         </div>
       ) : (
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <RevealGroup className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {roadmaps.map((r: Roadmap) => (
             <div
               key={r.id}
@@ -129,7 +130,7 @@ export default function RoadmapsPage() {
               </div>
             </div>
           ))}
-        </div>
+        </RevealGroup>
       )}
     </div>
   );

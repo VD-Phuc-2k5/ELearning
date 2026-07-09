@@ -6,6 +6,7 @@ import { getCurrentUser } from '../../actions/auth.actions';
 import { Code2, ArrowRight, Clock, ShieldAlert } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { RevealGroup } from '../../../components/effects/reveal';
 
 interface ProblemItem {
   id: string;
@@ -122,7 +123,7 @@ export default function ProblemsPage() {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <RevealGroup className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {problems.map((p: ProblemItem) => (
             <div
               key={p.id}
@@ -173,7 +174,7 @@ export default function ProblemsPage() {
               </div>
             </div>
           ))}
-        </div>
+        </RevealGroup>
       )}
     </div>
   );

@@ -41,6 +41,7 @@ export function Button({
     <button
       className={[
         'inline-flex items-center justify-center md:gap-2 rounded-md font-medium transition',
+        'active:scale-[0.97] transition-transform',
         'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2',
         'disabled:cursor-not-allowed disabled:opacity-60',
         variantClasses[variant],

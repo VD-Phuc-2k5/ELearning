@@ -1,10 +1,12 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { logoutAction } from '../../app/actions/auth.actions';
 import { useCurrentUser } from '../hooks/use-current-user';
+import { gsap, prefersReducedMotion } from '../../lib/gsap';
+import { CelebrationLayer } from '../effects/celebration';
 import { SideNav } from './side-nav';
 import { HeaderBar } from './header-bar';
 import { MobileNav } from './mobile-nav';
@@ -15,6 +17,16 @@ export function AppShell({ children }: AppShellProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, isLoading, isFetching } = useCurrentUser();
+  const mainRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!mainRef.current || prefersReducedMotion()) return;
+    gsap.fromTo(
+      mainRef.current,
+      { opacity: 0, y: 12 },
+      { opacity: 1, y: 0, duration: 0.4, ease: 'power2.out' },
+    );
+  }, [pathname]);
 
   const handleLogout = async () => {
     await logoutAction();
@@ -47,10 +59,16 @@ export function AppShell({ children }: AppShellProps) {
       </header>
 
       <main className="lg:ml-64">
-        <div className="w-full px-4 py-8 mx-auto max-w-7xl sm:px-6 lg:px-8">
+        <div
+          ref={mainRef}
+          key={pathname}
+          className="w-full px-4 py-8 mx-auto max-w-7xl sm:px-6 lg:px-8"
+        >
           {children}
         </div>
       </main>
+
+      <CelebrationLayer />
     </div>
   );
 }

@@ -12,6 +12,7 @@ import {
   X,
 } from 'lucide-react';
 import { Button, Input } from '../../../components/ui';
+import { RevealGroup } from '../../../components/effects/reveal';
 import { listForums, updateForum } from '../../actions/forum.actions';
 import type { ForumListItem } from '@learning-hub/domain';
 
@@ -59,11 +60,11 @@ export default function ForumListPage() {
           </Link>
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <RevealGroup className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {data.data.map((forum: any) => (
             <ForumCard key={forum.id} forum={forum} />
           ))}
-        </div>
+        </RevealGroup>
       )}
     </div>
   );
