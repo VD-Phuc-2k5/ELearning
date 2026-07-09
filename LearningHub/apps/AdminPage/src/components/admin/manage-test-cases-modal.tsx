@@ -178,7 +178,7 @@ export function ManageTestCasesModal({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {testCases.map((tc) => (
+                  {testCases.map((tc: any) => (
                     <tr key={tc.id} className="hover:bg-slate-50 text-xs">
                       <td className="px-4 py-2 font-medium text-slate-600">
                         #{tc.orderIndex}

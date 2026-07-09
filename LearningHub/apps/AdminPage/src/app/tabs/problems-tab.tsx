@@ -125,7 +125,7 @@ export function ProblemsTab() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {problems.map((p) => (
+              {problems.map((p: any) => (
                 <tr key={p.id} className="hover:bg-slate-50 transition">
                   <td className="px-6 py-4">
                     <div className="font-bold text-slate-900">{p.title}</div>

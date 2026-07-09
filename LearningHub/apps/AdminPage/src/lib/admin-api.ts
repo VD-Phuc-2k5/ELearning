@@ -20,8 +20,9 @@ export function getAxiosMessage(e: unknown, fallback: string): string {
   if (data?.errors && Array.isArray(data.errors)) {
     return data.errors.map((err) => `${err.field}: ${err.message}`).join(', ');
   }
-  if (Array.isArray(data?.message)) {
-    return data.message.join(', ');
+  const message = data?.message;
+  if (Array.isArray(message)) {
+    return message.join(', ');
   }
-  return data?.message ?? fallback;
+  return message ?? fallback;
 }

@@ -1,7 +1,10 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { LoginScreen } from './login-screen';
-import { adminLoginAction } from '../../app/actions/auth.actions';
+import {
+  adminLoginAction,
+  type AdminLoginResult,
+} from '../../app/actions/auth.actions';
 
 jest.mock('../../app/actions/auth.actions', () => ({
   adminLoginAction: jest.fn(),
@@ -113,7 +116,7 @@ describe('AdminPage — LoginScreen (TC074–TC081)', () => {
 
   it('TC081 — submit button is disabled while request is loading', async () => {
     mockAdminLoginAction.mockImplementation(
-      () => new Promise<void>(() => undefined),
+      () => new Promise<AdminLoginResult>(() => undefined),
     ); // never resolves
     renderLoginScreen();
 

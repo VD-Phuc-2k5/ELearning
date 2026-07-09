@@ -50,7 +50,7 @@ export class DockerSandboxService implements ISandboxService {
     } else if (language === 'c') {
       runCmd = `gcc ${codePath} -o /tmp/main.out && /tmp/main.out${stdinRedirect}`;
     } else if (language === 'java') {
-      runCmd = `javac ${codePath} -d /tmp && java -cp /tmp Main${stdinRedirect}`;
+      runCmd = `mv ${codePath} /tmp/Main.java && javac /tmp/Main.java -d /tmp && java -cp /tmp Main${stdinRedirect}`;
     } else if (language === 'go') {
       runCmd = `mkdir -p /tmp/go-cache /tmp/go-path && GOCACHE=/tmp/go-cache GOPATH=/tmp/go-path GO111MODULE=off go build -o /tmp/main ${codePath} && /tmp/main${stdinRedirect}`;
     } else if (language === 'csharp') {
