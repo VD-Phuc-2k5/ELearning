@@ -31,10 +31,18 @@ export class ExecuteCodeUseCase
       stdin: dto.stdin,
       timeoutMs: process.env.SANDBOX_TIMEOUT_MS
         ? Number(process.env.SANDBOX_TIMEOUT_MS)
-        : 10000,
+        : ['go', 'csharp', 'c', 'cpp', 'java', 'rust', 'swift'].includes(
+              dto.language,
+            )
+          ? 60000
+          : 10000,
       memoryLimitMb: process.env.SANDBOX_MEMORY_LIMIT_MB
         ? Number(process.env.SANDBOX_MEMORY_LIMIT_MB)
-        : 256,
+        : ['go', 'csharp', 'c', 'cpp', 'java', 'rust', 'swift'].includes(
+              dto.language,
+            )
+          ? 512
+          : 256,
     });
 
     // Save history in repository

@@ -52,9 +52,9 @@ export class DockerSandboxService implements ISandboxService {
     } else if (language === 'java') {
       runCmd = `mv ${codePath} /tmp/Main.java && javac /tmp/Main.java -d /tmp && java -cp /tmp Main${stdinRedirect}`;
     } else if (language === 'go') {
-      runCmd = `mkdir -p /tmp/go-cache /tmp/go-path && GOCACHE=/tmp/go-cache GOPATH=/tmp/go-path GO111MODULE=off go build -o /tmp/main ${codePath} && /tmp/main${stdinRedirect}`;
+      runCmd = `cp -r /home/sandbox/go-cache /tmp/go-cache && mkdir -p /tmp/go-path && GOCACHE=/tmp/go-cache GOPATH=/tmp/go-path GO111MODULE=off go build -o /tmp/main ${codePath} && /tmp/main${stdinRedirect}`;
     } else if (language === 'csharp') {
-      runCmd = `cp -r /home/sandbox/project /tmp/project && cp ${codePath} /tmp/project/Program.cs && dotnet run --project /tmp/project --no-restore -q${stdinRedirect}`;
+      runCmd = `cp -r /home/sandbox/project /tmp/project && cp ${codePath} /tmp/project/Program.cs && dotnet build --nologo --no-restore -c Release -o /tmp/out /tmp/project && dotnet /tmp/out/project.dll${stdinRedirect}`;
     } else if (language === 'cpp') {
       runCmd = `g++ ${codePath} -o /tmp/main.out && /tmp/main.out${stdinRedirect}`;
     } else if (language === 'rust') {
@@ -66,6 +66,19 @@ export class DockerSandboxService implements ISandboxService {
     }
 
     runCmd = setup + runCmd;
+
+    const compiledLangs = new Set([
+      'go',
+      'csharp',
+      'c',
+      'cpp',
+      'java',
+      'rust',
+      'swift',
+    ]);
+    const isCompiled = compiledLangs.has(language);
+    const nanoCpus = isCompiled ? 1.0 * 1e9 : 0.5 * 1e9;
+    const tmpfsSize = isCompiled ? '512m' : '256m';
 
     let container: Docker.Container | null = null;
     const startTime = Date.now();
@@ -79,14 +92,22 @@ export class DockerSandboxService implements ISandboxService {
       container = await this.docker.createContainer({
         Image: langConfig.image,
         Cmd: ['sh', '-c', runCmd],
-        Env: ['TMPDIR=/tmp', 'DENO_DIR=/tmp/deno-cache'],
+        Env: [
+          'TMPDIR=/tmp',
+          'DENO_DIR=/tmp/deno-cache',
+          'DOTNET_CLI_HOME=/tmp',
+          'DOTNET_NOLOGO=1',
+          'DOTNET_CLI_TELEMETRY_OPTOUT=1',
+          'DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1',
+          'DOTNET_CLI_WORKLOAD_UPDATE_NOTIFY_DISABLE=1',
+        ],
         HostConfig: {
           Memory: memoryLimitMb * 1024 * 1024,
           MemorySwap: memoryLimitMb * 1024 * 1024,
-          NanoCpus: 0.5 * 1e9,
+          NanoCpus: nanoCpus,
           NetworkMode: 'none',
           ReadonlyRootfs: true,
-          Tmpfs: { '/tmp': 'rw,exec,size=256m' },
+          Tmpfs: { '/tmp': `rw,exec,size=${tmpfsSize}` },
           PidsLimit: 200,
           SecurityOpt: ['no-new-privileges'],
           CapDrop: ['ALL'],
@@ -146,6 +167,10 @@ export class DockerSandboxService implements ISandboxService {
           const parsedLogs = this.parseDockerStream(logsBuffer);
           stdout = parsedLogs.stdout;
           stderr = parsedLogs.stderr;
+
+          if (language === 'csharp') {
+            stderr = stderr.replace(/^.*workload.*\n?/gm, '');
+          }
 
           if (exitCode !== 0) {
             status = 'error';
