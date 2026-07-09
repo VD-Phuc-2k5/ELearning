@@ -6,9 +6,17 @@ pipeline {
   }
 
   environment {
-    IMAGE_NAME   = 'learninghub-api'
-    COMPOSE_FILE = 'docker-compose.yml'
-    PROJECT_DIR  = 'LearningHub'
+    IMAGE_NAME        = 'learninghub-api'
+    COMPOSE_FILE      = 'docker-compose.yml'
+    PROJECT_DIR       = 'LearningHub'
+    POSTGRES_USER     = 'postgres'
+    POSTGRES_PASSWORD = 'postgres'
+    POSTGRES_DB       = 'dev_learning_hub'
+    POSTGRES_TEST_DB  = 'test_learning_hub'
+    POSTGRES_HOST     = 'localhost'
+    POSTGRES_PORT     = '5432'
+    REDIS_HOST        = 'localhost'
+    REDIS_PORT        = '6379'
   }
 
   stages {
@@ -25,6 +33,28 @@ pipeline {
         dir(PROJECT_DIR) {
           sh 'pnpm nx run-many --target=lint --projects=api,LearningHub,AdminPage --parallel=3'
         }
+      }
+    }
+
+    stage('Setup Test DB') {
+      steps {
+        sh '''
+          docker rm -f test-postgres test-redis 2>/dev/null || true
+          docker run -d --name test-postgres \
+            -e POSTGRES_USER="${POSTGRES_USER}" \
+            -e POSTGRES_PASSWORD="${POSTGRES_PASSWORD}" \
+            -e POSTGRES_DB="${POSTGRES_DB}" \
+            -p "${POSTGRES_PORT}:5432" \
+            postgres:17
+          docker run -d --name test-redis \
+            -p "${REDIS_PORT}:6379" \
+            redis:8-alpine
+          for i in $(seq 1 30); do
+            if docker exec test-postgres pg_isready -U "${POSTGRES_USER}" -d "${POSTGRES_DB}"; then break; fi
+            echo "Waiting for PostgreSQL..." && sleep 2
+          done
+          docker exec test-postgres psql -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" -c "CREATE DATABASE ${POSTGRES_TEST_DB}" 2>/dev/null || true
+        '''
       }
     }
 
@@ -77,6 +107,9 @@ pipeline {
   }
 
   post {
+    always {
+      sh 'docker rm -f test-postgres test-redis 2>/dev/null || true'
+    }
     failure { echo 'Pipeline FAILED' }
     success { echo 'Pipeline PASSED' }
   }
