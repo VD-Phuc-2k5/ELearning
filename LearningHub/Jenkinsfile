@@ -13,9 +13,9 @@ pipeline {
     POSTGRES_DB       = 'dev_learning_hub'
     POSTGRES_TEST_DB  = 'test_learning_hub'
     POSTGRES_HOST     = 'localhost'
-    POSTGRES_PORT     = '5433'
+    POSTGRES_PORT     = '5432'
     REDIS_HOST        = 'localhost'
-    REDIS_PORT        = '6380'
+    REDIS_PORT        = '6379'
   }
 
   stages {
@@ -38,6 +38,7 @@ pipeline {
     stage('Setup Test DB') {
       steps {
         sh '''
+          sudo docker stop postgres redis 2>/dev/null || true
           sudo docker rm -f test-postgres test-redis 2>/dev/null || true
           sudo docker run -d --name test-postgres \
             -e POSTGRES_USER="${POSTGRES_USER}" \
@@ -107,7 +108,10 @@ pipeline {
 
   post {
     always {
-      sh 'sudo docker rm -f test-postgres test-redis 2>/dev/null || true'
+      sh '''
+        sudo docker rm -f test-postgres test-redis 2>/dev/null || true
+        sudo docker start postgres redis 2>/dev/null || true
+      '''
     }
     failure { echo 'Pipeline FAILED' }
     success { echo 'Pipeline PASSED' }
