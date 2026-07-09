@@ -3,6 +3,7 @@ import {
   Injectable,
   BadRequestException,
   NotFoundException,
+  Logger,
 } from '@nestjs/common';
 import {
   FORUM_REPOSITORY,
@@ -55,6 +56,8 @@ export interface CreatePostParams {
 
 @Injectable()
 export class CreatePostUseCase {
+  private readonly logger = new Logger(CreatePostUseCase.name);
+
   constructor(
     @Inject(FORUM_REPOSITORY)
     private readonly forumRepo: IForumRepository,
@@ -142,7 +145,12 @@ export class CreatePostUseCase {
             targetType: 'post',
             targetId: post.id,
           })
-          .catch(() => undefined);
+          .catch((err) => {
+            this.logger.error(
+              'Failed to send mention notification',
+              (err as Error).stack,
+            );
+          });
       }
     }
 

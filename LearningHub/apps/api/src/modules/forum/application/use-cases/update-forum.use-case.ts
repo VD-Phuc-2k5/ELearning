@@ -3,6 +3,7 @@ import {
   Injectable,
   ForbiddenException,
   NotFoundException,
+  Logger,
 } from '@nestjs/common';
 import {
   FORUM_MEMBER_REPOSITORY,
@@ -22,6 +23,8 @@ import type { ForumDomain } from '../../domain/entities/forum.domain';
 
 @Injectable()
 export class UpdateForumUseCase {
+  private readonly logger = new Logger(UpdateForumUseCase.name);
+
   constructor(
     @Inject(FORUM_REPOSITORY)
     private readonly forumRepo: IForumRepository,
@@ -50,7 +53,13 @@ export class UpdateForumUseCase {
       input.bannerUrl !== forum.bannerUrl
     ) {
       const publicId = extractPublicIdFromUrl(forum.bannerUrl);
-      if (publicId) this.cloudinary.deleteFile(publicId).catch(() => undefined);
+      if (publicId)
+        this.cloudinary.deleteFile(publicId).catch((err) => {
+          this.logger.error(
+            `Failed to delete old Cloudinary banner ${publicId}`,
+            (err as Error).stack,
+          );
+        });
     }
     if (
       input.iconUrl !== undefined &&
@@ -58,7 +67,13 @@ export class UpdateForumUseCase {
       input.iconUrl !== forum.iconUrl
     ) {
       const publicId = extractPublicIdFromUrl(forum.iconUrl);
-      if (publicId) this.cloudinary.deleteFile(publicId).catch(() => undefined);
+      if (publicId)
+        this.cloudinary.deleteFile(publicId).catch((err) => {
+          this.logger.error(
+            `Failed to delete old Cloudinary icon ${publicId}`,
+            (err as Error).stack,
+          );
+        });
     }
 
     return this.forumRepo.update(id, input);

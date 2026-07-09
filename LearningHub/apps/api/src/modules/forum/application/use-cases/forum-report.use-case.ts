@@ -4,6 +4,7 @@ import {
   ConflictException,
   NotFoundException,
   ForbiddenException,
+  Logger,
 } from '@nestjs/common';
 import {
   FORUM_REPORT_REPOSITORY,
@@ -30,6 +31,8 @@ import type {
 
 @Injectable()
 export class CreateReportUseCase {
+  private readonly logger = new Logger(CreateReportUseCase.name);
+
   constructor(
     @Inject(FORUM_REPORT_REPOSITORY)
     private readonly reportRepo: IForumReportRepository,
@@ -74,7 +77,12 @@ export class CreateReportUseCase {
       description,
     });
 
-    this.emitReportCreated(targetType, report).catch(() => undefined);
+    this.emitReportCreated(targetType, report).catch((err) => {
+      this.logger.error(
+        'Failed to emit report created event',
+        (err as Error).stack,
+      );
+    });
 
     return report;
   }

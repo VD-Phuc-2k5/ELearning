@@ -4,6 +4,7 @@ import {
   NotFoundException,
   BadRequestException,
   ForbiddenException,
+  Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -25,6 +26,8 @@ import {
 
 @Injectable()
 export class ApproveQuestionBankUseCase {
+  private readonly logger = new Logger(ApproveQuestionBankUseCase.name);
+
   constructor(
     @Inject(QUESTION_BANK_REPOSITORY)
     private readonly questionBankRepository: IQuestionBankRepository,
@@ -86,8 +89,11 @@ export class ApproveQuestionBankUseCase {
       };
       const notification = await this.notificationRepo.create(input);
       this.gateway.emitNotification(bank.uploaderId, notification);
-    } catch {
-      // notification is non-critical
+    } catch (err) {
+      this.logger.error(
+        `Failed to send approval notification for bank ${bankId}`,
+        (err as Error).stack,
+      );
     }
 
     this.gateway.emitBankReviewed(

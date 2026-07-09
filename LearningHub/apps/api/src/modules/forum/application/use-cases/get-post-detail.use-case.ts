@@ -1,4 +1,4 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException, Logger } from '@nestjs/common';
 import {
   FORUM_POST_REPOSITORY,
   IForumPostRepository,
@@ -20,6 +20,8 @@ export interface PostDetailResult {
 
 @Injectable()
 export class GetPostDetailUseCase {
+  private readonly logger = new Logger(GetPostDetailUseCase.name);
+
   constructor(
     @Inject(FORUM_POST_REPOSITORY)
     private readonly postRepo: IForumPostRepository,
@@ -36,7 +38,12 @@ export class GetPostDetailUseCase {
     if (!post) throw new NotFoundException('Post not found');
 
     if (incrementView) {
-      this.postRepo.incrementViewCount(postId, 1).catch(() => undefined);
+      this.postRepo.incrementViewCount(postId, 1).catch((err) => {
+        this.logger.error(
+          'Failed to increment view count',
+          (err as Error).stack,
+        );
+      });
     }
 
     const poll = await this.pollRepo.findByPost(postId);

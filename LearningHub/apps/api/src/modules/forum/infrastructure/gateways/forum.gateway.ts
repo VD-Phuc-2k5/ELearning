@@ -9,6 +9,7 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
+import { Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { IForumGateway } from '../../application/interfaces/i-forum-gateway';
 
@@ -27,6 +28,8 @@ export class ForumGateway
     OnGatewayDisconnect,
     IForumGateway
 {
+  private readonly logger = new Logger(ForumGateway.name);
+
   @WebSocketServer()
   server!: Server;
 
@@ -53,6 +56,7 @@ export class ForumGateway
         (socket as AuthSocket).userId = payload.sub;
         next();
       } catch (err) {
+        this.logger.error('WebSocket auth failed', (err as Error).stack);
         next(err instanceof Error ? err : new Error('Auth failed'));
       }
     });

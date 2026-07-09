@@ -1,18 +1,23 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import * as ExcelJS from 'exceljs';
 import { CreateQuestionInput } from '../../domain/repositories/question.repository.interface';
 import { IExcelParserService } from '../../application/interfaces/i-excel-parser.service';
 
 @Injectable()
 export class ExcelParserService implements IExcelParserService {
+  private readonly logger = new Logger(ExcelParserService.name);
+
   async parse(
     fileBuffer: Buffer,
   ): Promise<Omit<CreateQuestionInput, 'questionBankId'>[]> {
     const workbook = new ExcelJS.Workbook();
     try {
-      // ponytail: ExcelJS types use old Buffer without generic; cast via unknown is the cross-lib workaround
       await workbook.xlsx.load(fileBuffer as unknown as ArrayBuffer);
-    } catch {
+    } catch (err) {
+      this.logger.error(
+        'Failed to parse Excel file for question import',
+        (err as Error).stack,
+      );
       throw new BadRequestException(
         'Không thể đọc file Excel. File có thể bị hỏng hoặc sai định dạng.',
       );

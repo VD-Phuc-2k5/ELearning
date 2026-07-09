@@ -3,6 +3,7 @@ import {
   Injectable,
   ForbiddenException,
   NotFoundException,
+  Logger,
 } from '@nestjs/common';
 import {
   FORUM_POST_REPOSITORY,
@@ -23,6 +24,8 @@ import {
 
 @Injectable()
 export class DeletePostUseCase {
+  private readonly logger = new Logger(DeletePostUseCase.name);
+
   constructor(
     @Inject(FORUM_POST_REPOSITORY)
     private readonly postRepo: IForumPostRepository,
@@ -49,7 +52,12 @@ export class DeletePostUseCase {
       for (const url of urls) {
         const publicId = extractPublicIdFromUrl(url);
         if (publicId) {
-          this.cloudinary.deleteFile(publicId).catch(() => undefined);
+          this.cloudinary.deleteFile(publicId).catch((err) => {
+            this.logger.error(
+              `Failed to delete Cloudinary file ${publicId}`,
+              (err as Error).stack,
+            );
+          });
         }
       }
     }

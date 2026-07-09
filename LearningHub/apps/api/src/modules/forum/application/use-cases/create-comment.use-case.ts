@@ -3,6 +3,7 @@ import {
   Injectable,
   BadRequestException,
   NotFoundException,
+  Logger,
 } from '@nestjs/common';
 import {
   FORUM_POST_REPOSITORY,
@@ -34,6 +35,8 @@ const ADMIN_ROLES = new Set(['ADMIN', 'OWNER']);
 
 @Injectable()
 export class CreateCommentUseCase {
+  private readonly logger = new Logger(CreateCommentUseCase.name);
+
   constructor(
     @Inject(FORUM_POST_REPOSITORY)
     private readonly postRepo: IForumPostRepository,
@@ -108,7 +111,12 @@ export class CreateCommentUseCase {
           targetId: comment.id,
           metadata: { postId, forumId, forumSlug },
         })
-        .catch(() => undefined);
+        .catch((err) => {
+          this.logger.error(
+            'Failed to send reply notification',
+            (err as Error).stack,
+          );
+        });
     }
     if (post.authorId !== authorId) {
       this.notificationService
@@ -120,7 +128,12 @@ export class CreateCommentUseCase {
           targetId: postId,
           metadata: { postId, forumId, forumSlug },
         })
-        .catch(() => undefined);
+        .catch((err) => {
+          this.logger.error(
+            'Failed to send mention notification',
+            (err as Error).stack,
+          );
+        });
     }
 
     if (mentionIds && mentionIds.length > 0) {
@@ -141,7 +154,12 @@ export class CreateCommentUseCase {
             targetId: comment.id,
             metadata: { postId, forumId, forumSlug },
           })
-          .catch(() => undefined);
+          .catch((err) => {
+            this.logger.error(
+              'Failed to send reply notification',
+              (err as Error).stack,
+            );
+          });
       }
     }
 

@@ -3,6 +3,7 @@ import {
   Injectable,
   ForbiddenException,
   NotFoundException,
+  Logger,
 } from '@nestjs/common';
 import {
   FORUM_REPORT_REPOSITORY,
@@ -99,6 +100,8 @@ export class AdminResolveReportUseCase {
 
 @Injectable()
 export class AdminDismissReportUseCase {
+  private readonly logger = new Logger(AdminDismissReportUseCase.name);
+
   constructor(
     @Inject(FORUM_REPORT_REPOSITORY)
     private readonly reportRepo: IForumReportRepository,
@@ -133,7 +136,12 @@ export class AdminDismissReportUseCase {
         targetId: dismissed.targetId,
         metadata: { note, reason: dismissed.reason },
       })
-      .catch(() => undefined);
+      .catch((err) => {
+        this.logger.error(
+          'Failed to send report dismissed notification',
+          (err as Error).stack,
+        );
+      });
 
     return dismissed;
   }

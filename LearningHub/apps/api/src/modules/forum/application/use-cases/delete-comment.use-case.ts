@@ -3,6 +3,7 @@ import {
   Injectable,
   ForbiddenException,
   NotFoundException,
+  Logger,
 } from '@nestjs/common';
 import {
   FORUM_COMMENT_REPOSITORY,
@@ -20,6 +21,8 @@ import { FORUM_GATEWAY, IForumGateway } from '../interfaces/i-forum-gateway';
 
 @Injectable()
 export class DeleteCommentUseCase {
+  private readonly logger = new Logger(DeleteCommentUseCase.name);
+
   constructor(
     @Inject(FORUM_COMMENT_REPOSITORY)
     private readonly commentRepo: IForumCommentRepository,
@@ -52,7 +55,12 @@ export class DeleteCommentUseCase {
     if (comment.parentId) {
       await this.commentRepo
         .incrementReplyCount(comment.parentId, -1)
-        .catch(() => undefined);
+        .catch((err) => {
+          this.logger.error(
+            'Failed to decrement reply count',
+            (err as Error).stack,
+          );
+        });
     }
     await this.commentRepo.softDelete(commentId);
     await this.postRepo.incrementCommentCount(postId, -1);

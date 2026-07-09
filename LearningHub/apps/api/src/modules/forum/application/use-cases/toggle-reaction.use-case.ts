@@ -3,6 +3,7 @@ import {
   Injectable,
   BadRequestException,
   NotFoundException,
+  Logger,
 } from '@nestjs/common';
 import {
   FORUM_REACTION_REPOSITORY,
@@ -32,6 +33,8 @@ export interface ToggleReactionResult {
 
 @Injectable()
 export class ToggleReactionUseCase {
+  private readonly logger = new Logger(ToggleReactionUseCase.name);
+
   constructor(
     @Inject(FORUM_REACTION_REPOSITORY)
     private readonly reactionRepo: IForumReactionRepository,
@@ -122,7 +125,12 @@ export class ToggleReactionUseCase {
           targetType,
           targetId,
         })
-        .catch(() => undefined);
+        .catch((err) => {
+          this.logger.error(
+            'Failed to send reaction notification',
+            (err as Error).stack,
+          );
+        });
     }
     return { active: true, emoji };
   }

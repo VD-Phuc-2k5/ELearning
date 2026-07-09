@@ -3,6 +3,7 @@ import {
   Injectable,
   ForbiddenException,
   NotFoundException,
+  Logger,
 } from '@nestjs/common';
 import {
   FORUM_MEMBER_REPOSITORY,
@@ -20,6 +21,8 @@ import { extractPublicIdFromUrl } from '../helpers/extract-mentions';
 
 @Injectable()
 export class DeleteForumUseCase {
+  private readonly logger = new Logger(DeleteForumUseCase.name);
+
   constructor(
     @Inject(FORUM_REPOSITORY)
     private readonly forumRepo: IForumRepository,
@@ -40,11 +43,23 @@ export class DeleteForumUseCase {
 
     if (forum.bannerUrl) {
       const publicId = extractPublicIdFromUrl(forum.bannerUrl);
-      if (publicId) this.cloudinary.deleteFile(publicId).catch(() => undefined);
+      if (publicId)
+        this.cloudinary.deleteFile(publicId).catch((err) => {
+          this.logger.error(
+            `Failed to delete Cloudinary banner ${publicId}`,
+            (err as Error).stack,
+          );
+        });
     }
     if (forum.iconUrl) {
       const publicId = extractPublicIdFromUrl(forum.iconUrl);
-      if (publicId) this.cloudinary.deleteFile(publicId).catch(() => undefined);
+      if (publicId)
+        this.cloudinary.deleteFile(publicId).catch((err) => {
+          this.logger.error(
+            `Failed to delete Cloudinary icon ${publicId}`,
+            (err as Error).stack,
+          );
+        });
     }
 
     await this.forumRepo.delete(id);
