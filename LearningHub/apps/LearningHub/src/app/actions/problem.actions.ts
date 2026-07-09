@@ -25,10 +25,12 @@ async function unwrapOrThrow<T>(
   return result.value;
 }
 
-export async function getStudentProblems(): Promise<any> {
+export async function getStudentProblems(includeDrafts = false): Promise<any> {
   try {
     return await unwrapOrThrow(
-      new GetProblemsUsecase(getRepo()).execute({ status: 'public' }),
+      new GetProblemsUsecase(getRepo()).execute(
+        includeDrafts ? undefined : { status: 'public' },
+      ),
     );
   } catch {
     return { data: [], total: 0 };

@@ -105,12 +105,8 @@ export default function SolveProblemPage() {
       let codeToRun = code;
       const wrapper = problem?.wrappers?.[language];
       if (wrapper) {
-        if (wrapper.includes('// {{STUDENT_CODE}}')) {
-          codeToRun = wrapper.replace('// {{STUDENT_CODE}}', code);
-        } else if (wrapper.includes('# {{STUDENT_CODE}}')) {
-          codeToRun = wrapper.replace('# {{STUDENT_CODE}}', code);
-        } else if (wrapper.includes('/* {{STUDENT_CODE}} */')) {
-          codeToRun = wrapper.replace('/* {{STUDENT_CODE}} */', code);
+        if (wrapper.includes('{{STUDENT_CODE}}')) {
+          codeToRun = wrapper.replace('{{STUDENT_CODE}}', code);
         } else {
           codeToRun = `${code}\n\n${wrapper}`;
         }

@@ -2,8 +2,10 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { getStudentProblems } from '../../actions/problem.actions';
+import { getCurrentUser } from '../../actions/auth.actions';
 import { Code2, ArrowRight, Clock, ShieldAlert } from 'lucide-react';
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 
 interface ProblemItem {
   id: string;
@@ -12,15 +14,26 @@ interface ProblemItem {
   difficulty: string;
   timeLimitMs: number;
   languages: string[];
+  status?: string;
 }
 
 export default function ProblemsPage() {
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    getCurrentUser().then((user) => {
+      if (user?.roles?.some((r) => r.code === 'ADMIN' || r.code === 'OWNER')) {
+        setIsAdmin(true);
+      }
+    });
+  }, []);
+
   const { data, isLoading, error } = useQuery<{
     data: ProblemItem[];
     total: number;
   }>({
-    queryKey: ['student-problems'],
-    queryFn: getStudentProblems,
+    queryKey: ['student-problems', isAdmin],
+    queryFn: () => getStudentProblems(isAdmin),
   });
 
   const getDifficultyBadge = (difficulty: string) => {
@@ -131,6 +144,11 @@ export default function ProblemsPage() {
                   <p className="text-slate-500 text-xs line-clamp-2 leading-relaxed">
                     {p.description}
                   </p>
+                  {isAdmin && p.status === 'draft' && (
+                    <span className="inline-flex items-center gap-1 bg-amber-50 text-amber-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-amber-100 mt-1">
+                      Bản nháp
+                    </span>
+                  )}
                 </div>
 
                 <div className="flex flex-wrap gap-1 pt-1">
