@@ -1,9 +1,8 @@
 pipeline {
   agent any
 
-  triggers {
-    githubPush()
-  }
+  // TODO: re-enable after GitHub Server is configured in Manage Jenkins
+  // triggers { githubPush() }
 
   environment {
     IMAGE_NAME        = 'learninghub-api'
