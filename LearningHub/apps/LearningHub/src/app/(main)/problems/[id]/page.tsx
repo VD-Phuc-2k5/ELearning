@@ -14,6 +14,7 @@ import {
 import { executeCodeAction } from '../../../actions/sandbox.actions';
 import { CodeEditor } from '../../playground/components/code-editor';
 import { DEFAULT_TEMPLATES } from '../../playground/constants/templates';
+import { useConfirmModal } from '../../../../components/ui/confirm-modal';
 import {
   ArrowLeft,
   Play,
@@ -29,6 +30,8 @@ import Link from 'next/link';
 export default function SolveProblemPage() {
   const params = useParams();
   const problemId = params.id as string;
+
+  const { modal: confirmModal, openConfirm } = useConfirmModal();
 
   const getLanguageLabel = (lang: string) => {
     switch (lang) {
@@ -70,6 +73,7 @@ export default function SolveProblemPage() {
   const [activeTab, setActiveTab] = useState<'input' | 'output'>('input');
 
   const pollTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const codeInitializedRef = useRef(false);
 
   const {
     data: problem,
@@ -130,13 +134,18 @@ export default function SolveProblemPage() {
     }
   };
 
-  // Automatically initialize language and template code
+  // Automatically initialize language and template code (only once)
   useEffect(() => {
-    if (problem?.languages && problem.languages.length > 0) {
+    if (
+      problem?.languages &&
+      problem.languages.length > 0 &&
+      !codeInitializedRef.current
+    ) {
       const defaultLang = problem.languages[0];
       setLanguage(defaultLang);
       const customTemplate = problem.templates?.[defaultLang];
       setCode(customTemplate || (DEFAULT_TEMPLATES as any)[defaultLang] || '');
+      codeInitializedRef.current = true;
     }
   }, [problem]);
 
@@ -147,10 +156,14 @@ export default function SolveProblemPage() {
   };
 
   const handleReset = () => {
-    if (confirm('Bạn chắc chắn muốn khôi phục code mẫu ban đầu?')) {
-      const customTemplate = problem?.templates?.[language];
-      setCode(customTemplate || (DEFAULT_TEMPLATES as any)[language] || '');
-    }
+    openConfirm(
+      'Bạn chắc chắn muốn khôi phục code mẫu ban đầu?',
+      () => {
+        const customTemplate = problem?.templates?.[language];
+        setCode(customTemplate || (DEFAULT_TEMPLATES as any)[language] || '');
+      },
+      { confirmLabel: 'Khôi phục', cancelLabel: 'Hủy', variant: 'primary' },
+    );
   };
 
   // Poll submission status until completed
@@ -698,6 +711,7 @@ export default function SolveProblemPage() {
           )}
         </div>
       </div>
+      {confirmModal}
     </div>
   );
 }
