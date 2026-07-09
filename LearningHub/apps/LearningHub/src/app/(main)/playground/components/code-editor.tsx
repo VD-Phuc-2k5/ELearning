@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import { FileCode2, RefreshCw } from 'lucide-react';
 import Editor from '@monaco-editor/react';
 
@@ -16,9 +17,8 @@ export function CodeEditor({
   onReset,
   language = 'python',
 }: CodeEditorProps) {
-  // Map our internal language values to Monaco Editor languages
-  const getMonacoLanguage = (lang: string) => {
-    switch (lang) {
+  const monacoLanguage = useMemo(() => {
+    switch (language) {
       case 'python':
         return 'python';
       case 'javascript':
@@ -42,7 +42,23 @@ export function CodeEditor({
       default:
         return 'plaintext';
     }
-  };
+  }, [language]);
+
+  const editorOptions = useMemo(
+    () => ({
+      minimap: { enabled: false },
+      fontSize: 14,
+      fontFamily: 'Consolas, "Courier New", monospace',
+      automaticLayout: true,
+      scrollBeyondLastLine: false,
+      padding: { top: 16, bottom: 16 },
+      tabSize: 4,
+      cursorBlinking: 'smooth' as const,
+      lineNumbersMinChars: 3,
+      formatOnType: true,
+    }),
+    [],
+  );
 
   return (
     <div className="rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden flex flex-col h-[500px]">
@@ -62,21 +78,42 @@ export function CodeEditor({
       <div className="flex-1 w-full relative min-h-[300px] bg-[#1e1e1e]">
         <Editor
           height="100%"
-          language={getMonacoLanguage(language)}
+          language={monacoLanguage}
           theme="vs-dark"
           value={code}
           onChange={(val) => setCode(val || '')}
-          options={{
-            minimap: { enabled: false },
-            fontSize: 14,
-            fontFamily: 'Consolas, "Courier New", monospace',
-            automaticLayout: true,
-            scrollBeyondLastLine: false,
-            padding: { top: 16, bottom: 16 },
-            tabSize: 4,
-            cursorBlinking: 'smooth',
-            lineNumbersMinChars: 3,
-            formatOnType: true,
+          options={editorOptions}
+          beforeMount={(monaco) => {
+            monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
+              target: monaco.languages.typescript.ScriptTarget.ESNext,
+              module: monaco.languages.typescript.ModuleKind.ESNext,
+              strict: true,
+              noUnusedLocals: true,
+              noUnusedParameters: true,
+              noImplicitReturns: true,
+              noFallthroughCasesInSwitch: true,
+            });
+            monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions(
+              {
+                noSemanticValidation: false,
+                noSyntaxValidation: false,
+              },
+            );
+            monaco.languages.typescript.javascriptDefaults.setCompilerOptions({
+              target: monaco.languages.typescript.ScriptTarget.ESNext,
+              module: monaco.languages.typescript.ModuleKind.ESNext,
+              strict: true,
+              noUnusedLocals: true,
+              noUnusedParameters: true,
+              noImplicitReturns: true,
+              noFallthroughCasesInSwitch: true,
+            });
+            monaco.languages.typescript.javascriptDefaults.setDiagnosticsOptions(
+              {
+                noSemanticValidation: false,
+                noSyntaxValidation: false,
+              },
+            );
           }}
         />
       </div>
