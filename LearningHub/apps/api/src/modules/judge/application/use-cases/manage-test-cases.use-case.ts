@@ -49,10 +49,17 @@ export class ManageTestCasesUseCase {
     const problem = await this.problemRepo.findById(problemId);
     if (!problem) throw new NotFoundException('Coding problem not found');
 
-    return this.testCaseRepo.create({
+    const result = await this.testCaseRepo.create({
       ...params,
       problemId,
     });
+
+    const testCaseCount = await this.problemRepo.countByProblemId(problemId);
+    if (testCaseCount === 1 && problem.status === 'draft') {
+      await this.problemRepo.update(problemId, { status: 'public' });
+    }
+
+    return result;
   }
 
   async getTestCases(
@@ -66,12 +73,31 @@ export class ManageTestCasesUseCase {
     return this.testCaseRepo.findByProblemId(problemId);
   }
 
+  async getSampleTestCases(
+    problemId: string,
+  ): Promise<{ input: string; expectedOutput: string }[]> {
+    const problem = await this.problemRepo.findById(problemId);
+    if (!problem) throw new NotFoundException('Coding problem not found');
+
+    const all = await this.testCaseRepo.findByProblemId(problemId);
+    return all
+      .filter((tc) => !tc.isHidden)
+      .sort((a, b) => a.orderIndex - b.orderIndex)
+      .map((tc) => ({ input: tc.input, expectedOutput: tc.expectedOutput }));
+  }
+
   async deleteTestCase(userId: string, id: string): Promise<void> {
     await this.checkAdmin(userId);
     const testCase = await this.testCaseRepo.findById(id);
     if (!testCase) throw new NotFoundException('TestCase not found');
 
+    const problemId = testCase.problemId;
     await this.testCaseRepo.delete(id);
+
+    const remainingCount = await this.problemRepo.countByProblemId(problemId);
+    if (remainingCount === 0) {
+      await this.problemRepo.update(problemId, { status: 'draft' });
+    }
   }
 
   async importTestCasesExcel(
@@ -86,7 +112,7 @@ export class ManageTestCasesUseCase {
     const workbook = new ExcelJS.Workbook();
     try {
       await workbook.xlsx.load(fileBuffer as unknown as ArrayBuffer);
-    } catch (_err: unknown) {
+    } catch {
       throw new BadRequestException(
         'Không thể đọc file Excel. File có thể bị hỏng hoặc sai định dạng.',
       );
@@ -160,13 +186,19 @@ export class ManageTestCasesUseCase {
       const orderVal = row.getCell(orderCol).value;
 
       // Extract raw strings from Excel cells (which could be string, number, or cell object)
-      const getValString = (val: any): string => {
+      const getValString = (val: ExcelJS.CellValue): string => {
         if (val === null || val === undefined) return '';
-        if (typeof val === 'object' && val.richText) {
-          return val.richText.map((t: any) => t.text || '').join('');
+        if (
+          typeof val === 'object' &&
+          'richText' in val &&
+          Array.isArray(val.richText)
+        ) {
+          return val.richText
+            .map((t: ExcelJS.RichText) => t.text || '')
+            .join('');
         }
-        if (typeof val === 'object' && val.text) {
-          return String(val.text);
+        if (typeof val === 'object' && 'text' in val) {
+          return String((val as { text: unknown }).text);
         }
         return String(val);
       };
@@ -249,6 +281,10 @@ export class ManageTestCasesUseCase {
         isHidden: tc.isHidden,
         orderIndex: tc.orderIndex,
       });
+    }
+
+    if (problem.status === 'draft') {
+      await this.problemRepo.update(problemId, { status: 'public' });
     }
 
     return {

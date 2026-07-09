@@ -29,6 +29,7 @@ const makeProblem = (
   languages: ['python', 'javascript'],
   templates: {},
   wrappers: {},
+  status: 'draft',
   creatorId: 'admin-1',
   createdAt: new Date(),
   updatedAt: new Date(),
@@ -75,6 +76,7 @@ describe('SubmitCodeUseCase', () => {
       delete: jest.fn(),
       findById: jest.fn(),
       findAll: jest.fn(),
+      countByProblemId: jest.fn(),
     };
     judgeQueue = { add: jest.fn() };
 

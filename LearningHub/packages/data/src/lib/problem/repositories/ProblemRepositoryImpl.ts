@@ -25,6 +25,7 @@ import {
   ProblemList,
   IProblemRepository,
   GetProblemsParams,
+  SampleTestCase,
 } from '@learning-hub/domain';
 import { IProblemRemoteDataSource } from '../datasources/IProblemRemoteDataSource';
 
@@ -92,6 +93,16 @@ export class ProblemRepositoryImpl implements IProblemRepository {
   async getTestCases(problemId: string): Promise<Either<Failure, TestCase[]>> {
     try {
       return right(await this.dataSource.getTestCases(problemId));
+    } catch (e) {
+      return left(toFailure(e));
+    }
+  }
+
+  async getSampleTestCases(
+    problemId: string,
+  ): Promise<Either<Failure, SampleTestCase[]>> {
+    try {
+      return right(await this.dataSource.getSampleTestCases(problemId));
     } catch (e) {
       return left(toFailure(e));
     }

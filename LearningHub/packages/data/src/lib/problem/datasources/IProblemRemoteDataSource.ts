@@ -7,12 +7,14 @@ import {
   CreateTestCaseParams,
   SubmitCodeParams,
   ProblemList,
+  SampleTestCase,
 } from '@learning-hub/domain';
 
 export interface GetProblemsDataSourceParams {
   difficulty?: string;
   page?: number;
   limit?: number;
+  status?: 'draft' | 'public';
 }
 
 export interface IProblemRemoteDataSource {
@@ -23,6 +25,7 @@ export interface IProblemRemoteDataSource {
   deleteProblem(id: string): Promise<void>;
 
   getTestCases(problemId: string): Promise<TestCase[]>;
+  getSampleTestCases(problemId: string): Promise<SampleTestCase[]>;
   createTestCase(
     problemId: string,
     params: CreateTestCaseParams,

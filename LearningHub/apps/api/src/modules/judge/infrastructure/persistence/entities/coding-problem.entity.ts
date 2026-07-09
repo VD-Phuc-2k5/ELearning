@@ -47,6 +47,9 @@ export class CodingProblemEntity {
   @Column({ name: 'wrappers', type: 'jsonb', default: {} })
   wrappers!: Record<string, string>;
 
+  @Column({ type: 'varchar', length: 20, default: 'draft' })
+  status!: 'draft' | 'public';
+
   @Column({ name: 'creator_id' })
   creatorId!: string;
 

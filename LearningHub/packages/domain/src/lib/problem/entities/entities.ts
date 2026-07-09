@@ -8,6 +8,7 @@ export interface Problem {
   readonly sampleInput: string | null;
   readonly sampleOutput: string | null;
   readonly languages: string[];
+  readonly status: 'draft' | 'public';
   readonly templates?: Record<string, string>;
   readonly wrappers?: Record<string, string>;
   readonly createdAt: string;
@@ -84,6 +85,11 @@ export interface CreateTestCaseParams {
   readonly isHidden?: boolean;
   readonly points?: number;
   readonly orderIndex?: number;
+}
+
+export interface SampleTestCase {
+  readonly input: string;
+  readonly expectedOutput: string;
 }
 
 export interface SubmitCodeParams {

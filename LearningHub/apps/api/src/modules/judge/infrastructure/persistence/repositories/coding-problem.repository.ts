@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ICodingProblemRepository } from '../../../domain/repositories/coding-problem.repository.interface';
 import { CodingProblemEntity } from '../entities/coding-problem.entity';
+import { TestCaseEntity } from '../entities/test-case.entity';
 import { CodingProblemDomain } from '../../../domain/entities/coding-problem.domain';
 
 @Injectable()
@@ -10,6 +11,8 @@ export class CodingProblemRepository implements ICodingProblemRepository {
   constructor(
     @InjectRepository(CodingProblemEntity)
     private readonly repo: Repository<CodingProblemEntity>,
+    @InjectRepository(TestCaseEntity)
+    private readonly testCaseRepo: Repository<TestCaseEntity>,
   ) {}
 
   private toDomain(entity: CodingProblemEntity): CodingProblemDomain {
@@ -25,6 +28,7 @@ export class CodingProblemRepository implements ICodingProblemRepository {
       languages: entity.languages,
       templates: entity.templates,
       wrappers: entity.wrappers,
+      status: entity.status,
       creatorId: entity.creatorId,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
@@ -53,6 +57,10 @@ export class CodingProblemRepository implements ICodingProblemRepository {
     return this.toDomain(updated);
   }
 
+  async countByProblemId(problemId: string): Promise<number> {
+    return this.testCaseRepo.count({ where: { problemId } });
+  }
+
   async delete(id: string): Promise<void> {
     await this.repo.delete(id);
   }
@@ -66,6 +74,7 @@ export class CodingProblemRepository implements ICodingProblemRepository {
     difficulty?: string;
     page?: number;
     limit?: number;
+    status?: 'draft' | 'public';
   }): Promise<{ data: CodingProblemDomain[]; total: number }> {
     const page = options?.page ?? 1;
     const limit = options?.limit ?? 20;
@@ -76,6 +85,12 @@ export class CodingProblemRepository implements ICodingProblemRepository {
     if (options?.difficulty) {
       queryBuilder.andWhere('p.difficulty = :difficulty', {
         difficulty: options.difficulty,
+      });
+    }
+
+    if (options?.status) {
+      queryBuilder.andWhere('p.status = :status', {
+        status: options.status,
       });
     }
 

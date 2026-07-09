@@ -37,7 +37,7 @@ export class SubmissionRepository implements ISubmissionRepository {
         id: r.id,
         submissionId: r.submissionId,
         testCaseId: r.testCaseId,
-        status: r.status as any,
+        status: r.status as SubmissionResultDomain['status'],
         actualOutput: r.actualOutput,
         executionTimeMs: r.executionTimeMs,
         memoryUsedKb: r.memoryUsedKb,

@@ -16,6 +16,7 @@ export class ListProblemsUseCase {
     difficulty?: string;
     page?: number;
     limit?: number;
+    status?: 'draft' | 'public';
   }): Promise<{ data: CodingProblemDomain[]; total: number }> {
     return this.problemRepo.findAll(options);
   }

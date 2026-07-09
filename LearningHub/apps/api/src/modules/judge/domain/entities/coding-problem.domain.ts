@@ -10,6 +10,7 @@ export interface CodingProblemDomain {
   languages: string[];
   templates: Record<string, string>;
   wrappers: Record<string, string>;
+  status: 'draft' | 'public';
   creatorId: string;
   createdAt: Date;
   updatedAt: Date;

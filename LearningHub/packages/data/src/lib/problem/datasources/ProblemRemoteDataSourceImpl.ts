@@ -10,6 +10,7 @@ import {
   CreateTestCaseParams,
   SubmitCodeParams,
   ProblemList,
+  SampleTestCase,
 } from '@learning-hub/domain';
 import {
   IProblemRemoteDataSource,
@@ -83,6 +84,17 @@ export class ProblemRemoteDataSourceImpl implements IProblemRemoteDataSource {
   async getTestCases(problemId: string): Promise<TestCase[]> {
     try {
       const res = await this.api.get(`/problems/${problemId}/test-cases`);
+      return res.data;
+    } catch (e) {
+      return handleAxiosError(e);
+    }
+  }
+
+  async getSampleTestCases(problemId: string): Promise<SampleTestCase[]> {
+    try {
+      const res = await this.api.get(
+        `/problems/${problemId}/test-cases/samples`,
+      );
       return res.data;
     } catch (e) {
       return handleAxiosError(e);

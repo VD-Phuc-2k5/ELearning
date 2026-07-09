@@ -18,5 +18,7 @@ export interface ICodingProblemRepository {
     difficulty?: string;
     page?: number;
     limit?: number;
+    status?: 'draft' | 'public';
   }): Promise<{ data: CodingProblemDomain[]; total: number }>;
+  countByProblemId(problemId: string): Promise<number>;
 }

@@ -7,12 +7,14 @@ import {
   UpdateProblemParams,
   CreateTestCaseParams,
   SubmitCodeParams,
+  SampleTestCase,
 } from '../entities/entities';
 
 export interface GetProblemsParams {
   difficulty?: string;
   page?: number;
   limit?: number;
+  status?: 'draft' | 'public';
 }
 
 export interface ProblemList {
@@ -33,6 +35,9 @@ export interface IProblemRepository {
   deleteProblem(id: string): Promise<Either<Failure, void>>;
 
   getTestCases(problemId: string): Promise<Either<Failure, TestCase[]>>;
+  getSampleTestCases(
+    problemId: string,
+  ): Promise<Either<Failure, SampleTestCase[]>>;
   createTestCase(
     problemId: string,
     params: CreateTestCaseParams,

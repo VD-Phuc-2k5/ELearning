@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import 'reflect-metadata';
 import { JudgeService } from './judge.service';
 import { ISubmissionRepository } from '../../domain/repositories/submission.repository.interface';
@@ -43,6 +44,7 @@ const makeProblem = (
   languages: ['python'],
   templates: {},
   wrappers: {},
+  status: 'draft',
   creatorId: 'user-1',
   createdAt: new Date(),
   updatedAt: new Date(),
@@ -96,6 +98,7 @@ describe('JudgeService', () => {
       delete: jest.fn(),
       findById: jest.fn(),
       findAll: jest.fn(),
+      countByProblemId: jest.fn(),
     };
     testCaseRepo = {
       create: jest.fn(),

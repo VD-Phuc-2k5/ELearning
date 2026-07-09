@@ -17,6 +17,7 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
 import * as ExcelJS from 'exceljs';
+import { Response } from 'express';
 import {
   ApiBearerAuth,
   ApiConsumes,
@@ -71,6 +72,7 @@ export class CodingProblemController {
       languages: dto.languages,
       templates: dto.templates ?? {},
       wrappers: dto.wrappers ?? {},
+      status: 'draft',
     });
   }
 
@@ -79,21 +81,24 @@ export class CodingProblemController {
   @ApiQuery({ name: 'difficulty', required: false })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'status', required: false, enum: ['draft', 'public'] })
   findAll(
     @Query('difficulty') difficulty?: string,
     @Query('page') page?: number,
     @Query('limit') limit?: number,
+    @Query('status') status?: 'draft' | 'public',
   ) {
     return this.listProblemsUseCase.execute({
       difficulty,
       page: page ? Number(page) : undefined,
       limit: limit ? Number(limit) : undefined,
+      status,
     });
   }
 
   @Get('test-cases/excel-template')
   @ApiOperation({ summary: 'Tải file Excel mẫu để import testcase (Admin)' })
-  async downloadTemplate(@Res() res: any) {
+  async downloadTemplate(@Res() res: Response) {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Template Test Cases');
 
@@ -145,6 +150,14 @@ export class CodingProblemController {
   @ApiOperation({ summary: 'Xem chi tiết đề bài coding' })
   findOne(@Param('id') id: string) {
     return this.listProblemsUseCase.getById(id);
+  }
+
+  @Get(':id/test-cases/samples')
+  @ApiOperation({
+    summary: 'Lấy các test case mẫu (không ẩn) để hiển thị trước khi nộp bài',
+  })
+  getSampleTestCases(@Param('id') problemId: string) {
+    return this.manageTestCasesUseCase.getSampleTestCases(problemId);
   }
 
   @Post(':id/test-cases')

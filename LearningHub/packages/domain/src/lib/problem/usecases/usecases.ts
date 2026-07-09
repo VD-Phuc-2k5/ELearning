@@ -4,6 +4,7 @@ export * from './CreateProblemUsecase';
 export * from './UpdateProblemUsecase';
 export * from './DeleteProblemUsecase';
 export * from './GetTestCasesUsecase';
+export * from './GetSampleTestCasesUsecase';
 export * from './CreateTestCaseUsecase';
 export * from './DeleteTestCaseUsecase';
 export * from './ImportTestCasesUsecase';
