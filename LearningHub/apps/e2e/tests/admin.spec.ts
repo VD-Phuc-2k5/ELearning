@@ -712,14 +712,16 @@ test.describe('AdminPage — Problems Management', () => {
     await clickTab(page, /đề bài coding/i);
     await page.waitForTimeout(3000);
 
-    page.on('dialog', async (dialog) => {
-      expect(dialog.message()).toContain('xóa');
-      await dialog.accept();
-    });
-
     const deleteBtn = page.getByRole('button', { name: /xóa|delete/i }).first();
     if (await deleteBtn.isVisible({ timeout: 5000 }).catch(() => false)) {
       await deleteBtn.click();
+      // Wait for the confirm modal to appear
+      const confirmDeleteBtn = page.getByRole('button', { name: 'Xóa' });
+      if (
+        await confirmDeleteBtn.isVisible({ timeout: 3000 }).catch(() => false)
+      ) {
+        await confirmDeleteBtn.click();
+      }
       await page.waitForTimeout(2000);
     }
   });
