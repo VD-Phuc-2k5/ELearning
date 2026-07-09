@@ -18,7 +18,18 @@ import {
   EyeOff,
   FileSpreadsheet,
   Upload,
+  AlertCircle,
+  CheckCircle2,
 } from 'lucide-react';
+
+interface TestCaseItem {
+  id: string;
+  input: string;
+  expectedOutput: string;
+  isHidden: boolean;
+  points: number;
+  orderIndex: number;
+}
 
 interface ManageTestCasesModalProps {
   problemId: string;
@@ -50,8 +61,9 @@ export function ManageTestCasesModal({
       link.href = `data:${template.contentType};base64,${template.data}`;
       link.download = 'template_testcases.xlsx';
       link.click();
-    } catch (e: any) {
-      setErr(e.message || 'Tải file mẫu thất bại');
+    } catch (e: unknown) {
+      const err = e as Error;
+      setErr(err.message || 'Tải file mẫu thất bại');
     }
   };
 
@@ -67,10 +79,12 @@ export function ManageTestCasesModal({
     try {
       const res = await importTestCases(problemId, formData);
       qc.invalidateQueries({ queryKey: ['admin-testcases', problemId] });
+      qc.invalidateQueries({ queryKey: ['admin-problems'] });
       alert(res.message || 'Import test cases thành công!');
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const e = err as Error;
       setErr(
-        err.message || 'Import thất bại. Vui lòng kiểm tra lại định dạng file.',
+        e.message || 'Import thất bại. Vui lòng kiểm tra lại định dạng file.',
       );
     } finally {
       setIsImporting(false);
@@ -78,7 +92,7 @@ export function ManageTestCasesModal({
     }
   };
 
-  const { data: testCases, isLoading } = useQuery<any[]>({
+  const { data: testCases, isLoading } = useQuery<TestCaseItem[]>({
     queryKey: ['admin-testcases', problemId],
     queryFn: () => getTestCases(problemId),
   });
@@ -87,6 +101,7 @@ export function ManageTestCasesModal({
     mutationFn: () => createTestCase(problemId, form),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['admin-testcases', problemId] });
+      qc.invalidateQueries({ queryKey: ['admin-problems'] });
       setForm({
         input: '',
         expectedOutput: '',
@@ -104,6 +119,7 @@ export function ManageTestCasesModal({
     mutationFn: (id: string) => deleteTestCase(problemId, id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['admin-testcases', problemId] });
+      qc.invalidateQueries({ queryKey: ['admin-problems'] });
     },
     onError: (e: unknown) =>
       setErr(getAxiosMessage(e, 'Xóa test case thất bại')),
@@ -116,6 +132,30 @@ export function ManageTestCasesModal({
       wide
     >
       <div className="space-y-6 max-h-[80vh] overflow-y-auto pr-2">
+        <div
+          className={`px-4 py-3 rounded-xl text-sm font-bold ${
+            (testCases?.length ?? 0) > 0
+              ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
+              : 'bg-amber-50 text-amber-700 border border-amber-100'
+          }`}
+        >
+          <span className="flex items-center gap-2">
+            {(testCases?.length ?? 0) > 0 ? (
+              <>
+                <CheckCircle2 className="h-4 w-4" />
+                Đề bài đang ở trạng thái <strong>Công khai</strong> — Học sinh
+                có thể nhìn thấy và làm bài.
+              </>
+            ) : (
+              <>
+                <AlertCircle className="h-4 w-4" />
+                Đề bài đang ở trạng thái <strong>Bản nháp</strong> — Chưa có
+                test case nào. Học sinh sẽ không nhìn thấy đề bài này.
+              </>
+            )}
+          </span>
+        </div>
+
         <div>
           <div className="flex justify-between items-center mb-3">
             <h3 className="text-sm font-semibold text-slate-800">
@@ -130,9 +170,14 @@ export function ManageTestCasesModal({
                 <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-600" />
                 Tải File Mẫu
               </button>
-              <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-100 hover:bg-emerald-100 text-xs font-semibold text-emerald-700 transition cursor-pointer">
+              <label
+                title="Chọn file .xlsx để thêm nhiều test case cùng lúc"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 border-2 border-dashed border-emerald-300 hover:bg-emerald-100 hover:border-emerald-400 text-xs font-bold text-emerald-700 transition cursor-pointer"
+              >
                 <Upload className="h-3.5 w-3.5" />
-                {isImporting ? 'Đang import...' : 'Import Excel'}
+                {isImporting
+                  ? 'Đang import...'
+                  : 'Import Excel (nhiều test case)'}
                 <input
                   type="file"
                   accept=".xlsx"
@@ -178,7 +223,7 @@ export function ManageTestCasesModal({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {testCases.map((tc: any) => (
+                  {testCases.map((tc: TestCaseItem) => (
                     <tr key={tc.id} className="hover:bg-slate-50 text-xs">
                       <td className="px-4 py-2 font-medium text-slate-600">
                         #{tc.orderIndex}
@@ -197,8 +242,11 @@ export function ManageTestCasesModal({
                             <EyeOff className="h-3 w-3" /> Ẩn
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full font-bold">
-                            <Eye className="h-3 w-3" /> Hiện
+                          <span
+                            title="Hiển thị làm ví dụ mẫu cho học sinh"
+                            className="inline-flex items-center gap-1 text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full font-bold"
+                          >
+                            <Eye className="h-3 w-3" /> Hiện = ví dụ mẫu
                           </span>
                         )}
                       </td>
@@ -300,7 +348,7 @@ export function ManageTestCasesModal({
                 />
               </div>
 
-              <div className="flex items-center pt-5">
+              <div className="flex flex-col justify-center pt-3">
                 <label className="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer select-none">
                   <input
                     type="checkbox"
@@ -312,6 +360,11 @@ export function ManageTestCasesModal({
                   />
                   Test case ẩn
                 </label>
+                {!form.isHidden && (
+                  <p className="text-[10px] text-emerald-600 font-medium mt-1 ml-6">
+                    Sẽ hiển thị làm ví dụ mẫu cho học sinh
+                  </p>
+                )}
               </div>
             </div>
 

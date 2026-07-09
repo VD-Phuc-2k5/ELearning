@@ -11,6 +11,9 @@ import {
 } from '../../lib/admin-api';
 import { createProblem } from '../../app/actions/problem.actions';
 import { MarkdownEditor } from './markdown-editor';
+import { CodeInput } from './code-input';
+import { DEFAULT_TEMPLATES, DEFAULT_WRAPPERS } from './default-code-presets';
+import { ManageTestCasesModal } from './manage-test-cases-modal';
 
 interface CreateProblemModalProps {
   onClose: () => void;
@@ -24,13 +27,21 @@ export function CreateProblemModal({ onClose }: CreateProblemModalProps) {
     difficulty: 'easy' as 'easy' | 'medium' | 'hard',
     timeLimitMs: 5000,
     memoryLimitMb: 256,
-    sampleInput: '',
-    sampleOutput: '',
     languages: ['python', 'javascript'] as string[],
-    templates: {} as Record<string, string>,
-    wrappers: {} as Record<string, string>,
+    templates: {
+      python: DEFAULT_TEMPLATES.python,
+      javascript: DEFAULT_TEMPLATES.javascript,
+    } as Record<string, string>,
+    wrappers: {
+      python: DEFAULT_WRAPPERS.python,
+      javascript: DEFAULT_WRAPPERS.javascript,
+    } as Record<string, string>,
   });
   const [err, setErr] = useState('');
+  const [createdProblem, setCreatedProblem] = useState<{
+    id: string;
+    title: string;
+  } | null>(null);
 
   const availableLanguages = [
     { value: 'python', label: 'Python 3' },
@@ -119,24 +130,43 @@ export function CreateProblemModal({ onClose }: CreateProblemModalProps) {
         ...form,
         title: form.title.trim(),
         description: form.description.trim(),
-        sampleInput: form.sampleInput?.trim() || null,
-        sampleOutput: form.sampleOutput?.trim() || null,
       }),
-    onSuccess: () => {
+    onSuccess: (created: { id: string; title: string }) => {
       qc.invalidateQueries({ queryKey: ['admin-problems'] });
-      onClose();
+      setCreatedProblem({ id: created.id, title: created.title });
     },
     onError: (e: unknown) => setErr(getAxiosMessage(e, 'Tạo đề bài thất bại')),
   });
 
   const toggleLanguage = (lang: string) => {
     setForm((p) => {
-      const languages = p.languages.includes(lang)
-        ? p.languages.filter((l: string) => l !== lang)
-        : [...p.languages, lang];
-      return { ...p, languages };
+      const isAdding = !p.languages.includes(lang);
+      const languages = isAdding
+        ? [...p.languages, lang]
+        : p.languages.filter((l: string) => l !== lang);
+      if (!isAdding) return { ...p, languages };
+      return {
+        ...p,
+        languages,
+        templates: p.templates[lang]?.trim()
+          ? p.templates
+          : { ...p.templates, [lang]: DEFAULT_TEMPLATES[lang] ?? '' },
+        wrappers: p.wrappers[lang]?.trim()
+          ? p.wrappers
+          : { ...p.wrappers, [lang]: DEFAULT_WRAPPERS[lang] ?? '' },
+      };
     });
   };
+
+  if (createdProblem) {
+    return (
+      <ManageTestCasesModal
+        problemId={createdProblem.id}
+        problemTitle={createdProblem.title}
+        onClose={onClose}
+      />
+    );
+  }
 
   return (
     <Modal title="Tạo đề bài lập trình mới" onClose={onClose} extraWide>
@@ -180,7 +210,7 @@ export function CreateProblemModal({ onClose }: CreateProblemModalProps) {
               onChange={(e) =>
                 setForm((p) => ({
                   ...p,
-                  difficulty: e.target.value as any,
+                  difficulty: e.target.value as 'easy' | 'medium' | 'hard',
                 }))
               }
               className={inputCls}
@@ -221,36 +251,6 @@ export function CreateProblemModal({ onClose }: CreateProblemModalProps) {
               }
               className={inputCls}
               min={16}
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Input Mẫu (Sample Input)
-            </label>
-            <textarea
-              value={form.sampleInput}
-              onChange={(e) =>
-                setForm((p) => ({ ...p, sampleInput: e.target.value }))
-              }
-              placeholder="1 2"
-              className={`${inputCls} h-20`}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Output Mẫu (Sample Output)
-            </label>
-            <textarea
-              value={form.sampleOutput}
-              onChange={(e) =>
-                setForm((p) => ({ ...p, sampleOutput: e.target.value }))
-              }
-              placeholder="3"
-              className={`${inputCls} h-20`}
             />
           </div>
         </div>
@@ -299,43 +299,33 @@ export function CreateProblemModal({ onClose }: CreateProblemModalProps) {
                       <label className="block text-[11px] font-bold text-slate-500 mb-1">
                         Mẫu Code học sinh nhìn thấy
                       </label>
-                      <textarea
+                      <CodeInput
                         value={form.templates[lang] || ''}
-                        onChange={(e) =>
+                        onChange={(v) =>
                           setForm((p) => ({
                             ...p,
                             templates: {
                               ...p.templates,
-                              [lang]: e.target.value,
+                              [lang]: v,
                             },
                           }))
                         }
-                        placeholder={
-                          lang === 'python'
-                            ? 'class Solution:\n    def solve(self, a: int, b: int) -> int:\n        pass'
-                            : '// {{STUDENT_CODE}}\n...'
-                        }
-                        className={`${inputCls} h-28 text-xs font-mono`}
+                        language={lang}
                       />
                     </div>
                     <div>
                       <label className="block text-[11px] font-bold text-slate-500 mb-1">
                         Mã bọc chạy chấm điểm (Driver Code)
                       </label>
-                      <textarea
+                      <CodeInput
                         value={form.wrappers[lang] || ''}
-                        onChange={(e) =>
+                        onChange={(v) =>
                           setForm((p) => ({
                             ...p,
-                            wrappers: { ...p.wrappers, [lang]: e.target.value },
+                            wrappers: { ...p.wrappers, [lang]: v },
                           }))
                         }
-                        placeholder={
-                          lang === 'python'
-                            ? '# {{STUDENT_CODE}}\nimport sys\n...\nprint(Solution().solve(a, b))'
-                            : '// {{STUDENT_CODE}}\n...'
-                        }
-                        className={`${inputCls} h-28 text-xs font-mono`}
+                        language={lang}
                       />
                     </div>
                   </div>

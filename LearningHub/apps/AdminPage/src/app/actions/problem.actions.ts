@@ -35,11 +35,17 @@ export async function createProblem(data: {
   difficulty: 'easy' | 'medium' | 'hard';
   timeLimitMs: number;
   memoryLimitMb: number;
-  sampleInput: string | null;
-  sampleOutput: string | null;
   languages: string[];
+  templates?: Record<string, string>;
+  wrappers?: Record<string, string>;
 }) {
-  return unwrap(await new CreateProblemUsecase(getRepo()).execute(data));
+  return unwrap(
+    await new CreateProblemUsecase(getRepo()).execute({
+      ...data,
+      sampleInput: null,
+      sampleOutput: null,
+    }),
+  );
 }
 
 export async function getTestCases(problemId: string) {

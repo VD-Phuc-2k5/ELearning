@@ -11,9 +11,21 @@ import {
 } from '../../lib/admin-api';
 import { updateProblem } from '../../app/actions/problem.actions';
 import { MarkdownEditor } from './markdown-editor';
+import { CodeInput } from './code-input';
+import { DEFAULT_TEMPLATES, DEFAULT_WRAPPERS } from './default-code-presets';
 
 interface EditProblemModalProps {
-  problem: any;
+  problem: {
+    id: string;
+    title: string;
+    description: string;
+    difficulty: 'easy' | 'medium' | 'hard';
+    timeLimitMs: number;
+    memoryLimitMb: number;
+    languages: string[];
+    templates?: Record<string, string>;
+    wrappers?: Record<string, string>;
+  };
   onClose: () => void;
 }
 
@@ -25,8 +37,6 @@ export function EditProblemModal({ problem, onClose }: EditProblemModalProps) {
     difficulty: problem.difficulty || 'easy',
     timeLimitMs: problem.timeLimitMs || 5000,
     memoryLimitMb: problem.memoryLimitMb || 256,
-    sampleInput: problem.sampleInput || '',
-    sampleOutput: problem.sampleOutput || '',
     languages: problem.languages || [],
     templates: problem.templates || {},
     wrappers: problem.wrappers || {},
@@ -120,8 +130,6 @@ export function EditProblemModal({ problem, onClose }: EditProblemModalProps) {
         ...form,
         title: form.title.trim(),
         description: form.description.trim(),
-        sampleInput: form.sampleInput?.trim() || null,
-        sampleOutput: form.sampleOutput?.trim() || null,
       }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['admin-problems'] });
@@ -133,10 +141,21 @@ export function EditProblemModal({ problem, onClose }: EditProblemModalProps) {
 
   const toggleLanguage = (lang: string) => {
     setForm((p) => {
-      const languages = p.languages.includes(lang)
-        ? p.languages.filter((l: string) => l !== lang)
-        : [...p.languages, lang];
-      return { ...p, languages };
+      const isAdding = !p.languages.includes(lang);
+      const languages = isAdding
+        ? [...p.languages, lang]
+        : p.languages.filter((l: string) => l !== lang);
+      if (!isAdding) return { ...p, languages };
+      return {
+        ...p,
+        languages,
+        templates: p.templates[lang]?.trim()
+          ? p.templates
+          : { ...p.templates, [lang]: DEFAULT_TEMPLATES[lang] ?? '' },
+        wrappers: p.wrappers[lang]?.trim()
+          ? p.wrappers
+          : { ...p.wrappers, [lang]: DEFAULT_WRAPPERS[lang] ?? '' },
+      };
     });
   };
 
@@ -182,7 +201,7 @@ export function EditProblemModal({ problem, onClose }: EditProblemModalProps) {
               onChange={(e) =>
                 setForm((p) => ({
                   ...p,
-                  difficulty: e.target.value as any,
+                  difficulty: e.target.value as 'easy' | 'medium' | 'hard',
                 }))
               }
               className={inputCls}
@@ -226,36 +245,6 @@ export function EditProblemModal({ problem, onClose }: EditProblemModalProps) {
               }
               className={inputCls}
               min={16}
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Input Mẫu (Sample Input)
-            </label>
-            <textarea
-              value={form.sampleInput}
-              onChange={(e) =>
-                setForm((p) => ({ ...p, sampleInput: e.target.value }))
-              }
-              placeholder="1 2"
-              className={`${inputCls} h-20`}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Output Mẫu (Sample Output)
-            </label>
-            <textarea
-              value={form.sampleOutput}
-              onChange={(e) =>
-                setForm((p) => ({ ...p, sampleOutput: e.target.value }))
-              }
-              placeholder="3"
-              className={`${inputCls} h-20`}
             />
           </div>
         </div>
@@ -304,43 +293,33 @@ export function EditProblemModal({ problem, onClose }: EditProblemModalProps) {
                       <label className="block text-[11px] font-bold text-slate-500 mb-1">
                         Mẫu Code học sinh nhìn thấy
                       </label>
-                      <textarea
+                      <CodeInput
                         value={form.templates[lang] || ''}
-                        onChange={(e) =>
+                        onChange={(v) =>
                           setForm((p) => ({
                             ...p,
                             templates: {
                               ...p.templates,
-                              [lang]: e.target.value,
+                              [lang]: v,
                             },
                           }))
                         }
-                        placeholder={
-                          lang === 'python'
-                            ? 'class Solution:\n    def solve(self, a: int, b: int) -> int:\n        pass'
-                            : '// {{STUDENT_CODE}}\n...'
-                        }
-                        className={`${inputCls} h-28 text-xs font-mono`}
+                        language={lang}
                       />
                     </div>
                     <div>
                       <label className="block text-[11px] font-bold text-slate-500 mb-1">
                         Mã bọc chạy chấm điểm (Driver Code)
                       </label>
-                      <textarea
+                      <CodeInput
                         value={form.wrappers[lang] || ''}
-                        onChange={(e) =>
+                        onChange={(v) =>
                           setForm((p) => ({
                             ...p,
-                            wrappers: { ...p.wrappers, [lang]: e.target.value },
+                            wrappers: { ...p.wrappers, [lang]: v },
                           }))
                         }
-                        placeholder={
-                          lang === 'python'
-                            ? '# {{STUDENT_CODE}}\nimport sys\n...\nprint(Solution().solve(a, b))'
-                            : '// {{STUDENT_CODE}}\n...'
-                        }
-                        className={`${inputCls} h-28 text-xs font-mono`}
+                        language={lang}
                       />
                     </div>
                   </div>

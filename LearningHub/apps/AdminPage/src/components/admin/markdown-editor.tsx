@@ -3,6 +3,7 @@
 import { useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import {
   Bold,
   Italic,
@@ -53,8 +54,10 @@ export function MarkdownEditor({
   height = 280,
 }: MarkdownEditorProps) {
   const [mode, setMode] = useState<ViewMode>('split');
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const editorRef = useRef<any>(null);
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleEditorMount = (editor: any) => {
     editorRef.current = editor;
   };
@@ -243,7 +246,9 @@ export function MarkdownEditor({
           >
             {value.trim() ? (
               <div className="markdown-preview prose prose-sm max-w-none text-slate-800">
-                <ReactMarkdown>{value}</ReactMarkdown>
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {value}
+                </ReactMarkdown>
               </div>
             ) : (
               <p className="text-slate-400 text-sm italic">

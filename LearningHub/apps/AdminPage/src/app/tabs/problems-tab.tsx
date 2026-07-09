@@ -1,9 +1,33 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Terminal, BookOpen, Edit3, Trash2 } from 'lucide-react';
+import {
+  Terminal,
+  BookOpen,
+  Edit3,
+  Trash2,
+  FileText,
+  Clock,
+  Cpu,
+  AlertCircle,
+  CheckCircle2,
+} from 'lucide-react';
 import { getProblems, deleteProblem } from '../actions/problem.actions';
 import { ManageTestCasesModal } from '../../components/admin/manage-test-cases-modal';
 import { EditProblemModal } from '../../components/admin/edit-problem-modal';
+
+interface ProblemItem {
+  id: string;
+  title: string;
+  description: string;
+  difficulty: 'easy' | 'medium' | 'hard';
+  timeLimitMs: number;
+  memoryLimitMb: number;
+  languages: string[];
+  status?: 'draft' | 'public';
+  testCaseCount?: number;
+  templates?: Record<string, string>;
+  wrappers?: Record<string, string>;
+}
 
 export function ProblemsTab() {
   const qc = useQueryClient();
@@ -11,14 +35,17 @@ export function ProblemsTab() {
     id: string;
     title: string;
   } | null>(null);
-  const [editingProblem, setEditingProblem] = useState<any | null>(null);
+  const [editingProblem, setEditingProblem] = useState<ProblemItem | null>(
+    null,
+  );
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const deleteMut = useMutation({
     mutationFn: (id: string) => deleteProblem(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['admin-problems'] });
     },
-    onError: (e: any) => {
+    onError: (e: Error) => {
       alert(e.message || 'Xóa đề bài thất bại');
     },
   });
@@ -33,7 +60,7 @@ export function ProblemsTab() {
     }
   };
 
-  const { data, isLoading } = useQuery<{ data: any[]; total: number }>({
+  const { data, isLoading } = useQuery<{ data: ProblemItem[]; total: number }>({
     queryKey: ['admin-problems'],
     queryFn: getProblems,
   });
@@ -61,6 +88,21 @@ export function ProblemsTab() {
       default:
         return null;
     }
+  };
+
+  const getStatusBadge = (status: string) => {
+    if (status === 'public') {
+      return (
+        <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
+          <CheckCircle2 className="h-3 w-3" /> Công khai
+        </span>
+      );
+    }
+    return (
+      <span className="inline-flex items-center gap-1 bg-amber-50 text-amber-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
+        <AlertCircle className="h-3 w-3" /> Bản nháp
+      </span>
+    );
   };
 
   if (isLoading)
@@ -99,8 +141,8 @@ export function ProblemsTab() {
               Chưa có đề bài lập trình nào
             </h3>
             <p className="text-slate-500 text-sm max-w-sm mx-auto mb-6">
-              Vui lòng nhấn nút "Thêm đề bài mới" ở trên để tạo đề bài đầu tiên
-              cho hệ thống.
+              Vui lòng nhấn nút "Thêm đề bài" ở trên để tạo đề bài đầu tiên cho
+              hệ thống.
             </p>
           </div>
         ) : (
@@ -109,6 +151,9 @@ export function ProblemsTab() {
               <tr>
                 <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">
                   Tên đề bài
+                </th>
+                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">
+                  Trạng thái
                 </th>
                 <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">
                   Độ khó
@@ -125,22 +170,53 @@ export function ProblemsTab() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {problems.map((p: any) => (
+              {problems.map((p: ProblemItem) => (
                 <tr key={p.id} className="hover:bg-slate-50 transition">
                   <td className="px-6 py-4">
                     <div className="font-bold text-slate-900">{p.title}</div>
-                    <div className="text-xs text-slate-500 truncate max-w-[200px]">
-                      {p.description}
+                    <div className="text-xs text-slate-500 truncate max-w-[250px] mt-1">
+                      {p.description
+                        ?.replace(/[#*`>\]]/g, '')
+                        .substring(0, 100) || ''}
+                    </div>
+                    <button
+                      onClick={() =>
+                        setExpandedId(expandedId === p.id ? null : p.id)
+                      }
+                      className="mt-1 inline-flex items-center gap-1 text-[10px] font-bold text-indigo-600 hover:text-indigo-800 transition cursor-pointer"
+                    >
+                      <FileText className="h-3 w-3" />
+                      {expandedId === p.id ? 'Ẩn mô tả' : 'Xem mô tả'}
+                    </button>
+                    {expandedId === p.id && (
+                      <div className="mt-3 p-4 bg-slate-50 border border-slate-200 rounded-xl max-h-[300px] overflow-y-auto">
+                        <div className="prose prose-sm max-w-none text-slate-700 whitespace-pre-wrap font-mono text-xs leading-relaxed">
+                          {p.description}
+                        </div>
+                      </div>
+                    )}
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="space-y-1">
+                      {getStatusBadge(p.status || 'draft')}
+                      {p.testCaseCount !== undefined && (
+                        <div className="text-[10px] text-slate-400 font-medium">
+                          {p.testCaseCount} test case
+                          {p.testCaseCount !== 1 ? 's' : ''}
+                        </div>
+                      )}
                     </div>
                   </td>
                   <td className="px-6 py-4">
                     {getDifficultyBadge(p.difficulty)}
                   </td>
                   <td className="px-6 py-4">
-                    <div className="text-sm font-medium text-slate-700">
+                    <div className="flex items-center gap-1 text-sm font-medium text-slate-700">
+                      <Clock className="h-3 w-3 text-slate-400" />
                       {p.timeLimitMs} ms
                     </div>
-                    <div className="text-xs text-slate-500">
+                    <div className="flex items-center gap-1 text-xs text-slate-500 mt-0.5">
+                      <Cpu className="h-3 w-3 text-slate-400" />
                       {p.memoryLimitMb} MB RAM
                     </div>
                   </td>
@@ -192,7 +268,10 @@ export function ProblemsTab() {
         <ManageTestCasesModal
           problemId={activeProblem.id}
           problemTitle={activeProblem.title}
-          onClose={() => setActiveProblem(null)}
+          onClose={() => {
+            setActiveProblem(null);
+            qc.invalidateQueries({ queryKey: ['admin-problems'] });
+          }}
         />
       )}
 

@@ -49,6 +49,22 @@ jest.mock('./markdown-editor', () => ({
   ),
 }));
 
+jest.mock('./code-input', () => ({
+  CodeInput: ({
+    value,
+    onChange,
+  }: {
+    value: string;
+    onChange: (v: string) => void;
+  }) => <textarea value={value} onChange={(e) => onChange(e.target.value)} />,
+}));
+
+jest.mock('./manage-test-cases-modal', () => ({
+  ManageTestCasesModal: ({ problemTitle }: { problemTitle: string }) => (
+    <div data-testid="manage-test-cases-modal">{problemTitle}</div>
+  ),
+}));
+
 const mockCreateProblem = createProblem as jest.MockedFunction<
   typeof createProblem
 >;
@@ -101,20 +117,20 @@ async function fillAllRequired() {
   if (numInputs[1])
     fireEvent.change(numInputs[1], { target: { value: '256' } });
 
-  // getLangTextareas() returns: [0]=sampleInput, [1]=sampleOutput, [2]=python-template, [3]=python-wrapper, [4]=js-template, [5]=js-wrapper
+  // getLangTextareas() returns: [0]=python-template, [1]=python-wrapper, [2]=js-template, [3]=js-wrapper
   const langTAs = getLangTextareas();
-  if (langTAs[2])
-    fireEvent.change(langTAs[2], {
+  if (langTAs[0])
+    fireEvent.change(langTAs[0], {
       target: { value: 'class Solution:\n    def solve(self): pass' },
     });
-  if (langTAs[3])
-    fireEvent.change(langTAs[3], {
+  if (langTAs[1])
+    fireEvent.change(langTAs[1], {
       target: { value: '{{STUDENT_CODE}}\nprint(Solution().solve())' },
     });
-  if (langTAs[4])
-    fireEvent.change(langTAs[4], { target: { value: 'function solve() {}' } });
-  if (langTAs[5])
-    fireEvent.change(langTAs[5], {
+  if (langTAs[2])
+    fireEvent.change(langTAs[2], { target: { value: 'function solve() {}' } });
+  if (langTAs[3])
+    fireEvent.change(langTAs[3], {
       target: { value: '{{STUDENT_CODE}}\nconsole.log(solve())' },
     });
 }
@@ -195,7 +211,10 @@ describe('AdminPage — CreateProblemModal validation (TC082–TC097)', () => {
     renderModal();
     fireEvent.change(getTitleInput(), { target: { value: 'Two Sum' } });
     fireEvent.change(getDescriptionEditor(), { target: { value: 'desc' } });
-    // Leave all language templates/wrappers empty
+    // Python + JavaScript are pre-checked with default template/wrapper code —
+    // clear the python template to trigger the "missing template" validation
+    const langTAs = getLangTextareas();
+    if (langTAs[0]) fireEvent.change(langTAs[0], { target: { value: '' } });
     fireEvent.click(getSubmitButton());
 
     await waitFor(() => {
@@ -212,27 +231,32 @@ describe('AdminPage — CreateProblemModal validation (TC082–TC097)', () => {
     fireEvent.change(getDescriptionEditor(), { target: { value: 'desc' } });
 
     const langTAs = getLangTextareas();
-    // [2]=python-template, [3]=python-wrapper (indices 0,1 are sampleInput/sampleOutput)
-    if (langTAs[2])
-      fireEvent.change(langTAs[2], {
+    // [0]=python-template, [1]=python-wrapper
+    if (langTAs[0])
+      fireEvent.change(langTAs[0], {
         target: { value: 'class Solution: pass' },
       });
     // Fill wrapper WITHOUT {{STUDENT_CODE}}
-    if (langTAs[3])
-      fireEvent.change(langTAs[3], {
+    if (langTAs[1])
+      fireEvent.change(langTAs[1], {
         target: { value: 'no placeholder here' },
       });
 
     fireEvent.click(getSubmitButton());
 
     await waitFor(() => {
-      expect(screen.getByText(/STUDENT_CODE/i)).toBeTruthy();
+      // JS wrapper still has the default {{STUDENT_CODE}} placeholder in its
+      // textarea, so match the specific error text rather than the raw token
+      expect(screen.getByText(/bắt buộc phải chứa placeholder/i)).toBeTruthy();
     });
     expect(mockCreateProblem).not.toHaveBeenCalled();
   });
 
-  it('TC084 — calls createProblem when all required fields are valid', async () => {
-    mockCreateProblem.mockResolvedValue({ id: 'prob-1' } as any);
+  it('TC084 — calls createProblem when all required fields are valid, then opens test-case setup', async () => {
+    mockCreateProblem.mockResolvedValue({
+      id: 'prob-1',
+      title: 'Two Sum',
+    } as Awaited<ReturnType<typeof createProblem>>);
     renderModal();
 
     await fillAllRequired();
@@ -240,6 +264,9 @@ describe('AdminPage — CreateProblemModal validation (TC082–TC097)', () => {
 
     await waitFor(() => {
       expect(mockCreateProblem).toHaveBeenCalled();
+    });
+    await waitFor(() => {
+      expect(screen.getByTestId('manage-test-cases-modal')).toBeTruthy();
     });
   });
 });
