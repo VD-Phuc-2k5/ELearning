@@ -6,6 +6,7 @@ import {
   SubmitCodeUsecase,
   SubmitCodeParamsWithId,
   GetSubmissionStatusUsecase,
+  GetSampleTestCasesUsecase,
 } from '@learning-hub/domain';
 import {
   ProblemRemoteDataSourceImpl,
@@ -27,7 +28,7 @@ async function unwrapOrThrow<T>(
 export async function getStudentProblems(): Promise<any> {
   try {
     return await unwrapOrThrow(
-      new GetProblemsUsecase(getRepo()).execute(undefined),
+      new GetProblemsUsecase(getRepo()).execute({ status: 'public' }),
     );
   } catch {
     return { data: [], total: 0 };
@@ -41,6 +42,18 @@ export async function getStudentProblemDetail(id: string): Promise<any> {
     );
   } catch {
     return null;
+  }
+}
+
+export async function getSampleTestCases(
+  problemId: string,
+): Promise<{ input: string; expectedOutput: string }[]> {
+  try {
+    return await unwrapOrThrow(
+      new GetSampleTestCasesUsecase(getRepo()).execute(problemId),
+    );
+  } catch {
+    return [];
   }
 }
 

@@ -3,10 +3,13 @@
 import { useEffect, useState, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'next/navigation';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import {
   getStudentProblemDetail,
   submitStudentCode,
   getSubmissionStatus,
+  getSampleTestCases,
 } from '../../../actions/problem.actions';
 import { executeCodeAction } from '../../../actions/sandbox.actions';
 import { CodeEditor } from '../../playground/components/code-editor';
@@ -77,12 +80,20 @@ export default function SolveProblemPage() {
     queryFn: () => getStudentProblemDetail(problemId),
   });
 
+  const { data: sampleTestCases } = useQuery<
+    { input: string; expectedOutput: string }[]
+  >({
+    queryKey: ['problem-samples', problemId],
+    queryFn: () => getSampleTestCases(problemId),
+    enabled: !!problemId,
+  });
+
   // Load sample input into custom input text area when problem loads
   useEffect(() => {
-    if (problem?.sampleInput) {
-      setCustomInput(problem.sampleInput);
+    if (sampleTestCases?.[0]?.input) {
+      setCustomInput(sampleTestCases[0].input);
     }
-  }, [problem]);
+  }, [sampleTestCases]);
 
   const handleRun = async () => {
     setIsRunningCode(true);
@@ -323,35 +334,42 @@ export default function SolveProblemPage() {
               </div>
             </div>
 
-            <div className="prose prose-slate max-w-none text-sm text-slate-600 whitespace-pre-wrap leading-relaxed">
-              {problem.description}
+            <div className="prose prose-slate max-w-none text-sm text-slate-600 leading-relaxed">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {problem.description}
+              </ReactMarkdown>
             </div>
           </div>
 
-          {(problem.sampleInput || problem.sampleOutput) && (
+          {sampleTestCases && sampleTestCases.length > 0 && (
             <div className="bg-white border border-slate-200 rounded-3xl p-6 space-y-4">
               <h3 className="text-sm font-bold text-slate-800">Ví dụ mẫu</h3>
-              <div className="space-y-3">
-                {problem.sampleInput && (
-                  <div>
-                    <div className="text-xs font-bold text-slate-500 mb-1">
-                      Sample Input
+              <div className="space-y-5">
+                {sampleTestCases.map((sample, idx) => (
+                  <div key={idx} className="space-y-3">
+                    {sampleTestCases.length > 1 && (
+                      <div className="text-xs font-bold text-slate-400">
+                        Ví dụ {idx + 1}
+                      </div>
+                    )}
+                    <div>
+                      <div className="text-xs font-bold text-slate-500 mb-1">
+                        Sample Input
+                      </div>
+                      <pre className="bg-slate-950 text-slate-100 p-3 rounded-xl font-mono text-xs overflow-x-auto">
+                        {sample.input || <span className="italic">—</span>}
+                      </pre>
                     </div>
-                    <pre className="bg-slate-950 text-slate-100 p-3 rounded-xl font-mono text-xs overflow-x-auto">
-                      {problem.sampleInput}
-                    </pre>
-                  </div>
-                )}
-                {problem.sampleOutput && (
-                  <div>
-                    <div className="text-xs font-bold text-slate-500 mb-1">
-                      Sample Output
+                    <div>
+                      <div className="text-xs font-bold text-slate-500 mb-1">
+                        Sample Output
+                      </div>
+                      <pre className="bg-slate-950 text-slate-100 p-3 rounded-xl font-mono text-xs overflow-x-auto">
+                        {sample.expectedOutput}
+                      </pre>
                     </div>
-                    <pre className="bg-slate-950 text-slate-100 p-3 rounded-xl font-mono text-xs overflow-x-auto">
-                      {problem.sampleOutput}
-                    </pre>
                   </div>
-                )}
+                ))}
               </div>
             </div>
           )}
