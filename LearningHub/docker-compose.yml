@@ -106,6 +106,8 @@ services:
   pgadmin:
     image: dpage/pgadmin4
     container_name: pgadmin
+    networks:
+      - learning-hub-network
     secrets:
       - pgadmin_password
     environment:
