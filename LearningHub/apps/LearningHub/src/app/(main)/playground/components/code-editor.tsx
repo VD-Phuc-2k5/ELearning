@@ -2,7 +2,10 @@
 
 import { useMemo } from 'react';
 import { FileCode2, RefreshCw } from 'lucide-react';
-import Editor from '@monaco-editor/react';
+import Editor, { loader } from '@monaco-editor/react';
+import * as monaco from 'monaco-editor';
+
+loader.config({ monaco });
 
 interface CodeEditorProps {
   code: string;
