@@ -1,17 +1,19 @@
 const nextJest = require('next/jest.js');
 
 const createJestConfig = nextJest({
-  dir: './',
+  dir: __dirname,
 });
 
 const config = {
   displayName: '@learning-hub/LearningHub',
   preset: '../../jest.preset.js',
+  setupFiles: ['<rootDir>/specs/setup-jest.ts'],
   transform: {
     '^(?!.*\\.(js|jsx|ts|tsx|css|json)$)': '@nx/react/plugins/jest',
   },
   moduleNameMapper: {
     '@aejkatappaja/phantom-ui': '<rootDir>/specs/__mocks__/phantom-ui.ts',
+    '^gsap/ScrollTrigger$': '<rootDir>/specs/__mocks__/gsap-scrolltrigger.ts',
   },
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],
   coverageDirectory: '../../coverage/apps/LearningHub',
