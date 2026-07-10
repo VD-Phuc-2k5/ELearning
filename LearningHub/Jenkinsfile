@@ -70,9 +70,9 @@ pipeline {
             echo "Waiting for PostgreSQL... (${i}/30)" && sleep 2
           done
 
-          echo "=== Creating test database ==="
-          sudo docker exec test-postgres psql -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" -c "CREATE DATABASE ${POSTGRES_TEST_DB}" 2>/dev/null || true
-          sudo docker exec test-postgres psql -U "${POSTGRES_USER}" -d "${POSTGRES_TEST_DB}" -c "SELECT 1" && echo "Test DB ${POSTGRES_TEST_DB} is accessible"
+          echo "=== Recreating test database ==="
+          sudo docker exec test-postgres psql -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" -c "DROP DATABASE IF EXISTS ${POSTGRES_TEST_DB}"
+          sudo docker exec test-postgres psql -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" -c "CREATE DATABASE ${POSTGRES_TEST_DB}"
 
           echo "=== Waiting for Redis ==="
           for i in $(seq 1 15); do
@@ -82,6 +82,10 @@ pipeline {
             fi
             echo "Waiting for Redis... (${i}/15)" && sleep 1
           done
+
+          echo "=== Running migrations ==="
+          cd "${PROJECT_DIR}"
+          POSTGRES_DB="${POSTGRES_TEST_DB}" pnpm migration:run
 
           echo "=== Container status ==="
           sudo docker ps --filter "name=test-" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
