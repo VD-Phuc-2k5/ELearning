@@ -321,6 +321,7 @@ services:
 
 networks:
   learning-hub-network:
+    name: learning-hub-network
     driver: bridge
 
 volumes:
