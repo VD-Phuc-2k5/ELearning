@@ -12,9 +12,9 @@ pipeline {
     POSTGRES_PASSWORD = 'postgres'
     POSTGRES_DB       = 'dev_learning_hub'
     POSTGRES_TEST_DB  = 'test_learning_hub'
-    POSTGRES_HOST     = 'localhost'
+    POSTGRES_HOST     = 'test-postgres'
     POSTGRES_PORT     = '5432'
-    REDIS_HOST        = 'localhost'
+    REDIS_HOST        = 'test-redis'
     REDIS_PORT        = '6379'
   }
 
@@ -44,6 +44,7 @@ pipeline {
 
           echo "=== Starting test-postgres ==="
           sudo docker run -d --name test-postgres \
+            --network learning-hub-network \
             -e POSTGRES_USER="${POSTGRES_USER}" \
             -e POSTGRES_PASSWORD="${POSTGRES_PASSWORD}" \
             -e POSTGRES_DB="${POSTGRES_DB}" \
@@ -52,6 +53,7 @@ pipeline {
 
           echo "=== Starting test-redis ==="
           sudo docker run -d --name test-redis \
+            --network learning-hub-network \
             -p "${REDIS_PORT}:6379" \
             redis:8-alpine
 
