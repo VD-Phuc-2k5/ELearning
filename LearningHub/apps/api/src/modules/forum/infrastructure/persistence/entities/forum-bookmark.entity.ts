@@ -20,7 +20,7 @@ export class ForumBookmarkEntity {
   @PrimaryColumn({ name: 'post_id', type: 'uuid' })
   postId!: string;
 
-  @ManyToOne(() => ForumPostEntity)
+  @ManyToOne(() => ForumPostEntity, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'post_id' })
   post!: ForumPostEntity;
 

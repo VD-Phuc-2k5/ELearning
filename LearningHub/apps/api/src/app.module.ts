@@ -49,6 +49,7 @@ import { AddUniqueUsername1785000000001 } from './migrations/1785000000001-AddUn
 import { AddRejectReasonToQuestionBanks1785000000002 } from './migrations/1785000000002-AddRejectReasonToQuestionBanks';
 import { DropBrokenForumPostSearchTrigger1785000000003 } from './migrations/1785000000003-DropBrokenForumPostSearchTrigger';
 import { FixForumCascadeDeletes1785000000004 } from './migrations/1785000000004-FixForumCascadeDeletes';
+import { FixForumPostCascadeDeletes1785000000005 } from './migrations/1785000000005-FixForumPostCascadeDeletes';
 import { SandboxModule } from './modules/sandbox/sandbox.module';
 import { JudgeModule } from './modules/judge/judge.module';
 import { HealthController } from './health.controller';
@@ -114,6 +115,7 @@ import { HealthController } from './health.controller';
           AddRejectReasonToQuestionBanks1785000000002,
           DropBrokenForumPostSearchTrigger1785000000003,
           FixForumCascadeDeletes1785000000004,
+          FixForumPostCascadeDeletes1785000000005,
         ],
         migrationsRun: true,
       }),

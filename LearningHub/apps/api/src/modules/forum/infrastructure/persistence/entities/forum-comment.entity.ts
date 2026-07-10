@@ -20,7 +20,7 @@ export class ForumCommentEntity {
   @Column({ name: 'post_id' })
   postId!: string;
 
-  @ManyToOne(() => ForumPostEntity)
+  @ManyToOne(() => ForumPostEntity, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'post_id' })
   post!: ForumPostEntity;
 

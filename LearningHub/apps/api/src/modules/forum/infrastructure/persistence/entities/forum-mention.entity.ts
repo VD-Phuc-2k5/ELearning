@@ -17,7 +17,7 @@ export class ForumMentionEntity {
   @Column({ name: 'post_id', type: 'varchar', nullable: true })
   postId!: string | null;
 
-  @ManyToOne(() => ForumPostEntity, { nullable: true })
+  @ManyToOne(() => ForumPostEntity, { nullable: true, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'post_id' })
   post!: ForumPostEntity | null;
 

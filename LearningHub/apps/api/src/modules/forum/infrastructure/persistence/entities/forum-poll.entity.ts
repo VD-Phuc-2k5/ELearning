@@ -15,7 +15,7 @@ export class ForumPollEntity {
   @Column({ name: 'post_id', unique: true })
   postId!: string;
 
-  @OneToOne(() => ForumPostEntity)
+  @OneToOne(() => ForumPostEntity, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'post_id' })
   post!: ForumPostEntity;
 
