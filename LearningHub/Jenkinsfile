@@ -12,9 +12,9 @@ pipeline {
     POSTGRES_PASSWORD = 'postgres'
     POSTGRES_DB       = 'dev_learning_hub'
     POSTGRES_TEST_DB  = 'test_learning_hub'
-    POSTGRES_HOST     = 'test-postgres'
+    POSTGRES_HOST     = 'postgres'
     POSTGRES_PORT     = '5432'
-    REDIS_HOST        = 'test-redis'
+    REDIS_HOST        = 'redis'
     REDIS_PORT        = '6379'
     JWT_SECRET        = credentials('jwt-secret')
     CLOUDINARY_CLOUD_NAME = 'test'
@@ -43,53 +43,18 @@ pipeline {
       steps {
         sh '''
           set -e
+          echo "=== Using existing postgres container ==="
 
-          sudo docker stop test-postgres test-redis 2>/dev/null || true
-          sudo docker rm -f test-postgres test-redis 2>/dev/null || true
+          sudo docker ps | grep postgres
 
-          echo "=== Starting test-postgres ==="
-          sudo docker run -d \
-            --name test-postgres \
-            --network learning-hub-network \
-            -e POSTGRES_USER="${POSTGRES_USER}" \
-            -e POSTGRES_PASSWORD="${POSTGRES_PASSWORD}" \
-            -e POSTGRES_DB="${POSTGRES_DB}" \
-            -p "${POSTGRES_PORT}:5432" \
-            postgres:17
-
-          echo "=== Starting test-redis ==="
-          sudo docker run -d \
-            --name test-redis \
-            --network learning-hub-network \
-            -p "${REDIS_PORT}:6379" \
-            redis:8-alpine
-
-          echo "=== Waiting for PostgreSQL ==="
-          for i in $(seq 1 30); do
-            if sudo docker exec test-postgres pg_isready -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" 2>/dev/null | grep -q "accepting connections"; then
-              echo "PostgreSQL is ready"
-              break
-            fi
-            echo "Waiting for PostgreSQL... ($i/30)"
-            sleep 2
-          done
-
-          echo "=== Creating test database ==="
-          sudo docker exec test-postgres psql -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" -c "DROP DATABASE IF EXISTS ${POSTGRES_TEST_DB}"
-          sudo docker exec test-postgres psql -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" -c "CREATE DATABASE ${POSTGRES_TEST_DB}"
+          sudo docker exec postgres psql -U postgres -c "DROP DATABASE IF EXISTS test_learning_hub"
+          sudo docker exec postgres psql -U postgres -c "CREATE DATABASE test_learning_hub"
 
           echo "=== Waiting for Redis ==="
-          for i in $(seq 1 15); do
-            if sudo docker exec test-redis redis-cli PING 2>/dev/null | grep -q "PONG"; then
-              echo "Redis is ready"
-              break
-            fi
-            echo "Waiting for Redis... ($i/15)"
-            sleep 2
-          done
+          sudo docker exec redis redis-cli PING || true
 
           echo "=== Container status ==="
-          sudo docker ps --filter "name=test-" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+          sudo docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
         '''
       }
     }
@@ -145,8 +110,7 @@ pipeline {
   post {
     always {
       sh '''
-        sudo docker rm -f test-postgres test-redis 2>/dev/null || true
-        sudo docker start postgres redis 2>/dev/null || true
+        echo "=== Cleanup complete ==="
       '''
     }
     failure { echo 'Pipeline FAILED' }
