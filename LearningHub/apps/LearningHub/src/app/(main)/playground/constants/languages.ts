@@ -8,7 +8,8 @@ export type Language =
   | 'cpp'
   | 'rust'
   | 'typescript'
-  | 'swift';
+  | 'swift'
+  | 'web';
 
 export const LANGUAGES: { value: Language; label: string }[] = [
   { value: 'python', label: 'Python 3' },
@@ -21,4 +22,5 @@ export const LANGUAGES: { value: Language; label: string }[] = [
   { value: 'csharp', label: 'C# (.NET)' },
   { value: 'rust', label: 'Rust' },
   { value: 'swift', label: 'Swift' },
+  { value: 'web', label: 'Web (HTML/CSS/JS)' },
 ];

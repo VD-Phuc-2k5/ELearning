@@ -1,17 +1,20 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { FileCode2, RefreshCw } from 'lucide-react';
-import Editor, { loader } from '@monaco-editor/react';
-import * as monaco from 'monaco-editor';
-
-loader.config({ monaco });
+import Editor, { OnMount } from '@monaco-editor/react';
+import '../lib/monaco-setup';
 
 interface CodeEditorProps {
   code: string;
   setCode: (value: string) => void;
   onReset: () => void;
   language?: string;
+  // Bumped by the parent whenever `code` must be force-pushed into the editor
+  // from outside (Reset button, confirmed language switch). The editor is
+  // otherwise uncontrolled so React re-renders don't fight the user's cursor
+  // position while typing.
+  resetToken: number;
 }
 
 export function CodeEditor({
@@ -19,7 +22,21 @@ export function CodeEditor({
   setCode,
   onReset,
   language = 'python',
+  resetToken,
 }: CodeEditorProps) {
+  const editorRef = useRef<Parameters<OnMount>[0] | null>(null);
+  const initialCode = useRef(code);
+  const isFirstReset = useRef(true);
+
+  useEffect(() => {
+    if (isFirstReset.current) {
+      isFirstReset.current = false;
+      return;
+    }
+    editorRef.current?.setValue(code);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resetToken]);
+
   const monacoLanguage = useMemo(() => {
     switch (language) {
       case 'python':
@@ -83,41 +100,12 @@ export function CodeEditor({
           height="100%"
           language={monacoLanguage}
           theme="vs-dark"
-          value={code}
+          defaultValue={initialCode.current}
+          onMount={(editor) => {
+            editorRef.current = editor;
+          }}
           onChange={(val) => setCode(val || '')}
           options={editorOptions}
-          beforeMount={(monaco) => {
-            monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
-              target: monaco.languages.typescript.ScriptTarget.ESNext,
-              module: monaco.languages.typescript.ModuleKind.ESNext,
-              strict: true,
-              noUnusedLocals: true,
-              noUnusedParameters: true,
-              noImplicitReturns: true,
-              noFallthroughCasesInSwitch: true,
-            });
-            monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions(
-              {
-                noSemanticValidation: false,
-                noSyntaxValidation: false,
-              },
-            );
-            monaco.languages.typescript.javascriptDefaults.setCompilerOptions({
-              target: monaco.languages.typescript.ScriptTarget.ESNext,
-              module: monaco.languages.typescript.ModuleKind.ESNext,
-              strict: true,
-              noUnusedLocals: true,
-              noUnusedParameters: true,
-              noImplicitReturns: true,
-              noFallthroughCasesInSwitch: true,
-            });
-            monaco.languages.typescript.javascriptDefaults.setDiagnosticsOptions(
-              {
-                noSemanticValidation: false,
-                noSyntaxValidation: false,
-              },
-            );
-          }}
         />
       </div>
     </div>

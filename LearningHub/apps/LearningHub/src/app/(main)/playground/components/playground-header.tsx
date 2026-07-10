@@ -8,6 +8,7 @@ interface PlaygroundHeaderProps {
   setLanguage: (value: Language) => void;
   handleRun: () => void;
   isRunning: boolean;
+  showRunButton?: boolean;
 }
 
 export function PlaygroundHeader({
@@ -15,6 +16,7 @@ export function PlaygroundHeader({
   setLanguage,
   handleRun,
   isRunning,
+  showRunButton = true,
 }: PlaygroundHeaderProps) {
   return (
     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-100 pb-6">
@@ -32,14 +34,16 @@ export function PlaygroundHeader({
       <div className="flex items-center gap-4">
         <LanguageSelector value={language} onChange={setLanguage} />
 
-        <Button
-          onClick={handleRun}
-          isLoading={isRunning}
-          icon={<Play className="h-4 w-4 fill-current" />}
-          className="rounded-xl font-semibold shadow-lg shadow-indigo-100"
-        >
-          Run Code
-        </Button>
+        {showRunButton && (
+          <Button
+            onClick={handleRun}
+            isLoading={isRunning}
+            icon={<Play className="h-4 w-4 fill-current" />}
+            className="rounded-xl font-semibold shadow-lg shadow-indigo-100"
+          >
+            Run Code
+          </Button>
+        )}
       </div>
     </div>
   );

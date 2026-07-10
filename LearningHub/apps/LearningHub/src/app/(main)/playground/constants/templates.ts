@@ -10,3 +10,9 @@ export const DEFAULT_TEMPLATES = {
   csharp: `using System;\n\nclass Program {\n    static void Main() {\n        Solution solver = new Solution();\n        solver.solve();\n    }\n}\n\nclass Solution {\n    public void solve() {\n        // Đọc dữ liệu từ stdin và xử lý\n        // string[] tokens = Console.ReadLine().Split();\n        // int a = int.Parse(tokens[0]);\n        // int b = int.Parse(tokens[1]);\n        // Console.WriteLine(a + b);\n    }\n}`,
   swift: `class Solution {\n    func solve() {\n        // Đọc dữ liệu và xử lý\n        if let input = readLine() {\n            print(input)\n        }\n    }\n}\n\nSolution().solve()`,
 };
+
+export const DEFAULT_WEB_TEMPLATE = {
+  html: `<!DOCTYPE html>\n<html>\n  <body>\n    <h1>Hello, world!</h1>\n  </body>\n</html>`,
+  css: `body {\n  font-family: sans-serif;\n  text-align: center;\n  margin-top: 40px;\n}`,
+  js: `console.log('Hello from JS');`,
+};

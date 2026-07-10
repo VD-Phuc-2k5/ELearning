@@ -17,7 +17,7 @@ export function StdinEditor({ stdin, setStdin }: StdinEditorProps) {
       <textarea
         value={stdin}
         onChange={(e) => setStdin(e.target.value)}
-        className="w-full p-4 font-mono text-sm bg-slate-50 text-slate-800 focus:outline-none border-t border-slate-100 h-24 resize-none"
+        className="w-full p-4 font-mono text-sm bg-slate-50 text-slate-800 outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500 border-t border-slate-100 h-24 resize-none"
         placeholder="Provide program inputs here (one per line)..."
       />
     </div>
