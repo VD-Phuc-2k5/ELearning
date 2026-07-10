@@ -26,7 +26,7 @@ describe('Forum Integration (IT029–IT034)', () => {
 
   afterAll(async () => {
     await cleanupTestData(app);
-    await app.close();
+    await app?.close();
   });
 
   it('IT029 — POST /forums creates a forum', async () => {

@@ -23,7 +23,7 @@ describe('Quiz Review Integration (IT025–IT028)', () => {
 
   afterAll(async () => {
     await cleanupTestData(app);
-    await app.close();
+    await app?.close();
   });
 
   it('IT025 — create a bank then PATCH /admin/quiz/banks/:id/approve returns 200 or 403', async () => {

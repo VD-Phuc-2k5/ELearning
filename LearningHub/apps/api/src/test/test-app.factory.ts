@@ -10,7 +10,7 @@ import { QuizModule } from '../modules/quiz/quiz.module';
 import { RoadmapModule } from '../modules/roadmap/roadmap.module';
 
 function resolveEnvPath(): string | undefined {
-  const candidates = ['.env', 'apps/api/.env', '../../.env'];
+  const candidates = ['apps/api/.env', '.env', '../../.env'];
   for (const p of candidates) {
     if (existsSync(p)) return p;
   }
@@ -45,6 +45,10 @@ export async function createTestApp(
         connection: {
           host: process.env.REDIS_HOST ?? 'localhost',
           port: Number(process.env.REDIS_PORT ?? 6379),
+          retryStrategy: (times: number) => {
+            if (times > 10) return null;
+            return Math.min(times * 200, 2000);
+          },
         },
       }),
       AuthModule,
@@ -56,6 +60,11 @@ export async function createTestApp(
 
   const app = module.createNestApplication();
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
-  await app.init();
+  try {
+    await app.init();
+  } catch (e) {
+    await app.close();
+    throw e;
+  }
   return app;
 }
