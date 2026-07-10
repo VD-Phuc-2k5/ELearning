@@ -176,7 +176,7 @@ export function CreateProblemModal({ onClose }: CreateProblemModalProps) {
 
   return (
     <Modal title="Tạo đề bài lập trình mới" onClose={onClose} extraWide>
-      <div className="space-y-4 max-h-[75vh] overflow-y-auto pr-2">
+      <div className="space-y-4 max-h-[75dvh] overflow-y-auto pr-2">
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">
             Tiêu đề đề bài *

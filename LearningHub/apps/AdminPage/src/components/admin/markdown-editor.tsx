@@ -56,6 +56,7 @@ export function MarkdownEditor({
   const [mode, setMode] = useState<ViewMode>('split');
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const editorRef = useRef<any>(null);
+  const initialValue = useRef(value);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleEditorMount = (editor: any) => {
@@ -215,7 +216,7 @@ export function MarkdownEditor({
               height="100%"
               language="markdown"
               theme="light"
-              value={value}
+              defaultValue={initialValue.current}
               onChange={(v) => onChange(v ?? '')}
               onMount={handleEditorMount}
               options={{

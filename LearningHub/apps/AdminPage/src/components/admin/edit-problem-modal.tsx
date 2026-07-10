@@ -161,7 +161,7 @@ export function EditProblemModal({ problem, onClose }: EditProblemModalProps) {
 
   return (
     <Modal title="Chỉnh sửa Đề bài lập trình" onClose={onClose} extraWide>
-      <div className="space-y-4 max-h-[80vh] overflow-y-auto pr-1">
+      <div className="space-y-4 max-h-[80dvh] overflow-y-auto pr-1">
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">
             Tiêu đề bài tập *

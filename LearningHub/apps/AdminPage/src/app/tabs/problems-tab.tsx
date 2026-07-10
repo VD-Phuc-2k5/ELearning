@@ -204,7 +204,7 @@ export function ProblemsTab() {
             return (
               <div
                 key={p.id}
-                className="group bg-white border border-slate-200 hover:border-indigo-200 hover:shadow-lg hover:shadow-indigo-50/50 rounded-3xl p-6 transition flex flex-col"
+                className="group bg-white border border-slate-200 hover:border-indigo-200 hover:shadow-lg hover:shadow-indigo-50/50 hover:-translate-y-0.5 rounded-3xl p-6 transition flex flex-col"
               >
                 {/* Header: status + difficulty */}
                 <div className="flex items-center justify-between gap-2 mb-3">

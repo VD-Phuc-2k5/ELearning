@@ -209,7 +209,7 @@ export function ManageTestCasesModal({
       onClose={onClose}
       wide
     >
-      <div className="space-y-6 max-h-[80vh] overflow-y-auto pr-2">
+      <div className="space-y-6 max-h-[80dvh] overflow-y-auto pr-2">
         {/* Notification banner */}
         {notification && (
           <div

@@ -1,5 +1,6 @@
 'use client';
 
+import { useRef } from 'react';
 import dynamic from 'next/dynamic';
 import type { BeforeMount } from '@monaco-editor/react';
 
@@ -62,6 +63,8 @@ export function CodeInput({
   language,
   height = 220,
 }: CodeInputProps) {
+  const initialValue = useRef(value);
+
   return (
     <div className="rounded-xl border border-slate-200 overflow-hidden">
       <MonacoEditor
@@ -69,7 +72,7 @@ export function CodeInput({
         language={LANG_MAP[language] ?? 'plaintext'}
         theme="dracula"
         beforeMount={handleBeforeMount}
-        value={value}
+        defaultValue={initialValue.current}
         onChange={(v) => onChange(v ?? '')}
         options={{
           minimap: { enabled: false },
