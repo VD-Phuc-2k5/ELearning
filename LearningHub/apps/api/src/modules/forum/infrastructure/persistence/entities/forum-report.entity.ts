@@ -17,7 +17,7 @@ export class ForumReportEntity {
   @Column({ name: 'reporter_id' })
   reporterId!: string;
 
-  @ManyToOne(() => UserEntity)
+  @ManyToOne(() => UserEntity, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'reporter_id' })
   reporter!: UserEntity;
 
@@ -39,7 +39,7 @@ export class ForumReportEntity {
   @Column({ name: 'resolved_by', nullable: true })
   resolvedBy!: string | null;
 
-  @ManyToOne(() => UserEntity)
+  @ManyToOne(() => UserEntity, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'resolved_by' })
   resolver!: UserEntity | null;
 

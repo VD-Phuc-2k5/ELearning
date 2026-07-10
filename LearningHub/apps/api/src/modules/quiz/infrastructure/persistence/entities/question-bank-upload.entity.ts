@@ -23,12 +23,12 @@ export class QuestionBankUploadEntity {
   @JoinColumn({ name: 'question_bank_id' })
   questionBank!: QuestionBankEntity;
 
-  @Column({ name: 'uploaded_by' })
-  uploadedBy!: string;
+  @Column({ name: 'uploaded_by', nullable: true })
+  uploadedBy!: string | null;
 
-  @ManyToOne(() => UserEntity)
+  @ManyToOne(() => UserEntity, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'uploaded_by' })
-  uploader!: UserEntity;
+  uploader!: UserEntity | null;
 
   @CreateDateColumn({ name: 'uploaded_at' })
   uploadedAt!: Date;

@@ -75,35 +75,37 @@ export class RejectQuestionBankUseCase {
       rejectReason: reason ?? null,
     });
 
-    try {
-      const input: CreateNotificationInput = {
-        recipientId: bank.uploaderId,
-        actorId: adminId,
-        type: 'bank_rejected',
-        targetType: 'question_bank',
-        targetId: bankId,
-        metadata: {
-          reason: reason ?? null,
-          bankTitle: bank.title,
+    if (bank.uploaderId) {
+      try {
+        const input: CreateNotificationInput = {
+          recipientId: bank.uploaderId,
+          actorId: adminId,
+          type: 'bank_rejected',
+          targetType: 'question_bank',
+          targetId: bankId,
+          metadata: {
+            reason: reason ?? null,
+            bankTitle: bank.title,
+          },
+        };
+        const notification = await this.notificationRepo.create(input);
+        this.gateway.emitNotification(bank.uploaderId, notification);
+      } catch (err) {
+        this.logger.error(
+          `Failed to send rejection notification for bank ${bankId}`,
+          (err as Error).stack,
+        );
+      }
+
+      this.gateway.emitBankReviewed(
+        {
+          bankId,
+          action: 'rejected',
+          actorId: adminId,
         },
-      };
-      const notification = await this.notificationRepo.create(input);
-      this.gateway.emitNotification(bank.uploaderId, notification);
-    } catch (err) {
-      this.logger.error(
-        `Failed to send rejection notification for bank ${bankId}`,
-        (err as Error).stack,
+        bank.uploaderId,
       );
     }
-
-    this.gateway.emitBankReviewed(
-      {
-        bankId,
-        action: 'rejected',
-        actorId: adminId,
-      },
-      bank.uploaderId,
-    );
 
     return updated;
   }

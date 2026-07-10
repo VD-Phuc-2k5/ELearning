@@ -27,7 +27,7 @@ export class ForumCommentEntity {
   @Column({ name: 'author_id' })
   authorId!: string;
 
-  @ManyToOne(() => UserEntity)
+  @ManyToOne(() => UserEntity, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'author_id' })
   author!: UserEntity;
 

@@ -20,12 +20,12 @@ export class RoadmapEntity {
   @Column({ nullable: true, type: 'text' })
   description!: string | null;
 
-  @Column({ name: 'creator_id' })
-  creatorId!: string;
+  @Column({ name: 'creator_id', nullable: true })
+  creatorId!: string | null;
 
-  @ManyToOne(() => UserEntity)
+  @ManyToOne(() => UserEntity, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'creator_id' })
-  creator!: UserEntity;
+  creator!: UserEntity | null;
 
   @Column({ default: 'draft' })
   status!: string;

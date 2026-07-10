@@ -100,4 +100,11 @@ export class AuthFailures extends Failure {
       'CANNOT_DELETE_SELF',
     );
   }
+
+  static userHasRelatedRecords(): AuthFailures {
+    return new AuthFailures(
+      'User cannot be deleted: transfer or remove related records first (e.g. forums they own)',
+      'USER_HAS_RELATED_RECORDS',
+    );
+  }
 }

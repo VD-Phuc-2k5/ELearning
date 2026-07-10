@@ -12,7 +12,7 @@ import { QuestionBankEntity } from './question-bank.entity';
 export class UserBankProgressEntity {
   @PrimaryGeneratedColumn('uuid') id!: string;
   @Column({ name: 'user_id' }) userId!: string;
-  @ManyToOne(() => UserEntity)
+  @ManyToOne(() => UserEntity, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
   user!: UserEntity;
   @Column({ name: 'question_bank_id' }) questionBankId!: string;

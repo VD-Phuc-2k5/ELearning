@@ -76,34 +76,36 @@ export class ApproveQuestionBankUseCase {
       statusId: 'approved',
     });
 
-    try {
-      const input: CreateNotificationInput = {
-        recipientId: bank.uploaderId,
-        actorId: adminId,
-        type: 'bank_approved',
-        targetType: 'question_bank',
-        targetId: bankId,
-        metadata: {
-          bankTitle: bank.title,
+    if (bank.uploaderId) {
+      try {
+        const input: CreateNotificationInput = {
+          recipientId: bank.uploaderId,
+          actorId: adminId,
+          type: 'bank_approved',
+          targetType: 'question_bank',
+          targetId: bankId,
+          metadata: {
+            bankTitle: bank.title,
+          },
+        };
+        const notification = await this.notificationRepo.create(input);
+        this.gateway.emitNotification(bank.uploaderId, notification);
+      } catch (err) {
+        this.logger.error(
+          `Failed to send approval notification for bank ${bankId}`,
+          (err as Error).stack,
+        );
+      }
+
+      this.gateway.emitBankReviewed(
+        {
+          bankId,
+          action: 'approved',
+          actorId: adminId,
         },
-      };
-      const notification = await this.notificationRepo.create(input);
-      this.gateway.emitNotification(bank.uploaderId, notification);
-    } catch (err) {
-      this.logger.error(
-        `Failed to send approval notification for bank ${bankId}`,
-        (err as Error).stack,
+        bank.uploaderId,
       );
     }
-
-    this.gateway.emitBankReviewed(
-      {
-        bankId,
-        action: 'approved',
-        actorId: adminId,
-      },
-      bank.uploaderId,
-    );
 
     return { bank: updated, duplicateBank: null };
   }

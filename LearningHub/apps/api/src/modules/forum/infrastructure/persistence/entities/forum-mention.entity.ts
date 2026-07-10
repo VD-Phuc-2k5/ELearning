@@ -27,7 +27,7 @@ export class ForumMentionEntity {
   @Column({ name: 'mentioned_user_id', type: 'varchar' })
   mentionedUserId!: string;
 
-  @ManyToOne(() => UserEntity)
+  @ManyToOne(() => UserEntity, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'mentioned_user_id' })
   mentionedUser!: UserEntity;
 

@@ -16,14 +16,14 @@ export class ForumNotificationEntity {
   @Column({ name: 'recipient_id', type: 'varchar' })
   recipientId!: string;
 
-  @ManyToOne(() => UserEntity)
+  @ManyToOne(() => UserEntity, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'recipient_id' })
   recipient!: UserEntity;
 
   @Column({ name: 'actor_id', nullable: true, type: 'varchar' })
   actorId!: string | null;
 
-  @ManyToOne(() => UserEntity)
+  @ManyToOne(() => UserEntity, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'actor_id' })
   actor!: UserEntity | null;
 

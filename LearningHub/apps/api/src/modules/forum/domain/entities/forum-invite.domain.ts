@@ -8,7 +8,7 @@ export type ForumInviteStatus =
 export interface ForumInviteDomain {
   id: string;
   forumId: string;
-  inviterId: string;
+  inviterId: string | null;
   inviteeId: string | null;
   token: string;
   status: ForumInviteStatus;

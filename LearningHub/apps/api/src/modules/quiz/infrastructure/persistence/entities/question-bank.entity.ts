@@ -27,12 +27,12 @@ export class QuestionBankEntity {
   @Column({ nullable: true, type: 'text' })
   description!: string;
 
-  @Column({ name: 'uploader_id' })
-  uploaderId!: string;
+  @Column({ name: 'uploader_id', nullable: true })
+  uploaderId!: string | null;
 
-  @ManyToOne(() => UserEntity)
+  @ManyToOne(() => UserEntity, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'uploader_id' })
-  uploader!: UserEntity;
+  uploader!: UserEntity | null;
 
   @Column({ name: 'file_hash', nullable: true })
   fileHash!: string;

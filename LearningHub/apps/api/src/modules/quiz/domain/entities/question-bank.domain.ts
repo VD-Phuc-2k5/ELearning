@@ -2,7 +2,7 @@ export interface QuestionBankDomain {
   id: string;
   title: string;
   description: string | null;
-  uploaderId: string;
+  uploaderId: string | null;
   fileHash: string | null;
   totalQuestions: number;
   passingScore: number;

@@ -22,7 +22,7 @@ export class ForumPollVoteEntity {
   @PrimaryColumn({ name: 'user_id', type: 'uuid' })
   userId!: string;
 
-  @ManyToOne(() => UserEntity)
+  @ManyToOne(() => UserEntity, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
   user!: UserEntity;
 }

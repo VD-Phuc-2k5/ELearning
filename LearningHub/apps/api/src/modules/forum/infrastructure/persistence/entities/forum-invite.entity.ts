@@ -20,12 +20,12 @@ export class ForumInviteEntity {
   @JoinColumn({ name: 'forum_id' })
   forum!: ForumEntity;
 
-  @Column({ name: 'inviter_id', type: 'varchar' })
-  inviterId!: string;
+  @Column({ name: 'inviter_id', type: 'varchar', nullable: true })
+  inviterId!: string | null;
 
-  @ManyToOne(() => UserEntity)
+  @ManyToOne(() => UserEntity, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'inviter_id' })
-  inviter!: UserEntity;
+  inviter!: UserEntity | null;
 
   @Column({ name: 'invitee_id', nullable: true, type: 'varchar' })
   inviteeId!: string | null;
