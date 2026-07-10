@@ -135,7 +135,7 @@ function ForumCard({ forum }: { forum: ForumListItem }) {
   }
 
   return (
-    <div className="group relative rounded-2xl border border-slate-100 bg-white shadow-sm transition hover:shadow-md overflow-hidden">
+    <div className="group relative rounded-2xl border border-slate-100 bg-white shadow-sm transition hover:shadow-md hover:-translate-y-0.5 overflow-hidden">
       {forum.bannerUrl ? (
         <Link href={`/forum/${forum.slug}`}>
           <div className="bg-slate-100 rounded-2xl border border-slate-100 overflow-hidden">

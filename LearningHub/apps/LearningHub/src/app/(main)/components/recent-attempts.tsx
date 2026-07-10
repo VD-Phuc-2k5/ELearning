@@ -128,7 +128,7 @@ export function RecentAttempts({ userId }: Props) {
             return (
               <div
                 key={a.id}
-                className="flex items-center gap-4 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm transition hover:shadow-md"
+                className="flex items-center gap-4 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm transition hover:shadow-md hover:-translate-y-0.5"
               >
                 <div className="min-w-0 flex-1">
                   <Link

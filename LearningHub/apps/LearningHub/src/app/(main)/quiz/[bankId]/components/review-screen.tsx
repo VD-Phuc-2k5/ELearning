@@ -60,6 +60,7 @@ export function ReviewScreen({ attemptId, onBack }: ReviewScreenProps) {
       <div className="flex items-center gap-3">
         <button
           onClick={onBack}
+          aria-label="Quay lại"
           className="p-2 rounded-xl hover:bg-slate-100 transition"
         >
           <ArrowLeft className="h-4 w-4 text-slate-600" />

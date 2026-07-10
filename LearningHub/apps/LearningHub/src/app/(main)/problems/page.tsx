@@ -127,7 +127,7 @@ export default function ProblemsPage() {
           {problems.map((p: ProblemItem) => (
             <div
               key={p.id}
-              className="group bg-white border border-slate-200 hover:border-indigo-200 hover:shadow-lg hover:shadow-indigo-50/50 rounded-3xl p-6 transition flex flex-col justify-between"
+              className="group bg-white border border-slate-200 hover:border-indigo-200 hover:shadow-lg hover:shadow-indigo-50/50 hover:-translate-y-0.5 rounded-3xl p-6 transition flex flex-col justify-between"
             >
               <div className="space-y-4">
                 <div className="flex items-center justify-between gap-3">

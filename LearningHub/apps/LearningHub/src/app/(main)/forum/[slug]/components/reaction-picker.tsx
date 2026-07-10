@@ -41,6 +41,7 @@ export function ReactionPicker({
         <button
           key={emoji}
           type="button"
+          aria-label={`Thả cảm xúc ${emoji}`}
           onClick={() => {
             onSelect(emoji);
             onClose();
@@ -52,6 +53,7 @@ export function ReactionPicker({
       ))}
       <button
         type="button"
+        aria-label="Đóng"
         onClick={onClose}
         className="h-9 w-9 flex items-center justify-center rounded-lg text-xs text-slate-400 hover:bg-slate-100"
       >

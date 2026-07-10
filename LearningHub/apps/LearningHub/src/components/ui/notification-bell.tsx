@@ -161,6 +161,7 @@ export function NotificationBell() {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setOpen(!open)}
+        aria-label={count > 0 ? `Thông báo (${count} chưa đọc)` : 'Thông báo'}
         className="relative p-2 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
       >
         <Bell className="h-4 w-4" />

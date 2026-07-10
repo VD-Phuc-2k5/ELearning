@@ -64,6 +64,10 @@ export default function SolveProblemPage() {
 
   const [language, setLanguage] = useState<string>('python');
   const [code, setCode] = useState<string>('');
+  // Bumped whenever `code` is force-reset from outside the editor (initial
+  // template load, Reset button, confirmed language switch) so the
+  // (uncontrolled) CodeEditor knows to imperatively re-sync.
+  const [resetToken, setResetToken] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submission, setSubmission] = useState<any | null>(null);
   const [err, setErr] = useState('');
@@ -147,14 +151,37 @@ export default function SolveProblemPage() {
       setLanguage(defaultLang);
       const customTemplate = problem.templates?.[defaultLang];
       setCode(customTemplate || (DEFAULT_TEMPLATES as any)[defaultLang] || '');
+      setResetToken((t) => t + 1);
       codeInitializedRef.current = true;
     }
   }, [problem]);
 
-  const handleLanguageChange = (lang: string) => {
+  const loadLanguageTemplate = (lang: string) => {
     setLanguage(lang);
     const customTemplate = problem.templates?.[lang];
     setCode(customTemplate || (DEFAULT_TEMPLATES as any)[lang] || '');
+    setResetToken((t) => t + 1);
+  };
+
+  const handleLanguageChange = (lang: string) => {
+    if (lang === language) return;
+    const currentTemplate =
+      problem.templates?.[language] ||
+      (DEFAULT_TEMPLATES as any)[language] ||
+      '';
+    if (code !== currentTemplate) {
+      openConfirm(
+        'Bạn đang có code chưa lưu. Chuyển ngôn ngữ sẽ xóa code hiện tại và tải lại template mới. Bạn có chắc muốn tiếp tục?',
+        () => loadLanguageTemplate(lang),
+        {
+          confirmLabel: 'Chuyển ngôn ngữ',
+          cancelLabel: 'Ở lại',
+          variant: 'primary',
+        },
+      );
+    } else {
+      loadLanguageTemplate(lang);
+    }
   };
 
   const handleReset = () => {
@@ -163,6 +190,7 @@ export default function SolveProblemPage() {
       () => {
         const customTemplate = problem?.templates?.[language];
         setCode(customTemplate || (DEFAULT_TEMPLATES as any)[language] || '');
+        setResetToken((t) => t + 1);
       },
       { confirmLabel: 'Khôi phục', cancelLabel: 'Hủy', variant: 'primary' },
     );
@@ -357,31 +385,36 @@ export default function SolveProblemPage() {
             <div className="bg-white border border-slate-200 rounded-3xl p-6 space-y-4">
               <h3 className="text-sm font-bold text-slate-800">Ví dụ mẫu</h3>
               <div className="space-y-5">
-                {sampleTestCases.map((sample, idx) => (
-                  <div key={idx} className="space-y-3">
-                    {sampleTestCases.length > 1 && (
-                      <div className="text-xs font-bold text-slate-400">
-                        Ví dụ {idx + 1}
+                {sampleTestCases.map(
+                  (
+                    sample: { input: string; expectedOutput: string },
+                    idx: number,
+                  ) => (
+                    <div key={idx} className="space-y-3">
+                      {sampleTestCases.length > 1 && (
+                        <div className="text-xs font-bold text-slate-400">
+                          Ví dụ {idx + 1}
+                        </div>
+                      )}
+                      <div>
+                        <div className="text-xs font-bold text-slate-500 mb-1">
+                          Sample Input
+                        </div>
+                        <pre className="bg-slate-950 text-slate-100 p-3 rounded-xl font-mono text-xs overflow-x-auto">
+                          {sample.input || <span className="italic">—</span>}
+                        </pre>
                       </div>
-                    )}
-                    <div>
-                      <div className="text-xs font-bold text-slate-500 mb-1">
-                        Sample Input
+                      <div>
+                        <div className="text-xs font-bold text-slate-500 mb-1">
+                          Sample Output
+                        </div>
+                        <pre className="bg-slate-950 text-slate-100 p-3 rounded-xl font-mono text-xs overflow-x-auto">
+                          {sample.expectedOutput}
+                        </pre>
                       </div>
-                      <pre className="bg-slate-950 text-slate-100 p-3 rounded-xl font-mono text-xs overflow-x-auto">
-                        {sample.input || <span className="italic">—</span>}
-                      </pre>
                     </div>
-                    <div>
-                      <div className="text-xs font-bold text-slate-500 mb-1">
-                        Sample Output
-                      </div>
-                      <pre className="bg-slate-950 text-slate-100 p-3 rounded-xl font-mono text-xs overflow-x-auto">
-                        {sample.expectedOutput}
-                      </pre>
-                    </div>
-                  </div>
-                ))}
+                  ),
+                )}
               </div>
             </div>
           )}
@@ -422,6 +455,7 @@ export default function SolveProblemPage() {
             setCode={setCode}
             language={language}
             onReset={handleReset}
+            resetToken={resetToken}
           />
 
           {/* Submit Action */}

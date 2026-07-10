@@ -83,7 +83,7 @@ export default function RoadmapsPage() {
           {roadmaps.map((r: Roadmap) => (
             <div
               key={r.id}
-              className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 space-y-4 hover:shadow-md transition"
+              className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 space-y-4 hover:shadow-md hover:-translate-y-0.5 transition"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="h-10 w-10 rounded-xl bg-indigo-50 flex items-center justify-center shrink-0">

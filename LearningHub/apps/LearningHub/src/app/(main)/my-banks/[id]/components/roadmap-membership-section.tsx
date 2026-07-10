@@ -74,7 +74,7 @@ export function RoadmapMembershipSection({ bankId }: { bankId: string }) {
             <Link
               key={m.roadmapId}
               href={`/roadmaps/${m.roadmapId}`}
-              className="group block rounded-2xl border border-slate-100 bg-white p-5 shadow-sm hover:shadow-md hover:border-indigo-200 transition"
+              className="group block rounded-2xl border border-slate-100 bg-white p-5 shadow-sm hover:shadow-md hover:border-indigo-200 hover:-translate-y-0.5 transition"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">

@@ -28,6 +28,7 @@ export function ModeSelect({ bank, onSelectMode, onBack }: ModeSelectProps) {
       <div className="flex items-center gap-3">
         <button
           onClick={onBack}
+          aria-label="Quay lại"
           className="p-2 rounded-xl hover:bg-slate-100 text-slate-500 transition"
         >
           <ArrowLeft className="h-5 w-5" />

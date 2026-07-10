@@ -176,7 +176,10 @@ export default function DashboardPage() {
                       </p>
                     </div>
                     <Link href={`/my-banks/${bank.id}`}>
-                      <button className="p-2 text-slate-300 hover:text-indigo-600 transition rounded-lg hover:bg-indigo-50">
+                      <button
+                        aria-label={`Xem bộ đề ${bank.title}`}
+                        className="p-2 text-slate-300 hover:text-indigo-600 transition rounded-lg hover:bg-indigo-50"
+                      >
                         <ArrowUpRight className="h-4 w-4" />
                       </button>
                     </Link>
