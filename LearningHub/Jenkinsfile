@@ -43,11 +43,13 @@ pipeline {
       steps {
         sh '''
           set -e
-          sudo docker stop postgres redis 2>/dev/null || true
+
+          sudo docker stop test-postgres test-redis 2>/dev/null || true
           sudo docker rm -f test-postgres test-redis 2>/dev/null || true
 
           echo "=== Starting test-postgres ==="
-          sudo docker run -d --name test-postgres \
+          sudo docker run -d \
+            --name test-postgres \
             --network learning-hub-network \
             -e POSTGRES_USER="${POSTGRES_USER}" \
             -e POSTGRES_PASSWORD="${POSTGRES_PASSWORD}" \
@@ -56,36 +58,35 @@ pipeline {
             postgres:17
 
           echo "=== Starting test-redis ==="
-          sudo docker run -d --name test-redis \
+          sudo docker run -d \
+            --name test-redis \
             --network learning-hub-network \
             -p "${REDIS_PORT}:6379" \
             redis:8-alpine
 
           echo "=== Waiting for PostgreSQL ==="
           for i in $(seq 1 30); do
-            if sudo docker exec test-postgres pg_isready -U "${POSTGRES_USER}" -d "${POSTGRES_DB}"; then
+            if sudo docker exec test-postgres pg_isready -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" 2>/dev/null | grep -q "accepting connections"; then
               echo "PostgreSQL is ready"
               break
             fi
-            echo "Waiting for PostgreSQL... (${i}/30)" && sleep 2
+            echo "Waiting for PostgreSQL... ($i/30)"
+            sleep 2
           done
 
-          echo "=== Recreating test database ==="
+          echo "=== Creating test database ==="
           sudo docker exec test-postgres psql -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" -c "DROP DATABASE IF EXISTS ${POSTGRES_TEST_DB}"
           sudo docker exec test-postgres psql -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" -c "CREATE DATABASE ${POSTGRES_TEST_DB}"
 
           echo "=== Waiting for Redis ==="
           for i in $(seq 1 15); do
-            if sudo docker exec test-redis redis-cli PING | grep -q PONG; then
+            if sudo docker exec test-redis redis-cli PING 2>/dev/null | grep -q "PONG"; then
               echo "Redis is ready"
               break
             fi
-            echo "Waiting for Redis... (${i}/15)" && sleep 1
+            echo "Waiting for Redis... ($i/15)"
+            sleep 2
           done
-
-          echo "=== Running migrations ==="
-          cd "${PROJECT_DIR}"
-          POSTGRES_DB="${POSTGRES_TEST_DB}" pnpm migration:run
 
           echo "=== Container status ==="
           sudo docker ps --filter "name=test-" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
