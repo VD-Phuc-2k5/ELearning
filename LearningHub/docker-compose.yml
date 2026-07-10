@@ -16,6 +16,8 @@ services:
     build:
       context: .
       dockerfile: apps/api/Dockerfile
+    networks:
+      - learning-hub-network
     env_file:
       - apps/api/.env
     secrets:
@@ -59,6 +61,8 @@ services:
   postgres:
     image: postgres:17
     container_name: postgres
+    networks:
+      - learning-hub-network
     secrets:
       - postgres_password
     environment:
@@ -84,6 +88,8 @@ services:
   redis:
     image: redis:8-alpine
     container_name: redis
+    networks:
+      - learning-hub-network
     ports:
       - '6379:6379'
     command: redis-server --appendonly yes
@@ -196,6 +202,8 @@ services:
       context: ./apps/jenkins
       dockerfile: Dockerfile
     container_name: jenkins
+    networks:
+      - learning-hub-network
     ports:
       - '8088:8080'
       - '50000:50000'
@@ -302,6 +310,10 @@ services:
         - sandbox-swift:latest
     profiles: [sandbox]
     command: ['true']
+
+networks:
+  learning-hub-network:
+    driver: bridge
 
 volumes:
   api_logs:
