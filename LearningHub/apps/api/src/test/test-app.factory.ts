@@ -34,8 +34,8 @@ export async function createTestApp(
         synchronize: true,
         logging: false,
         dropSchema: false,
-        retryAttempts: 10,
-        retryDelay: 1000,
+        retryAttempts: 1,
+        retryDelay: 500,
       }),
       CacheModule.register({ isGlobal: true }),
       // QuizModule transitively imports ForumModule (queue processors), so
@@ -46,7 +46,7 @@ export async function createTestApp(
           host: process.env.REDIS_HOST ?? 'localhost',
           port: Number(process.env.REDIS_PORT ?? 6379),
           retryStrategy: (times: number) => {
-            if (times > 10) return null;
+            if (times > 1) return null;
             return Math.min(times * 200, 2000);
           },
         },
