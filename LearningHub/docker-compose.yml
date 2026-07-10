@@ -154,6 +154,8 @@ services:
       - 'host.docker.internal:host-gateway'
 
   learninghub:
+    networks:
+      - learning-hub-network
     build:
       context: .
       dockerfile: apps/LearningHub/Dockerfile
@@ -177,6 +179,8 @@ services:
           memory: 256M
 
   adminpage:
+    networks:
+      - learning-hub-network
     build:
       context: .
       dockerfile: apps/AdminPage/Dockerfile
