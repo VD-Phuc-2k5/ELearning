@@ -107,7 +107,8 @@ export function ManageTestCasesModal({
       qc.invalidateQueries({ queryKey: ['admin-testcases', problemId] });
       qc.invalidateQueries({ queryKey: ['admin-problems'] });
       showNotification(
-        res.message || 'Import test cases thành công!',
+        (res as { message?: string }).message ||
+          'Import test cases thành công!',
         'success',
       );
     } catch (err: unknown) {
