@@ -4,7 +4,7 @@ import { User } from '../entities/entities';
 
 export class GetProfileUsecase implements Usecase<User, NoParams> {
   constructor(private repository: IAuthRepository) {}
-  async execute(params: NoParams): Promise<Either<Failure, User>> {
+  async execute(_params: NoParams): Promise<Either<Failure, User>> {
     return this.repository.getProfile();
   }
 }

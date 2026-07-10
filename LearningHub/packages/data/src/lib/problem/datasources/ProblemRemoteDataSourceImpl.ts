@@ -146,7 +146,7 @@ export class ProblemRemoteDataSourceImpl implements IProblemRemoteDataSource {
     problemId: string,
     file: Buffer,
     fileName: string,
-  ): Promise<any> {
+  ): Promise<unknown> {
     try {
       const form = new FormData();
       form.append('file', file, { filename: fileName });

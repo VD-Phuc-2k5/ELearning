@@ -41,7 +41,7 @@ export interface IProblemRemoteDataSource {
     problemId: string,
     file: Buffer,
     fileName: string,
-  ): Promise<any>;
+  ): Promise<unknown>;
   getTestCasesTemplate(): Promise<{ data: string; contentType: string }>;
 
   submitCode(problemId: string, params: SubmitCodeParams): Promise<Submission>;

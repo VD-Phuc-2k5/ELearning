@@ -48,7 +48,7 @@ export interface Submission {
   readonly passedTestCases: number;
   readonly executionTimeMs: number | null;
   readonly memoryUsedKb: number | null;
-  readonly results?: any[];
+  readonly results?: unknown[];
   readonly submittedAt: string;
   readonly judgedAt: string | null;
 }

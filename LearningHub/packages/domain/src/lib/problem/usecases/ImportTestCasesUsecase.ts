@@ -10,10 +10,10 @@ export class ImportTestCasesParams {
 }
 
 export class ImportTestCasesUsecase
-  implements Usecase<any, ImportTestCasesParams>
+  implements Usecase<unknown, ImportTestCasesParams>
 {
   constructor(private repository: IProblemRepository) {}
-  execute(params: ImportTestCasesParams): Promise<Either<Failure, any>> {
+  execute(params: ImportTestCasesParams): Promise<Either<Failure, unknown>> {
     return this.repository.importTestCases(
       params.problemId,
       params.file,

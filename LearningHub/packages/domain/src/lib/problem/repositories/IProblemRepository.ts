@@ -53,7 +53,7 @@ export interface IProblemRepository {
     problemId: string,
     file: Buffer,
     fileName: string,
-  ): Promise<Either<Failure, any>>;
+  ): Promise<Either<Failure, unknown>>;
   getTestCasesTemplate(): Promise<
     Either<Failure, { data: string; contentType: string }>
   >;

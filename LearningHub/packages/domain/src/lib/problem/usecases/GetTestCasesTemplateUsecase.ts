@@ -6,7 +6,7 @@ export class GetTestCasesTemplateUsecase
 {
   constructor(private repository: IProblemRepository) {}
   execute(
-    params: NoParams,
+    _params: NoParams,
   ): Promise<Either<Failure, { data: string; contentType: string }>> {
     return this.repository.getTestCasesTemplate();
   }

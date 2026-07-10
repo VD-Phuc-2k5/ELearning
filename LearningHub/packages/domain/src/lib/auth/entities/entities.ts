@@ -29,6 +29,7 @@ export interface AuthTokens {
 export interface LoginParams {
   email: string;
   password: string;
+  rejectAdminRole?: boolean;
 }
 
 export interface RegisterParams {

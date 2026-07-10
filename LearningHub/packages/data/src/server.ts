@@ -35,7 +35,7 @@ export async function serverLogin(email: string, password: string) {
     email,
     password,
     rejectAdminRole: true,
-  } as any);
+  });
   if (result.type === 'right') {
     await setCookies(result.value.accessToken, result.value.refreshToken);
     return result.value;

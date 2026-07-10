@@ -2,7 +2,11 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { ResultScreen } from './result-screen';
 
-jest.mock('gsap', () => ({ registerPlugin: () => {}, fromTo: jest.fn() }));
+jest.mock('gsap', () => ({
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  registerPlugin: () => {},
+  fromTo: jest.fn(),
+}));
 
 // ponytail: mock components/ui to avoid loading tiptap ESM-only deps
 jest.mock('../../../../../components/ui', () => ({

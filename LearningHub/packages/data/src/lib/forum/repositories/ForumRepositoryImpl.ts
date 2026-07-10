@@ -218,6 +218,7 @@ export class ForumRepositoryImpl implements IForumRepository {
             )
           : await this.dataSource.getCommentReactions(
               params.forumId,
+              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
               params.postId!,
               params.targetId,
             );

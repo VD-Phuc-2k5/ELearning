@@ -148,7 +148,7 @@ export class ProblemRepositoryImpl implements IProblemRepository {
     problemId: string,
     file: Buffer,
     fileName: string,
-  ): Promise<Either<Failure, any>> {
+  ): Promise<Either<Failure, unknown>> {
     try {
       return right(
         await this.dataSource.importTestCases(problemId, file, fileName),
