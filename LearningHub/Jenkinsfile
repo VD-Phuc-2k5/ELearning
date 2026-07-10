@@ -47,6 +47,7 @@ pipeline {
 
           sudo docker ps | grep postgres
 
+          sudo docker exec postgres psql -U postgres -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'test_learning_hub' AND pid <> pg_backend_pid()"
           sudo docker exec postgres psql -U postgres -c "DROP DATABASE IF EXISTS test_learning_hub"
           sudo docker exec postgres psql -U postgres -c "CREATE DATABASE test_learning_hub"
 
