@@ -41,7 +41,12 @@ export class SandboxRepositoryImpl implements ISandboxRepository {
   ): Promise<Either<Failure, ExecutionResult>> {
     try {
       const res = await this.dataSource.executeCode(params, this.token);
-      return right(res);
+      const stripAnsi = (s: string) => s.replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '');
+      return right({
+        ...res,
+        stdout: stripAnsi(res.stdout),
+        stderr: stripAnsi(res.stderr),
+      });
     } catch (e) {
       return left(toFailure(e));
     }
