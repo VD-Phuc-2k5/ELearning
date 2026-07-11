@@ -10,27 +10,27 @@ export class FixUserCascadeDeletes1785000000006 implements MigrationInterface {
   }> = [
     {
       table: 'quiz_attempts',
-      constraint: 'FK_quiz_attempts_user',
+      constraint: 'FK_1701aaf48f6a78e96bfe08dd395',
       column: 'user_id',
     },
     {
       table: 'user_bank_progress',
-      constraint: 'FK_user_bank_progress_user',
+      constraint: 'FK_23dd604e6fad1632aa94e326c0d',
       column: 'user_id',
     },
     {
       table: 'user_roadmap_progress',
-      constraint: 'FK_user_roadmap_progress_user',
+      constraint: 'FK_52907d6297d1057593f203aed9b',
       column: 'user_id',
     },
     {
       table: 'forum_comments',
-      constraint: 'FK_forum_comments_author',
+      constraint: 'FK_8e7d4ffc2c0ccb3087e2d590c57',
       column: 'author_id',
     },
     {
       table: 'forum_posts',
-      constraint: 'FK_forum_posts_author',
+      constraint: 'FK_141ee222adc1090094e49486a00',
       column: 'author_id',
     },
   ];
@@ -42,12 +42,12 @@ export class FixUserCascadeDeletes1785000000006 implements MigrationInterface {
   }> = [
     {
       table: 'roadmaps',
-      constraint: 'FK_roadmaps_creator',
+      constraint: 'FK_d3f6fcd5c48ebd4940bfcbb8afb',
       column: 'creator_id',
     },
     {
       table: 'forum_invites',
-      constraint: 'FK_forum_invites_inviter',
+      constraint: 'FK_7da8d583e9fd1ed022591f47b5b',
       column: 'inviter_id',
     },
     {
