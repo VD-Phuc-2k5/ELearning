@@ -15,6 +15,13 @@ export interface RefreshTokenResult {
   refreshToken: string;
 }
 
+// ponytail: two tabs/requests racing on the same refresh token both read it
+// before either rotation lands, so the loser sees a just-revoked token.
+// Grace window treats that as a race, not a replay, and mints it a token of
+// its own. Ceiling: a stolen token is reusable for up to this long after
+// rotation — raise the ceiling (reuse-chain detection) if that risk matters.
+const REFRESH_GRACE_WINDOW_MS = 10_000;
+
 @Injectable()
 export class RefreshTokenUseCase
   implements Usecase<RefreshTokenResult, RefreshTokenParams>
@@ -36,14 +43,19 @@ export class RefreshTokenUseCase
     const tokenHash = this.hashService.hash(params.token);
     const refreshToken =
       await this.refreshTokenRepository.findByTokenHash(tokenHash);
-    if (
-      !refreshToken ||
-      refreshToken.revokedAt !== null ||
-      refreshToken.expiresAt < new Date()
-    ) {
+    if (!refreshToken || refreshToken.expiresAt < new Date()) {
       return left(AuthFailures.invalidRefreshToken());
     }
-    await this.refreshTokenRepository.revoke(refreshToken);
+    const alreadyRevoked = refreshToken.revokedAt !== null;
+    const withinGraceWindow =
+      alreadyRevoked &&
+      Date.now() - refreshToken.revokedAt!.getTime() < REFRESH_GRACE_WINDOW_MS;
+    if (alreadyRevoked && !withinGraceWindow) {
+      return left(AuthFailures.invalidRefreshToken());
+    }
+    if (!alreadyRevoked) {
+      await this.refreshTokenRepository.revoke(refreshToken);
+    }
     const user = await this.userRepository.findById(refreshToken.userId);
     if (!user) {
       return left(AuthFailures.userNotFound());

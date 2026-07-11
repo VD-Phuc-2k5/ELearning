@@ -1,5 +1,6 @@
 import request from 'supertest';
 import { INestApplication } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
 import { createTestApp } from '../../test/test-app.factory';
 import {
   seedRoles,
@@ -121,6 +122,59 @@ describe('Auth — Integration (IT001–IT011)', () => {
       .send({ token: refreshToken });
     expect(res.status).toBe(201);
     expect(typeof res.body.accessToken).toBe('string');
+  });
+
+  it('IT013 — expired access token: request fails, refresh mints a working token, retried request succeeds', async () => {
+    if (!dbAvailable) return;
+    await registerUser(app, `it013${TEST_SUFFIX}`, 'it013user');
+    const { accessToken, refreshToken } = await loginUser(
+      app,
+      `it013${TEST_SUFFIX}`,
+    );
+
+    const jwtService = app.get(JwtService);
+    const payload = jwtService.decode(accessToken) as {
+      sub: string;
+      email: string;
+    };
+    const expiredAccessToken = jwtService.sign(
+      { sub: payload.sub, email: payload.email },
+      { expiresIn: '-10s' },
+    );
+
+    const expiredRes = await request(app.getHttpServer())
+      .get('/auth/me')
+      .set('Authorization', bearer(expiredAccessToken));
+    expect(expiredRes.status).toBe(401);
+
+    const refreshRes = await request(app.getHttpServer())
+      .post('/auth/refresh')
+      .send({ token: refreshToken });
+    expect(refreshRes.status).toBe(201);
+
+    const retryRes = await request(app.getHttpServer())
+      .get('/auth/me')
+      .set('Authorization', bearer(refreshRes.body.accessToken));
+    expect(retryRes.status).toBe(200);
+    expect(retryRes.body.user.email).toBe(`it013${TEST_SUFFIX}`);
+  });
+
+  it('IT012 — two concurrent refreshes racing on the same token (e.g. two tabs) both succeed', async () => {
+    if (!dbAvailable) return;
+    await registerUser(app, `it012${TEST_SUFFIX}`, 'it012user');
+    const { refreshToken } = await loginUser(app, `it012${TEST_SUFFIX}`);
+
+    const post = () =>
+      request(app.getHttpServer())
+        .post('/auth/refresh')
+        .send({ token: refreshToken });
+
+    const [r1, r2] = await Promise.all([post(), post()]);
+
+    expect(r1.status).toBe(201);
+    expect(r2.status).toBe(201);
+    expect(typeof r1.body.accessToken).toBe('string');
+    expect(typeof r2.body.accessToken).toBe('string');
   });
 
   // ── Logout ───────────────────────────────────────────────────
