@@ -125,7 +125,7 @@ describe('LearningHub — ModeSelect', () => {
         onBack={onBack}
       />,
     );
-    const backBtn = screen.getByRole('button', { name: '' });
+    const backBtn = screen.getByRole('button', { name: 'Quay lại' });
     fireEvent.click(backBtn);
     expect(onBack).toHaveBeenCalled();
   });
