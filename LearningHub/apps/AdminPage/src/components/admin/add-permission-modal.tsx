@@ -63,7 +63,7 @@ export function AddPermissionModal({ onClose }: AddPermissionModalProps) {
             className={inputCls}
           >
             <option value="">-- Chọn resource --</option>
-            {(resources ?? []).map((r) => (
+            {(resources ?? []).map((r: string) => (
               <option key={r} value={r}>
                 {r}
               </option>

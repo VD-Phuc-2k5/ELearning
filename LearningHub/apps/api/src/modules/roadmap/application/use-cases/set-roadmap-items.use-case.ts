@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ForbiddenException,
   Inject,
   Injectable,
@@ -16,6 +17,14 @@ import {
   IUserRoadmapProgressRepository,
   USER_ROADMAP_PROGRESS_REPOSITORY,
 } from '../../domain/repositories/user-roadmap-progress.repository.interface';
+import {
+  IUserBankProgressRepository,
+  USER_BANK_PROGRESS_REPOSITORY,
+} from '../../../quiz/domain/repositories/user-bank-progress.repository.interface';
+import {
+  IQuestionBankRepository,
+  QUESTION_BANK_REPOSITORY,
+} from '../../../quiz/domain/repositories/question-bank.repository.interface';
 import { RoadmapItemDomain } from '../../domain/entities/roadmap-item.domain';
 import { RoadmapProgressStatus } from '../../domain/entities/user-roadmap-progress.domain';
 
@@ -28,6 +37,10 @@ export class SetRoadmapItemsUseCase {
     private readonly itemRepo: IRoadmapItemRepository,
     @Inject(USER_ROADMAP_PROGRESS_REPOSITORY)
     private readonly progressRepo: IUserRoadmapProgressRepository,
+    @Inject(USER_BANK_PROGRESS_REPOSITORY)
+    private readonly bankProgressRepo: IUserBankProgressRepository,
+    @Inject(QUESTION_BANK_REPOSITORY)
+    private readonly questionBankRepo: IQuestionBankRepository,
   ) {}
 
   async execute(
@@ -40,14 +53,38 @@ export class SetRoadmapItemsUseCase {
     if (roadmap.creatorId !== userId)
       throw new ForbiddenException('Bạn không có quyền chỉnh sửa roadmap này');
 
+    if (bankIds.length > 0) {
+      const banks = await Promise.all(
+        bankIds.map((id) => this.questionBankRepo.findById(id)),
+      );
+      const approvedBanks = banks.filter(
+        (b): b is NonNullable<typeof b> =>
+          b !== null && b.statusId === 'approved',
+      );
+      const approvedIds = new Set(approvedBanks.map((b) => b.id));
+      const nonApproved = bankIds.filter((id) => !approvedIds.has(id));
+      if (nonApproved.length > 0) {
+        throw new BadRequestException(
+          `Các ngân hàng câu hỏi sau chưa được duyệt: ${nonApproved.join(', ')}`,
+        );
+      }
+    }
+
     const items = await this.itemRepo.setItems(roadmapId, bankIds);
     const newTotal = bankIds.length;
 
-    // Recalculate all enrolled users' progress
+    // Recalculate all enrolled users' progress based on actual bank completions
     const allProgress = await this.progressRepo.findAllByRoadmap(roadmapId);
     await Promise.all(
-      allProgress.map((p) => {
-        const completedBanks = Math.min(p.completedBanks, newTotal);
+      allProgress.map(async (p) => {
+        const completedIds =
+          newTotal > 0
+            ? await this.bankProgressRepo.findCompletedBankIds(
+                p.userId,
+                bankIds,
+              )
+            : [];
+        const completedBanks = completedIds.length;
         const progressPercent =
           newTotal > 0 ? Math.round((completedBanks / newTotal) * 100) : 0;
         const status: RoadmapProgressStatus =

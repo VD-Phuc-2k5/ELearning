@@ -6,7 +6,10 @@ import gsap from 'gsap';
 import { ArrowLeft, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
 import { clsx } from 'clsx';
 import { Button } from '../../../../../components/ui';
+import { useConfirmModal } from '../../../../../components/ui/confirm-modal';
 import { submitQuiz } from '../../../../actions/quiz.actions';
+import { useExamLockdown } from './use-exam-lockdown';
+import { ExamQuestionCard } from './exam-question-card';
 import type { Question, QuizSubmitResult } from '@learning-hub/domain';
 
 interface ExamModeProps {
@@ -31,56 +34,50 @@ export function ExamMode({
   );
   const startTimeRef = useRef(Date.now());
   const cardRef = useRef<HTMLDivElement>(null);
-  // ponytail: ref keeps latest mutation state accessible from stable event listeners
-  const safeSubmitRef = useRef<() => void>(() => {});
 
   const submitMutation = useMutation({
-    mutationFn: () =>
-      submitQuiz(
+    mutationFn: async () => {
+      const result = await submitQuiz(
         bankId,
         questions
+          .filter((q) => answers[q.id])
           .map((q) => ({
             questionId: q.id,
-            selectedOptionId: answers[q.id] || '',
-          }))
-          .filter((a) => a.selectedOptionId),
+            selectedOptionId: answers[q.id],
+          })),
         roadmapId,
         Math.round((Date.now() - startTimeRef.current) / 1000),
-      ),
+      );
+      if (!result.success) throw new Error(result.message);
+      return result.data;
+    },
     onSuccess: onFinish,
   });
 
-  safeSubmitRef.current = () => {
-    if (!submitMutation.isPending && !submitMutation.isSuccess) {
-      submitMutation.mutate();
-    }
-  };
+  const { modal, openConfirm } = useConfirmModal();
 
-  // Lock: block tab-switch, browser back, and page unload — auto-submit on each
+  const { pendingSubmit, onConfirmSubmit, onCancelSubmit } = useExamLockdown(
+    () => {
+      if (!submitMutation.isPending && !submitMutation.isSuccess) {
+        submitMutation.mutate();
+      }
+    },
+  );
+
   useEffect(() => {
-    history.pushState(null, '', location.href);
-
-    const handlePopState = () => {
-      history.pushState(null, '', location.href);
-      safeSubmitRef.current();
-    };
-    const handleVisibilityChange = () => {
-      if (document.hidden) safeSubmitRef.current();
-    };
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      e.preventDefault();
-    };
-
-    window.addEventListener('popstate', handlePopState);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('beforeunload', handleBeforeUnload);
-
-    return () => {
-      window.removeEventListener('popstate', handlePopState);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
-  }, []);
+    if (pendingSubmit) {
+      openConfirm(
+        'Bạn đã rời khỏi trang làm bài. Bạn có muốn nộp bài không?',
+        onConfirmSubmit,
+        {
+          confirmLabel: 'Nộp bài',
+          cancelLabel: 'Hủy',
+          variant: 'primary',
+          onCancel: onCancelSubmit,
+        },
+      );
+    }
+  }, [pendingSubmit, openConfirm, onConfirmSubmit, onCancelSubmit]);
 
   useEffect(() => {
     if (!timeLimitSeconds) return;
@@ -114,14 +111,20 @@ export function ExamMode({
 
   const handleSubmit = () => {
     if (answered < questions.length) {
-      if (
-        !confirm(
-          `Còn ${questions.length - answered} câu chưa trả lời. Nộp bài?`,
-        )
-      )
-        return;
+      openConfirm(
+        `Còn ${questions.length - answered} câu chưa trả lời. Nộp bài?`,
+        () => {
+          if (!submitMutation.isPending && !submitMutation.isSuccess) {
+            submitMutation.mutate();
+          }
+        },
+        { confirmLabel: 'Nộp bài', cancelLabel: 'Hủy', variant: 'primary' },
+      );
+      return;
     }
-    safeSubmitRef.current();
+    if (!submitMutation.isPending && !submitMutation.isSuccess) {
+      submitMutation.mutate();
+    }
   };
 
   const fmt = (s: number) =>
@@ -133,7 +136,7 @@ export function ExamMode({
     <div className="space-y-6 py-4">
       <div className="flex items-center justify-between">
         <button
-          onClick={() => safeSubmitRef.current()}
+          onClick={() => submitMutation.mutate()}
           className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 transition"
         >
           <ArrowLeft className="h-4 w-4" /> Thoát
@@ -179,47 +182,15 @@ export function ExamMode({
         ))}
       </div>
 
-      <div
-        ref={cardRef}
-        className="bg-white rounded-3xl border border-slate-100 shadow-sm p-8 space-y-6"
-      >
-        <p className="text-sm text-slate-500 font-medium">
-          Question {current + 1}
-        </p>
-        <p className="text-lg font-semibold text-slate-900 leading-relaxed">
-          {question.content}
-        </p>
-
-        <div className="grid gap-3">
-          {[...question.answerOptions]
-            .sort((a, b) => a.optionLabel.localeCompare(b.optionLabel))
-            .map((opt) => (
-              <button
-                key={opt.id}
-                onClick={() =>
-                  setAnswers((prev) => ({ ...prev, [question.id]: opt.id }))
-                }
-                className={clsx(
-                  'flex items-center gap-3 rounded-2xl border-2 px-4 py-3 text-left text-sm font-medium transition',
-                  answers[question.id] === opt.id
-                    ? 'border-indigo-500 bg-indigo-50 text-indigo-800'
-                    : 'border-slate-200 hover:border-indigo-300 hover:bg-indigo-50',
-                )}
-              >
-                <span
-                  className={clsx(
-                    'h-7 w-7 rounded-full text-xs font-bold flex items-center justify-center shrink-0 border',
-                    answers[question.id] === opt.id
-                      ? 'bg-indigo-500 text-white border-indigo-500'
-                      : 'bg-slate-100 text-slate-600 border-slate-200',
-                  )}
-                >
-                  {opt.optionLabel}
-                </span>
-                {opt.content}
-              </button>
-            ))}
-        </div>
+      <div ref={cardRef}>
+        <ExamQuestionCard
+          question={question}
+          current={current}
+          selectedOptionId={answers[question.id]}
+          onSelectOption={(optionId) =>
+            setAnswers((prev) => ({ ...prev, [question.id]: optionId }))
+          }
+        />
       </div>
 
       <div className="flex items-center justify-between">
@@ -232,8 +203,12 @@ export function ExamMode({
           Previous
         </Button>
         {current < questions.length - 1 ? (
-          <Button onClick={() => goTo(current + 1)}>
-            Next <ChevronRight className="h-4 w-4" />
+          <Button
+            onClick={() => goTo(current + 1)}
+            icon={<ChevronRight className="h-4 w-4" />}
+            iconPosition="Right"
+          >
+            Next
           </Button>
         ) : (
           <Button onClick={handleSubmit} isLoading={submitMutation.isPending}>
@@ -241,6 +216,7 @@ export function ExamMode({
           </Button>
         )}
       </div>
+      {modal}
     </div>
   );
 }

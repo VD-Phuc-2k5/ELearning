@@ -1,15 +1,16 @@
 'use server';
 
 import {
+  RegisterUsecase,
+  GetProfileUsecase,
+  type RegisterParams,
+  type User,
+} from '@learning-hub/domain';
+import {
   AuthRemoteDataSourceImpl,
   AuthRepositoryImpl,
 } from '@learning-hub/data';
-import type { RegisterParams } from '@learning-hub/domain';
-import {
-  LoginUsecase,
-  LogoutUsecase,
-  RegisterUsecase,
-} from '@learning-hub/domain';
+import { serverLogin, serverLogout } from '@learning-hub/data/server';
 import { cookies } from 'next/headers';
 
 export async function loginAction(data: {
@@ -19,37 +20,41 @@ export async function loginAction(data: {
   | { success: true; accessToken: string; refreshToken: string }
   | { success: false; error: string }
 > {
-  const repo = new AuthRepositoryImpl(new AuthRemoteDataSourceImpl());
-  const result = await new LoginUsecase(repo).execute(data);
-  if (result.type === 'right') {
-    const jar = await cookies();
-    jar.set('accessToken', result.value.accessToken, {
-      maxAge: 900,
-      path: '/',
-      sameSite: 'lax',
-    });
-    jar.set('refreshToken', result.value.refreshToken, {
-      maxAge: 7 * 24 * 60 * 60,
-      path: '/',
-      sameSite: 'lax',
-      httpOnly: true,
-    });
+  try {
+    const result = await serverLogin(data.email, data.password);
     return {
       success: true,
-      accessToken: result.value.accessToken,
-      refreshToken: result.value.refreshToken,
+      accessToken: result.accessToken,
+      refreshToken: result.refreshToken,
     };
+  } catch (e: any) {
+    return { success: false, error: e?.message || 'Login failed' };
   }
-  return { success: false, error: result.value.message };
+}
+
+export async function getCurrentUser(): Promise<User | null> {
+  const store = await cookies();
+  const accessToken = store.get('accessToken')?.value;
+  if (!accessToken) return null;
+  try {
+    const repo = new AuthRepositoryImpl(new AuthRemoteDataSourceImpl());
+    const result = await new GetProfileUsecase(repo).execute({});
+    if (result.type === 'right') {
+      return result.value;
+    }
+    return null;
+  } catch {
+    return null;
+  }
 }
 
 export async function logoutAction(): Promise<void> {
-  const cookieStore = await cookies();
-  const token = cookieStore.get('accessToken')?.value;
-  const repo = new AuthRepositoryImpl(new AuthRemoteDataSourceImpl(), token);
-  await new LogoutUsecase(repo).execute({});
-  cookieStore.delete('accessToken');
-  cookieStore.delete('refreshToken');
+  await serverLogout();
+}
+
+export async function getSocketToken(): Promise<string> {
+  const store = await cookies();
+  return store.get('accessToken')?.value ?? '';
 }
 
 export async function registerAction(

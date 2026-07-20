@@ -9,6 +9,7 @@ import {
   XCircle,
   ChevronLeft,
   ChevronRight,
+  Lightbulb,
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { Button } from '../../../../../components/ui';
@@ -32,7 +33,11 @@ export function PracticeMode({ questions, onExit }: PracticeModeProps) {
   const feedback = feedbackMap[question?.id];
 
   const verifyMutation = useMutation({
-    mutationFn: (optionId: string) => verifyAnswer(question.id, optionId),
+    mutationFn: async (optionId: string) => {
+      const result = await verifyAnswer(question.id, optionId);
+      if (!result.success) throw new Error(result.message);
+      return result.data;
+    },
     onSuccess: (data) =>
       setFeedbackMap((prev) => ({ ...prev, [question.id]: data })),
   });
@@ -137,26 +142,16 @@ export function PracticeMode({ questions, onExit }: PracticeModeProps) {
         </div>
 
         {feedback && (
-          <div
-            className={clsx(
-              'rounded-2xl p-4 flex items-center gap-3 text-sm font-medium',
-              feedback.isCorrect
-                ? 'bg-emerald-50 text-emerald-700'
-                : 'bg-red-50 text-red-700',
+          <>
+            {!feedback.isCorrect && feedback.explanation && (
+              <div className="flex gap-2 rounded-xl bg-amber-50 border border-amber-200 p-3">
+                <Lightbulb className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" />
+                <span className="text-sm text-amber-900 whitespace-pre-wrap">
+                  {feedback.explanation}
+                </span>
+              </div>
             )}
-          >
-            {feedback.isCorrect ? (
-              <>
-                <CheckCircle2 className="h-5 w-5 shrink-0" /> Correct! Great
-                job.
-              </>
-            ) : (
-              <>
-                <XCircle className="h-5 w-5 shrink-0" /> Incorrect. The correct
-                answer is highlighted.
-              </>
-            )}
-          </div>
+          </>
         )}
       </div>
 
@@ -170,8 +165,12 @@ export function PracticeMode({ questions, onExit }: PracticeModeProps) {
           Previous
         </Button>
         {current < questions.length - 1 ? (
-          <Button onClick={() => goTo(current + 1)}>
-            Next <ChevronRight className="h-4 w-4" />
+          <Button
+            onClick={() => goTo(current + 1)}
+            iconPosition="Right"
+            icon={<ChevronRight className="h-4 w-4" />}
+          >
+            Next
           </Button>
         ) : (
           <Button onClick={onExit}>Finish</Button>

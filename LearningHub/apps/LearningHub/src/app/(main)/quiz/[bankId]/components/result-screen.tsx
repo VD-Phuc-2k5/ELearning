@@ -7,6 +7,7 @@ import gsap from 'gsap';
 import { Trophy, RotateCcw, BookOpen, ArrowRight } from 'lucide-react';
 import { clsx } from 'clsx';
 import { Button } from '../../../../../components/ui';
+import { useCelebrate } from '../../../../../components/effects/celebration';
 import type { QuizSubmitResult } from '@learning-hub/domain';
 
 interface ResultScreenProps {
@@ -28,6 +29,13 @@ export function ResultScreen({
 }: ResultScreenProps) {
   const router = useRouter();
   const scoreRef = useRef<HTMLDivElement>(null);
+  const celebrate = useCelebrate();
+
+  const pct =
+    result.scorePercent ??
+    (result.totalQuestions > 0
+      ? Math.round((result.correctCount / result.totalQuestions) * 100)
+      : 0);
 
   useEffect(() => {
     if (!scoreRef.current) return;
@@ -36,13 +44,9 @@ export function ResultScreen({
       { scale: 0.8, opacity: 0 },
       { scale: 1, opacity: 1, duration: 0.5, ease: 'back.out(1.4)' },
     );
+    if (pct >= 80) celebrate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const pct =
-    result.scorePercent ??
-    (result.totalQuestions > 0
-      ? Math.round((result.correctCount / result.totalQuestions) * 100)
-      : 0);
   const grade =
     pct >= 80
       ? { label: 'Excellent!', color: 'text-emerald-600' }

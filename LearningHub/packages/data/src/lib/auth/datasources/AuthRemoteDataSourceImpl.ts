@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getServerCookies } from '../../serverCookies';
 import {
   AuthTokens,
   CreatePermissionParams,
@@ -12,35 +13,20 @@ import {
   UpdateRoleParams,
   User,
 } from '@learning-hub/domain';
-import {
-  AuthenticationException,
-  NetworkException,
-  NotFoundException,
-  PermissionException,
-  UnknownException,
-} from '@learning-hub/core';
+import { handleAxiosError } from '@learning-hub/core';
 import { IAuthRemoteDataSource } from './IAuthRemoteDataSource';
 
 export class AuthRemoteDataSourceImpl implements IAuthRemoteDataSource {
   private api = axios.create({
-    baseURL: process.env.NEST_API_URL || 'http://localhost:8080',
+    baseURL: `${process.env.NEST_API_URL || 'http://localhost:8080'}/api`,
+    withCredentials: true,
   });
 
-  private getAuthHeader(token?: string) {
-    return token ? { Authorization: `Bearer ${token}` } : {};
-  }
-
-  private handleError(e: unknown): never {
-    if (axios.isAxiosError(e)) {
-      if (!e.response) throw new NetworkException();
-      const status = e.response.status;
-      const message: string = e.response.data?.message || e.message;
-      if (status === 401) throw new AuthenticationException(message);
-      if (status === 403) throw new PermissionException(message);
-      if (status === 404) throw new NotFoundException(message);
-      throw new UnknownException();
-    }
-    throw new NetworkException();
+  constructor() {
+    this.api.interceptors.request.use(async (config) => {
+      config.headers.Cookie = await getServerCookies();
+      return config;
+    });
   }
 
   async register(data: RegisterParams): Promise<{ user: User }> {
@@ -48,7 +34,7 @@ export class AuthRemoteDataSourceImpl implements IAuthRemoteDataSource {
       const res = await this.api.post('/auth/register', data);
       return res.data;
     } catch (e) {
-      return this.handleError(e);
+      return handleAxiosError(e);
     }
   }
 
@@ -57,7 +43,7 @@ export class AuthRemoteDataSourceImpl implements IAuthRemoteDataSource {
       const res = await this.api.post('/auth/login', data);
       return res.data;
     } catch (e) {
-      return this.handleError(e);
+      return handleAxiosError(e);
     }
   }
 
@@ -66,324 +52,238 @@ export class AuthRemoteDataSourceImpl implements IAuthRemoteDataSource {
       const res = await this.api.post('/auth/admin/login', data);
       return res.data;
     } catch (e) {
-      return this.handleError(e);
+      return handleAxiosError(e);
     }
   }
 
-  async refreshToken(data: { refreshToken: string }): Promise<AuthTokens> {
+  async refreshToken(data: { token: string }): Promise<AuthTokens> {
     try {
       const res = await this.api.post('/auth/refresh', data);
       return res.data;
     } catch (e) {
-      return this.handleError(e);
+      return handleAxiosError(e);
     }
   }
 
-  async logout(token?: string): Promise<void> {
+  async logout(refreshToken: string): Promise<void> {
     try {
-      await this.api.post(
-        '/auth/logout',
-        {},
-        { headers: this.getAuthHeader(token) },
-      );
+      await this.api.post('/auth/logout', { refreshToken });
     } catch (e) {
-      return this.handleError(e);
+      return handleAxiosError(e);
     }
   }
 
-  async getProfile(token?: string): Promise<User> {
+  async getProfile(): Promise<User> {
     try {
-      const res = await this.api.get('/auth/profile', {
-        headers: this.getAuthHeader(token),
-      });
-      return res.data;
+      const res = await this.api.get('/auth/me');
+      return res.data?.user;
     } catch (e) {
-      return this.handleError(e);
+      return handleAxiosError(e);
     }
   }
 
-  async getUsers(token?: string): Promise<User[]> {
+  async getUsers(role?: string): Promise<User[]> {
     try {
       const res = await this.api.get('/admin/users', {
-        params: { role: 'ADMIN' },
-        headers: this.getAuthHeader(token),
+        params: { role: role || 'ADMIN' },
       });
       return res.data;
     } catch (e) {
-      return this.handleError(e);
+      return handleAxiosError(e);
     }
   }
 
-  async registerAdmin(
-    data: RegisterParams,
-    token?: string,
-  ): Promise<{ user: User }> {
+  async registerAdmin(data: RegisterParams): Promise<{ user: User }> {
     try {
-      const res = await this.api.post('/auth/admin/register', data, {
-        headers: this.getAuthHeader(token),
-      });
+      const res = await this.api.post('/auth/admin/register', data);
       return res.data;
     } catch (e) {
-      return this.handleError(e);
+      return handleAxiosError(e);
     }
   }
 
-  async updateUser(
-    id: string,
-    data: UpdateAdminParams,
-    token?: string,
-  ): Promise<User> {
+  async updateUser(id: string, data: UpdateAdminParams): Promise<User> {
     try {
-      const res = await this.api.patch(`/admin/users/${id}`, data, {
-        headers: this.getAuthHeader(token),
-      });
+      const res = await this.api.patch(`/admin/users/${id}`, data);
       return res.data;
     } catch (e) {
-      return this.handleError(e);
+      return handleAxiosError(e);
     }
   }
 
-  async deleteUser(id: string, token?: string): Promise<void> {
+  async deleteUser(id: string): Promise<void> {
     try {
-      await this.api.delete(`/admin/users/${id}`, {
-        headers: this.getAuthHeader(token),
-      });
+      await this.api.delete(`/admin/users/${id}`);
     } catch (e) {
-      return this.handleError(e);
+      return handleAxiosError(e);
     }
   }
 
-  async searchUsersByEmail(email: string, token?: string): Promise<User[]> {
+  async searchUsersByEmail(email: string): Promise<User[]> {
     try {
       const res = await this.api.get('/admin/users/search', {
         params: { email },
-        headers: this.getAuthHeader(token),
       });
       return res.data;
     } catch (e) {
-      return this.handleError(e);
+      return handleAxiosError(e);
     }
   }
 
-  async getRoles(token?: string): Promise<Role[]> {
+  async getRoles(): Promise<Role[]> {
     try {
-      const res = await this.api.get('/admin/roles', {
-        headers: this.getAuthHeader(token),
-      });
+      const res = await this.api.get('/admin/roles');
       return res.data;
     } catch (e) {
-      return this.handleError(e);
+      return handleAxiosError(e);
     }
   }
 
-  async createRole(data: CreateRoleParams, token?: string): Promise<Role> {
+  async createRole(data: CreateRoleParams): Promise<Role> {
     try {
-      const res = await this.api.post('/admin/roles', data, {
-        headers: this.getAuthHeader(token),
-      });
+      const res = await this.api.post('/admin/roles', data);
       return res.data;
     } catch (e) {
-      return this.handleError(e);
+      return handleAxiosError(e);
     }
   }
 
-  async updateRole(
-    id: number,
-    data: UpdateRoleParams,
-    token?: string,
-  ): Promise<Role> {
+  async updateRole(id: number, data: UpdateRoleParams): Promise<Role> {
     try {
-      const res = await this.api.patch(`/admin/roles/${id}`, data, {
-        headers: this.getAuthHeader(token),
-      });
+      const res = await this.api.patch(`/admin/roles/${id}`, data);
       return res.data;
     } catch (e) {
-      return this.handleError(e);
+      return handleAxiosError(e);
     }
   }
 
-  async deleteRole(id: number, token?: string): Promise<void> {
+  async deleteRole(id: number): Promise<void> {
     try {
-      await this.api.delete(`/admin/roles/${id}`, {
-        headers: this.getAuthHeader(token),
-      });
+      await this.api.delete(`/admin/roles/${id}`);
     } catch (e) {
-      return this.handleError(e);
+      return handleAxiosError(e);
     }
   }
 
-  async getPermissions(token?: string): Promise<Permission[]> {
+  async getPermissions(): Promise<Permission[]> {
     try {
-      const res = await this.api.get('/admin/permissions', {
-        headers: this.getAuthHeader(token),
-      });
+      const res = await this.api.get('/admin/permissions');
       return res.data;
     } catch (e) {
-      return this.handleError(e);
+      return handleAxiosError(e);
     }
   }
 
-  async getResources(token?: string): Promise<{ resources: string[] }> {
+  async getResources(): Promise<{ resources: string[] }> {
     try {
-      const res = await this.api.get('/admin/permissions/resources', {
-        headers: this.getAuthHeader(token),
-      });
+      const res = await this.api.get('/admin/permissions/resources');
       return res.data;
     } catch (e) {
-      return this.handleError(e);
+      return handleAxiosError(e);
     }
   }
 
-  async createPermission(
-    data: CreatePermissionParams,
-    token?: string,
-  ): Promise<Permission> {
+  async createPermission(data: CreatePermissionParams): Promise<Permission> {
     try {
-      const res = await this.api.post('/admin/permissions', data, {
-        headers: this.getAuthHeader(token),
-      });
+      const res = await this.api.post('/admin/permissions', data);
       return res.data;
     } catch (e) {
-      return this.handleError(e);
+      return handleAxiosError(e);
     }
   }
 
-  async deletePermission(id: number, token?: string): Promise<void> {
+  async deletePermission(id: number): Promise<void> {
     try {
-      await this.api.delete(`/admin/permissions/${id}`, {
-        headers: this.getAuthHeader(token),
-      });
+      await this.api.delete(`/admin/permissions/${id}`);
     } catch (e) {
-      return this.handleError(e);
+      return handleAxiosError(e);
     }
   }
 
-  async getRolePermissions(
-    roleId: number,
-    token?: string,
-  ): Promise<Permission[]> {
+  async getRolePermissions(roleId: number): Promise<Permission[]> {
     try {
-      const res = await this.api.get(`/admin/roles/${roleId}/permissions`, {
-        headers: this.getAuthHeader(token),
-      });
+      const res = await this.api.get(`/admin/roles/${roleId}/permissions`);
       return res.data;
     } catch (e) {
-      return this.handleError(e);
+      return handleAxiosError(e);
     }
   }
 
-  async assignPermission(
-    roleId: number,
-    permissionId: number,
-    token?: string,
-  ): Promise<void> {
+  async assignPermission(roleId: number, permissionId: number): Promise<void> {
     try {
-      await this.api.post(
-        `/admin/roles/${roleId}/permissions`,
-        { permissionId },
-        { headers: this.getAuthHeader(token) },
-      );
+      await this.api.post(`/admin/roles/${roleId}/permissions`, {
+        permissionId,
+      });
     } catch (e) {
-      return this.handleError(e);
+      return handleAxiosError(e);
     }
   }
 
-  async removePermission(
-    roleId: number,
-    permissionId: number,
-    token?: string,
-  ): Promise<void> {
+  async removePermission(roleId: number, permissionId: number): Promise<void> {
     try {
       await this.api.delete(
         `/admin/roles/${roleId}/permissions/${permissionId}`,
-        { headers: this.getAuthHeader(token) },
       );
     } catch (e) {
-      return this.handleError(e);
+      return handleAxiosError(e);
     }
   }
 
-  async getUserRoles(userId: string, token?: string): Promise<Role[]> {
+  async getUserRoles(userId: string): Promise<Role[]> {
     try {
-      const res = await this.api.get(`/admin/users/${userId}/roles`, {
-        headers: this.getAuthHeader(token),
-      });
+      const res = await this.api.get(`/admin/users/${userId}/roles`);
       return res.data.roles;
     } catch (e) {
-      return this.handleError(e);
+      return handleAxiosError(e);
     }
   }
 
-  async assignRoleToUser(
-    userId: string,
-    roleId: number,
-    token?: string,
-  ): Promise<void> {
+  async assignRoleToUser(userId: string, roleId: number): Promise<void> {
     try {
-      await this.api.post(
-        `/admin/users/${userId}/roles`,
-        { roleId },
-        { headers: this.getAuthHeader(token) },
-      );
+      await this.api.post(`/admin/users/${userId}/roles`, { roleId });
     } catch (e) {
-      return this.handleError(e);
+      return handleAxiosError(e);
     }
   }
 
-  async removeRoleFromUser(
-    userId: string,
-    roleId: number,
-    token?: string,
-  ): Promise<void> {
+  async removeRoleFromUser(userId: string, roleId: number): Promise<void> {
     try {
-      await this.api.delete(`/admin/users/${userId}/roles/${roleId}`, {
-        headers: this.getAuthHeader(token),
-      });
+      await this.api.delete(`/admin/users/${userId}/roles/${roleId}`);
     } catch (e) {
-      return this.handleError(e);
+      return handleAxiosError(e);
     }
   }
 
-  async getUserPermissions(
-    userId: string,
-    token?: string,
-  ): Promise<Permission[]> {
+  async getUserPermissions(userId: string): Promise<Permission[]> {
     try {
-      const res = await this.api.get(`/admin/users/${userId}/permissions`, {
-        headers: this.getAuthHeader(token),
-      });
+      const res = await this.api.get(`/admin/users/${userId}/permissions`);
       return res.data.permissions;
     } catch (e) {
-      return this.handleError(e);
+      return handleAxiosError(e);
     }
   }
 
   async grantUserPermission(
     userId: string,
     data: GrantPermissionParams,
-    token?: string,
   ): Promise<void> {
     try {
-      await this.api.post(`/admin/users/${userId}/permissions`, data, {
-        headers: this.getAuthHeader(token),
-      });
+      await this.api.post(`/admin/users/${userId}/permissions`, data);
     } catch (e) {
-      return this.handleError(e);
+      return handleAxiosError(e);
     }
   }
 
   async revokeUserPermission(
     userId: string,
     permissionId: number,
-    token?: string,
   ): Promise<void> {
     try {
       await this.api.delete(
         `/admin/users/${userId}/permissions/${permissionId}`,
-        { headers: this.getAuthHeader(token) },
       );
     } catch (e) {
-      return this.handleError(e);
+      return handleAxiosError(e);
     }
   }
 }

@@ -25,13 +25,14 @@ import { UpdateUserUseCase } from '../../application/use-cases/update-user.use-c
 import { DeleteUserUseCase } from '../../application/use-cases/delete-user.use-case';
 import { UpdateUserDto } from '../../application/dto/user.dto';
 import { AuthFailures } from '../../domain/errors/auth.failures';
-import { toUserResponse } from '../dto/response.dto';
+import { toUserResponse } from '../dto/user-response.dto';
 
 function mapFailure(failure: AuthFailures): never {
   switch (failure.code) {
     case 'USER_NOT_FOUND':
       throw new NotFoundException(failure.message);
     case 'EMAIL_ALREADY_IN_USE':
+    case 'USERNAME_ALREADY_EXISTS':
       throw new ConflictException(failure.message);
     case 'CANNOT_DELETE_SELF':
       throw new ForbiddenException(failure.message);
@@ -83,8 +84,11 @@ export class AdminUserController {
   @ApiOperation({ summary: 'Update a user' })
   async update(@Param('id') id: string, @Body() dto: UpdateUserDto) {
     const result = await this.updateUser.execute({ id, ...dto });
-    if (result.type === 'left') mapFailure(result.value as AuthFailures);
-    return toUserResponse(result.value!.user);
+    if (result.type === 'left') {
+      mapFailure(result.value as AuthFailures);
+      return;
+    }
+    return toUserResponse(result.value.user);
   }
 
   @Delete(':id')

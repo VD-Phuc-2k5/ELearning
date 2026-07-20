@@ -1,0 +1,120 @@
+pipeline {
+  agent any
+
+  // TODO: re-enable after GitHub Server is configured in Manage Jenkins
+  // triggers { githubPush() }
+
+  environment {
+    IMAGE_NAME        = 'learninghub-api'
+    COMPOSE_FILE      = 'docker-compose.yml'
+    PROJECT_DIR       = 'LearningHub'
+    POSTGRES_USER     = 'postgres'
+    POSTGRES_PASSWORD = 'postgres123'
+    POSTGRES_DB       = 'dev_learning_hub'
+    POSTGRES_TEST_DB  = 'test_learning_hub'
+    POSTGRES_HOST     = 'postgres'
+    POSTGRES_PORT     = '5432'
+    REDIS_HOST        = 'redis'
+    REDIS_PORT        = '6379'
+    JWT_SECRET        = credentials('jwt-secret')
+    CLOUDINARY_CLOUD_NAME = 'test'
+    CLOUDINARY_API_KEY    = 'test'
+    CLOUDINARY_API_SECRET = credentials('cloudinary-api-secret')
+  }
+
+  stages {
+    stage('Install') {
+      steps {
+        dir(PROJECT_DIR) {
+          sh 'pnpm install --frozen-lockfile'
+        }
+      }
+    }
+
+    stage('Lint') {
+      steps {
+        dir(PROJECT_DIR) {
+          sh 'pnpm nx run-many --target=lint --projects=api,LearningHub,AdminPage --parallel=3'
+        }
+      }
+    }
+
+    stage('Setup Test DB') {
+      steps {
+        sh '''
+          set -e
+          echo "=== Using existing postgres container ==="
+
+          sudo docker ps | grep postgres
+
+          sudo docker exec postgres psql -U postgres -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'test_learning_hub' AND pid <> pg_backend_pid()"
+          sudo docker exec postgres psql -U postgres -c "DROP DATABASE IF EXISTS test_learning_hub"
+          sudo docker exec postgres psql -U postgres -c "CREATE DATABASE test_learning_hub"
+
+          echo "=== Waiting for Redis ==="
+          sudo docker exec redis redis-cli PING || true
+
+          echo "=== Container status ==="
+          sudo docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+        '''
+      }
+    }
+
+    stage('Test (API)') {
+      steps {
+        dir(PROJECT_DIR) {
+          sh 'pnpm nx run-many --target=test --projects=api'
+        }
+      }
+    }
+
+    stage('Test (Frontend)') {
+      steps {
+        dir(PROJECT_DIR) {
+          sh 'pnpm nx run-many --target=test --projects=LearningHub,AdminPage'
+        }
+      }
+    }
+
+    stage('Build') {
+      steps {
+        dir(PROJECT_DIR) {
+          sh 'pnpm nx run-many --target=build --projects=api,LearningHub,AdminPage --parallel=3'
+        }
+      }
+    }
+
+    stage('Docker Build & Deploy') {
+      when { branch 'main' }
+      steps {
+        dir(PROJECT_DIR) {
+          sh """
+            sudo docker build -f apps/api/Dockerfile         -t learninghub-api:latest .
+            sudo docker build -f apps/LearningHub/Dockerfile -t learninghub-web:latest .
+            sudo docker build -f apps/AdminPage/Dockerfile   -t learninghub-admin:latest .
+            sudo docker compose -f ${COMPOSE_FILE} up -d --scale api=3
+          """
+        }
+      }
+    }
+
+    stage('E2E Tests') {
+      when { branch 'main' }
+      steps {
+        dir(PROJECT_DIR) {
+          sh 'pnpm test:e2e'
+        }
+      }
+    }
+  }
+
+  post {
+    always {
+      sh '''
+        echo "=== Cleanup complete ==="
+      '''
+    }
+    failure { echo 'Pipeline FAILED' }
+    success { echo 'Pipeline PASSED' }
+  }
+}

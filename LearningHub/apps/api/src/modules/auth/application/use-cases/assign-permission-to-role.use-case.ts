@@ -3,6 +3,8 @@ import { Either, Failure, Usecase, left, right } from '@learning-hub/core';
 import { IRoleRepository } from '../../domain/repositories/i-role.repository';
 import { IPermissionRepository } from '../../domain/repositories/i-permission.repository';
 import { IRolePermissionRepository } from '../../domain/repositories/i-role-permission.repository';
+import { IUserRoleRepository } from '../../domain/repositories/i-user-role.repository';
+import { IPermissionResolverService } from '../interfaces/i-permission-resolver.service';
 import { AuthFailures } from '../../domain/errors/auth.failures';
 
 export interface AssignPermissionToRoleParams {
@@ -10,10 +12,14 @@ export interface AssignPermissionToRoleParams {
   permissionId: number;
 }
 
-export interface AssignPermissionToRoleResult { success: true; }
+export interface AssignPermissionToRoleResult {
+  success: true;
+}
 
 @Injectable()
-export class AssignPermissionToRoleUseCase implements Usecase<AssignPermissionToRoleResult, AssignPermissionToRoleParams> {
+export class AssignPermissionToRoleUseCase
+  implements Usecase<AssignPermissionToRoleResult, AssignPermissionToRoleParams>
+{
   constructor(
     @Inject('IRoleRepository')
     private readonly roleRepo: IRoleRepository,
@@ -21,7 +27,11 @@ export class AssignPermissionToRoleUseCase implements Usecase<AssignPermissionTo
     private readonly permissionRepo: IPermissionRepository,
     @Inject('IRolePermissionRepository')
     private readonly rolePermissionRepo: IRolePermissionRepository,
-  ) { }
+    @Inject('IUserRoleRepository')
+    private readonly userRoleRepo: IUserRoleRepository,
+    @Inject('IPermissionResolverService')
+    private readonly permissionResolver: IPermissionResolverService,
+  ) {}
 
   async execute(
     params: AssignPermissionToRoleParams,
@@ -36,6 +46,8 @@ export class AssignPermissionToRoleUseCase implements Usecase<AssignPermissionTo
     );
     if (exists) return left(AuthFailures.alreadyAssigned());
     await this.rolePermissionRepo.assign(params.roleId, params.permissionId);
+    const userIds = await this.userRoleRepo.findUserIdsByRoleId(params.roleId);
+    userIds.forEach((uid) => this.permissionResolver.invalidate(uid));
     return right({ success: true as const });
   }
 }

@@ -15,7 +15,7 @@ import { QuizAttemptAnswerEntity } from './quiz-attempt-answer.entity';
 export class QuizAttemptEntity {
   @PrimaryGeneratedColumn('uuid') id!: string;
   @Column({ name: 'user_id' }) userId!: string;
-  @ManyToOne(() => UserEntity)
+  @ManyToOne(() => UserEntity, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
   user!: UserEntity;
   @Column({ name: 'question_bank_id' }) questionBankId!: string;

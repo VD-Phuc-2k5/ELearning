@@ -1,3 +1,6 @@
 .direnv/
+.claude
 AGENTS.md
 CLAUDE.md
+test-results/
+LearningHub/apps/e2e/playwright/.auth/

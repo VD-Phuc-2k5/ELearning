@@ -9,11 +9,15 @@ import {
   Plus,
   Settings,
   UserCog,
+  ShieldAlert,
+  BookOpen,
+  Terminal,
 } from 'lucide-react';
 import '@aejkatappaja/phantom-ui';
 import type { Role, User } from '@learning-hub/domain';
 import { useConfirmModal } from '../components/admin/modal';
 import { LoginScreen } from '../components/admin/login-screen';
+import { adminLogoutAction, checkAdminAuth } from './actions/auth.actions';
 import { TabButton } from '../components/admin/tab-button';
 import { CreateAdminModal } from '../components/admin/create-admin-modal';
 import { AddPermissionModal } from '../components/admin/add-permission-modal';
@@ -26,8 +30,20 @@ import { RolesTab } from './tabs/roles-tab';
 import { PermissionsTab } from './tabs/permissions-tab';
 import { MonitoringTab } from './tabs/monitoring-tab';
 import { UserAdminTab } from './tabs/user-admin-tab';
+import { ForumModerationTab } from './tabs/forum-moderation-tab';
+import { QuizReviewTab } from './tabs/quiz-review-tab';
+import { ProblemsTab } from './tabs/problems-tab';
+import { CreateProblemModal } from '../components/admin/create-problem-modal';
 
-type TabKey = 'monitoring' | 'users' | 'roles' | 'permissions' | 'user-admin';
+type TabKey =
+  | 'monitoring'
+  | 'users'
+  | 'roles'
+  | 'permissions'
+  | 'user-admin'
+  | 'forum-moderation'
+  | 'quiz-review'
+  | 'problems';
 
 const tabTitle: Record<TabKey, string> = {
   users: 'Quản lý Thành viên',
@@ -35,10 +51,13 @@ const tabTitle: Record<TabKey, string> = {
   permissions: 'Danh mục Quyền hạn',
   monitoring: 'Giám sát Hệ thống',
   'user-admin': 'Quản trị User',
+  'forum-moderation': 'Kiểm duyệt Forum',
+  'quiz-review': 'Kiểm duyệt Ngân hàng Câu hỏi',
+  problems: 'Quản lý Đề bài Lập trình',
 };
 
 export default function AdminDashboard() {
-  const [token, setToken] = useState<string | null>(null);
+  const [authenticated, setAuthenticated] = useState<boolean | null>(null);
   const [activeTab, setActiveTab] = useState<TabKey>('users');
   const [showCreate, setShowCreate] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
@@ -46,16 +65,22 @@ export default function AdminDashboard() {
   const [showCreatePerm, setShowCreatePerm] = useState(false);
   const [showCreateRole, setShowCreateRole] = useState(false);
   const [editingRole, setEditingRole] = useState<Role | null>(null);
+  const [showCreateProblem, setShowCreateProblem] = useState(false);
   const { modal: confirmModal, openConfirm } = useConfirmModal();
 
   useEffect(() => {
-    setToken(localStorage.getItem('adminToken'));
+    checkAdminAuth().then(setAuthenticated);
   }, []);
 
-  if (token === null)
+  if (authenticated === null) return null;
+
+  if (!authenticated)
     return (
       <LoginScreen
-        onLogin={() => setToken(localStorage.getItem('adminToken'))}
+        onLogin={async () => {
+          const ok = await checkAdminAuth();
+          setAuthenticated(ok);
+        }}
       />
     );
 
@@ -98,12 +123,30 @@ export default function AdminDashboard() {
             icon={<UserCog className="h-5 w-5" />}
             label="Quản trị User"
           />
+          <TabButton
+            active={activeTab === 'forum-moderation'}
+            onClick={() => setActiveTab('forum-moderation')}
+            icon={<ShieldAlert className="h-5 w-5" />}
+            label="Kiểm duyệt Forum"
+          />
+          <TabButton
+            active={activeTab === 'quiz-review'}
+            onClick={() => setActiveTab('quiz-review')}
+            icon={<BookOpen className="h-5 w-5" />}
+            label="Kiểm duyệt Câu hỏi"
+          />
+          <TabButton
+            active={activeTab === 'problems'}
+            onClick={() => setActiveTab('problems')}
+            icon={<Terminal className="h-5 w-5" />}
+            label="Đề bài Coding"
+          />
         </nav>
         <div className="p-4 border-t border-white/10">
           <button
-            onClick={() => {
-              localStorage.removeItem('adminToken');
-              setToken(null);
+            onClick={async () => {
+              await adminLogoutAction();
+              setAuthenticated(false);
             }}
             className="w-full text-left px-4 py-3 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 text-sm transition"
           >
@@ -142,6 +185,14 @@ export default function AdminDashboard() {
                 <Plus className="h-5 w-5" /> Thêm vai trò
               </button>
             )}
+            {activeTab === 'problems' && (
+              <button
+                onClick={() => setShowCreateProblem(true)}
+                className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-xl font-bold hover:bg-indigo-700 transition"
+              >
+                <Plus className="h-5 w-5" /> Thêm đề bài
+              </button>
+            )}
           </div>
         </header>
 
@@ -172,6 +223,9 @@ export default function AdminDashboard() {
             onClose={() => setEditingRole(null)}
           />
         )}
+        {showCreateProblem && (
+          <CreateProblemModal onClose={() => setShowCreateProblem(false)} />
+        )}
 
         {activeTab === 'users' && (
           <UsersTab
@@ -188,6 +242,9 @@ export default function AdminDashboard() {
         )}
         {activeTab === 'monitoring' && <MonitoringTab />}
         {activeTab === 'user-admin' && <UserAdminTab />}
+        {activeTab === 'forum-moderation' && <ForumModerationTab />}
+        {activeTab === 'quiz-review' && <QuizReviewTab />}
+        {activeTab === 'problems' && <ProblemsTab />}
       </main>
       {confirmModal}
     </div>

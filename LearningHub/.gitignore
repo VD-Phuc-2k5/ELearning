@@ -47,8 +47,17 @@ Thumbs.db
 .next
 out
 
+# API logs
+logs/
+
 test-output
+test-results
 
 .env
+.env.local
 tsconfig.tsbuildinfo
 .claude/plans
+
+# Docker secrets (keep example)
+secrets/*
+!secrets/.env.secrets.example

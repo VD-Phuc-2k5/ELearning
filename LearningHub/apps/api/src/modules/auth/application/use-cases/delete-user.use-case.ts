@@ -28,7 +28,14 @@ export class DeleteUserUseCase
       return left(AuthFailures.cannotDeleteSelf());
     const user = await this.userRepository.findById(params.id);
     if (!user) return left(AuthFailures.userNotFound());
-    await this.userRepository.delete(params.id);
+    try {
+      await this.userRepository.delete(params.id);
+    } catch (error) {
+      if ((error as { code?: string }).code === '23503') {
+        return left(AuthFailures.userHasRelatedRecords());
+      }
+      throw error;
+    }
     return right({ success: true as const });
   }
 }

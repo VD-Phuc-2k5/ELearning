@@ -8,8 +8,24 @@ export const btnSecondary =
   'flex-1 py-3 rounded-xl border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50';
 
 interface ApiError {
-  response?: { data?: { message?: string } };
+  response?: {
+    data?: {
+      message?: string | string[];
+      errors?: { field: string; message: string }[];
+    };
+  };
 }
 export function getAxiosMessage(e: unknown, fallback: string): string {
-  return (e as ApiError).response?.data?.message ?? fallback;
+  const axiosErr = e as ApiError;
+  const data = axiosErr.response?.data;
+  if (data?.errors && Array.isArray(data.errors)) {
+    return data.errors.map((err) => `${err.field}: ${err.message}`).join(', ');
+  }
+  const message = data?.message;
+  if (Array.isArray(message)) {
+    return message.join(', ');
+  }
+  if (message) return message;
+  const plainMessage = (e as Error).message;
+  return plainMessage && plainMessage !== fallback ? plainMessage : fallback;
 }

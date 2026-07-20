@@ -2,7 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
-import { Map, BookOpen } from 'lucide-react';
+import { Map, BookOpen, AlertCircle } from 'lucide-react';
 import { getRoadmapDetail } from '../../../../actions/roadmap.actions';
 import { ProgressBar } from '../../../../../components/ui';
 import '@aejkatappaja/phantom-ui';
@@ -18,7 +18,7 @@ export function QuizProgressCard({
   bankId,
   bankTitle,
 }: QuizProgressCardProps) {
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ['roadmap', roadmapId],
     queryFn: () => getRoadmapDetail(roadmapId),
   });
@@ -33,10 +33,20 @@ export function QuizProgressCard({
       />
     );
   }
+  if (isError) {
+    return (
+      <div className="mb-4 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-center">
+        <AlertCircle className="h-5 w-5 text-rose-400 mx-auto mb-1" />
+        <p className="text-sm font-medium text-rose-600">
+          Không thể tải thông tin roadmap
+        </p>
+      </div>
+    );
+  }
   if (!data) return null;
 
   const total = data.items.length;
-  const stepIdx = data.items.findIndex((i) => i.questionBankId === bankId);
+  const stepIdx = data.items.findIndex((i: any) => i.questionBankId === bankId);
   const step = stepIdx >= 0 ? stepIdx + 1 : 0;
   const pct = Math.round(data.userProgress?.progressPercent ?? 0);
 

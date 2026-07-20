@@ -46,7 +46,7 @@ export function PermissionsTab({ openConfirm }: PermissionsTabProps) {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {(perms ?? []).map((p) => (
+      {(perms ?? []).map((p: Permission) => (
         <div
           key={p.id}
           className="group bg-white p-6 rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition relative"

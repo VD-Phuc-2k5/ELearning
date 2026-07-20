@@ -25,6 +25,7 @@ export interface GetBanksQuizParams {
   search?: string;
   tagId?: number;
   statusId?: string;
+  uploaderId?: string;
 }
 
 export interface CreateBankQuizParams {
@@ -51,6 +52,7 @@ export interface GetAttemptsParams {
   page?: number;
   limit?: number;
   bankId?: string;
+  uploaderId?: string;
 }
 
 export interface IQuizRepository {
@@ -106,4 +108,9 @@ export interface IQuizRepository {
   checkBankHash(hash: string): Promise<Either<Failure, BankHashResult>>;
   getDerivedBanks(bankId: string): Promise<Either<Failure, DerivedBank[]>>;
   getBankRoadmaps(bankId: string): Promise<Either<Failure, BankRoadmapItem[]>>;
+  approveBank(bankId: string): Promise<Either<Failure, QuestionBank>>;
+  rejectBank(
+    bankId: string,
+    reason?: string,
+  ): Promise<Either<Failure, QuestionBank>>;
 }

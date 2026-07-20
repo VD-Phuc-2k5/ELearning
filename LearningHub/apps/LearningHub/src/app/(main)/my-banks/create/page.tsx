@@ -7,9 +7,9 @@ import { useRouter } from 'next/navigation';
 import { z } from 'zod';
 import { Button, Input } from '../../../../components/ui';
 import {
-  checkBankHash,
   createBank,
   uploadExcel,
+  checkBankHash,
 } from '../../../actions/quiz.actions';
 import type { BankHashResult, QuestionBank } from '@learning-hub/domain';
 import { useState, useRef } from 'react';
@@ -35,7 +35,7 @@ export default function CreateBankPage() {
   const queryClient = useQueryClient();
   const [file, setFile] = useState<File | null>(null);
   const [fileHash, setFileHash] = useState<string | null>(null);
-  const [isDuplicate, setIsDuplicate] = useState<boolean>(false);
+  const [isDuplicate, setIsDuplicate] = useState(false);
   const [duplicateBank, setDuplicateBank] = useState<QuestionBank | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -69,9 +69,16 @@ export default function CreateBankPage() {
 
   const createMutation = useMutation({
     mutationFn: async (data: CreateBankInput) => {
-      const bank = await createBank(data);
+      const bankResult = await createBank(data);
+      if (!bankResult.success) throw new Error(bankResult.message);
+      const bank = bankResult.data;
       if (file) {
-        await uploadExcel(bank.id, file, fileHash ?? undefined);
+        const uploadResult = await uploadExcel(
+          bank.id,
+          file,
+          fileHash ?? undefined,
+        );
+        if (!uploadResult.success) throw new Error(uploadResult.message);
       }
       return bank;
     },
@@ -109,7 +116,7 @@ export default function CreateBankPage() {
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <div className="bg-white rounded-3xl border border-slate-200 p-8 shadow-sm space-y-8">
           <div className="space-y-6">
-            <h3 className="text-base font-semibold text-slate-900 uppercase tracking-wide text-xs text-slate-400">
+            <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wide">
               Basic Information
             </h3>
             <Input

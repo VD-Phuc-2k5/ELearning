@@ -1,6 +1,37 @@
 'use server';
 
-import { Either, Failure } from '@learning-hub/core';
+async function unwrapOrThrow<T>(
+  promise: Promise<{ type: string; value: any }>,
+): Promise<T> {
+  const result = await promise;
+  if (result.type === 'left') throw new Error(result.value.message);
+  return result.value;
+}
+
+type ActionResult<T> =
+  | { success: true; data: T }
+  | { success: false; message: string };
+
+async function unwrapOrResult<T>(
+  promise: Promise<{ type: string; value: any }>,
+  fallbackMessage = 'Something went wrong',
+): Promise<ActionResult<T>> {
+  try {
+    const result = await promise;
+    if (result.type === 'left') {
+      return {
+        success: false,
+        message: result.value?.message || fallbackMessage,
+      };
+    }
+    return { success: true, data: result.value };
+  } catch (e) {
+    return {
+      success: false,
+      message: e instanceof Error ? e.message : fallbackMessage,
+    };
+  }
+}
 import {
   RoadmapRemoteDataSourceImpl,
   RoadmapRepositoryImpl,
@@ -31,93 +62,93 @@ import {
   UpdateRoadmapUsecaseParams,
   UpdateRoadmapUsecase,
 } from '@learning-hub/domain';
-import { cookies } from 'next/headers';
-
-function unwrap<T>(r: Either<Failure, T>): T {
-  if (r.type === 'left') throw new Error(r.value.message);
-  return r.value;
-}
-
-async function getRepo() {
-  const token = (await cookies()).get('accessToken')?.value ?? '';
-  return new RoadmapRepositoryImpl(new RoadmapRemoteDataSourceImpl(), token);
+function getRepo() {
+  return new RoadmapRepositoryImpl(new RoadmapRemoteDataSourceImpl());
 }
 
 export async function listRoadmaps(
   params?: GetRoadmapsParams,
 ): Promise<RoadmapList> {
-  const repo = await getRepo();
-  return unwrap(await new GetRoadmapsUsecase(repo).execute(params ?? {}));
+  try {
+    const repo = getRepo();
+    return unwrapOrThrow(new GetRoadmapsUsecase(repo).execute(params ?? {}));
+  } catch {
+    return { data: [], total: 0 };
+  }
 }
 
 export async function listMyRoadmaps(
   params?: GetRoadmapsParams,
 ): Promise<RoadmapList> {
-  const repo = await getRepo();
-  return unwrap(await new GetMyRoadmapsUsecase(repo).execute(params ?? {}));
+  try {
+    const repo = getRepo();
+    return unwrapOrThrow(new GetMyRoadmapsUsecase(repo).execute(params ?? {}));
+  } catch {
+    return { data: [], total: 0 };
+  }
 }
 
 export async function createRoadmap(
   data: CreateRoadmapParams,
-): Promise<Roadmap> {
-  const repo = await getRepo();
-  return unwrap(await new CreateRoadmapUsecase(repo).execute(data));
+): Promise<ActionResult<Roadmap>> {
+  const repo = getRepo();
+  return unwrapOrResult(new CreateRoadmapUsecase(repo).execute(data));
 }
 
-export async function getRoadmapDetail(id: string): Promise<RoadmapDetail> {
-  const repo = await getRepo();
-  return unwrap(
-    await new GetRoadmapDetailUsecase(repo).execute(
-      new GetRoadmapDetailParams(id),
-    ),
-  );
+export async function getRoadmapDetail(
+  id: string,
+): Promise<RoadmapDetail | null> {
+  try {
+    const repo = getRepo();
+    return unwrapOrThrow(
+      new GetRoadmapDetailUsecase(repo).execute(new GetRoadmapDetailParams(id)),
+    );
+  } catch {
+    return null;
+  }
 }
 
 export async function updateRoadmap(
   id: string,
   data: UpdateRoadmapParams,
-): Promise<Roadmap> {
-  const repo = await getRepo();
-  return unwrap(
-    await new UpdateRoadmapUsecase(repo).execute(
+): Promise<ActionResult<Roadmap>> {
+  const repo = getRepo();
+  return unwrapOrResult(
+    new UpdateRoadmapUsecase(repo).execute(
       new UpdateRoadmapUsecaseParams(id, data),
     ),
   );
 }
 
-export async function deleteRoadmap(id: string): Promise<void> {
-  const repo = await getRepo();
-  unwrap(
-    await new DeleteRoadmapUsecase(repo).execute(new DeleteRoadmapParams(id)),
+export async function deleteRoadmap(id: string): Promise<ActionResult<void>> {
+  const repo = getRepo();
+  return unwrapOrResult(
+    new DeleteRoadmapUsecase(repo).execute(new DeleteRoadmapParams(id)),
   );
 }
 
 export async function setRoadmapItems(
   id: string,
   bankIds: string[],
-): Promise<RoadmapItem[]> {
-  const repo = await getRepo();
-  return unwrap(
-    await new SetRoadmapItemsUsecase(repo).execute(
+): Promise<ActionResult<RoadmapItem[]>> {
+  const repo = getRepo();
+  return unwrapOrResult(
+    new SetRoadmapItemsUsecase(repo).execute(
       new SetRoadmapItemsParams(id, bankIds),
     ),
   );
 }
 
-export async function enrollRoadmap(id: string): Promise<UserRoadmapProgress> {
-  const repo = await getRepo();
-  return unwrap(
-    await new EnrollRoadmapUsecase(repo).execute(new EnrollRoadmapParams(id)),
+export async function enrollRoadmap(
+  id: string,
+): Promise<ActionResult<UserRoadmapProgress>> {
+  const repo = getRepo();
+  return unwrapOrResult(
+    new EnrollRoadmapUsecase(repo).execute(new EnrollRoadmapParams(id)),
   );
 }
 
 export async function getMyRoadmapProgress(): Promise<UserRoadmapProgress[]> {
-  const token = (await cookies()).get('accessToken')?.value;
-  if (!token) return [];
-  const repo = new RoadmapRepositoryImpl(
-    new RoadmapRemoteDataSourceImpl(),
-    token,
-  );
-  const result = await new GetMyRoadmapProgressUsecase(repo).execute({});
+  const result = await new GetMyRoadmapProgressUsecase(getRepo()).execute({});
   return result.type === 'right' ? result.value : [];
 }

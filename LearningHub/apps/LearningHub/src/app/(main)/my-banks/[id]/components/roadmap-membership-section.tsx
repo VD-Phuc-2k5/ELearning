@@ -25,13 +25,20 @@ export function RoadmapMembershipSection({ bankId }: { bankId: string }) {
       const details = await Promise.all(
         items.map((i) => getRoadmapDetail(i.roadmapId)),
       );
-      return items.map((item, idx) => ({
-        roadmapId: item.roadmapId,
-        roadmapTitle: item.roadmapTitle,
-        description: details[idx].roadmap.description,
-        totalBanks: details[idx].items.length,
-        position: item.position,
-      }));
+      const result: RoadmapMembership[] = [];
+      items.forEach((item, idx) => {
+        const detail = details[idx];
+        if (detail) {
+          result.push({
+            roadmapId: item.roadmapId,
+            roadmapTitle: item.roadmapTitle,
+            description: detail.roadmap.description,
+            totalBanks: detail.items.length,
+            position: item.position,
+          });
+        }
+      });
+      return result;
     },
   });
 
@@ -57,17 +64,17 @@ export function RoadmapMembershipSection({ bankId }: { bankId: string }) {
         </phantom-ui>
       ) : memberships.length === 0 ? (
         <EmptyState
-          icon={<Map className="h-8 w-8" />}
+          icon={<Map className="h-8 w-full" />}
           title="Not used in any roadmap"
           description="This question bank hasn't been added to a roadmap yet."
         />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
-          {memberships.map((m) => (
+          {memberships.map((m: RoadmapMembership) => (
             <Link
               key={m.roadmapId}
               href={`/roadmaps/${m.roadmapId}`}
-              className="group block rounded-2xl border border-slate-100 bg-white p-5 shadow-sm hover:shadow-md hover:border-indigo-200 transition"
+              className="group block rounded-2xl border border-slate-100 bg-white p-5 shadow-sm hover:shadow-md hover:border-indigo-200 hover:-translate-y-0.5 transition"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">

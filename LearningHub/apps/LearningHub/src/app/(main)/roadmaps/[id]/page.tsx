@@ -11,6 +11,7 @@ import {
   Circle,
   PlayCircle,
   Edit2,
+  AlertCircle,
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { Button } from '../../../../components/ui';
@@ -46,13 +47,16 @@ export default function RoadmapDetailPage() {
   const router = useRouter();
   const qc = useQueryClient();
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, error } = useQuery({
     queryKey: ['roadmap', id],
     queryFn: () => getRoadmapDetail(id),
   });
 
   const enroll = useMutation({
-    mutationFn: () => enrollRoadmap(id),
+    mutationFn: async () => {
+      const result = await enrollRoadmap(id);
+      if (!result.success) throw new Error(result.message);
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['roadmap', id] }),
   });
 
@@ -63,7 +67,7 @@ export default function RoadmapDetailPage() {
   const totalQuestions = useMemo(
     () =>
       (data?.items ?? []).reduce(
-        (sum, i) => sum + (i.bankTotalQuestions ?? 0),
+        (sum: number, i: any) => sum + (i.bankTotalQuestions ?? 0),
         0,
       ),
     [data?.items],
@@ -84,6 +88,14 @@ export default function RoadmapDetailPage() {
           <div key={i} className="h-16 rounded-xl bg-slate-100" />
         ))}
       </phantom-ui>
+    );
+
+  if (error)
+    return (
+      <div className="flex items-start gap-2 rounded-2xl bg-red-50 border border-red-100 px-4 py-3 text-sm text-red-700">
+        <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+        <span>Lỗi tải dữ liệu</span>
+      </div>
     );
 
   if (!data) return null;
@@ -188,7 +200,7 @@ export default function RoadmapDetailPage() {
         <h2 className="text-lg font-bold text-slate-900">
           Curriculum ({total} banks)
         </h2>
-        {items.map((item, idx) => {
+        {items.map((item: any, idx: number) => {
           const status = getBankStatus(item.questionBankId);
           const cfg = STATUS_CONFIG[status];
           return (

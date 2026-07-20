@@ -2,19 +2,30 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
-import { Map, Plus, ArrowUpRight, Users } from 'lucide-react';
+import { Map, Plus, ArrowUpRight, Users, AlertCircle } from 'lucide-react';
 import { Button } from '../../../components/ui';
+import { RevealGroup } from '../../../components/effects/reveal';
 import { listRoadmaps, enrollRoadmap } from '../../actions/roadmap.actions';
 import '@aejkatappaja/phantom-ui';
 
+interface Roadmap {
+  id: string;
+  title: string;
+  description: string | null;
+  status: string;
+}
+
 export default function RoadmapsPage() {
   const qc = useQueryClient();
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, error } = useQuery({
     queryKey: ['roadmaps'],
     queryFn: () => listRoadmaps({ limit: 20 }),
   });
   const enroll = useMutation({
-    mutationFn: (id: string) => enrollRoadmap(id),
+    mutationFn: async (id: string) => {
+      const result = await enrollRoadmap(id);
+      if (!result.success) throw new Error(result.message);
+    },
     onSuccess: () =>
       qc.invalidateQueries({ queryKey: ['my-roadmap-progress'] }),
   });
@@ -28,6 +39,14 @@ export default function RoadmapsPage() {
           ))}
         </div>
       </phantom-ui>
+    );
+
+  if (error)
+    return (
+      <div className="flex items-start gap-2 rounded-2xl bg-red-50 border border-red-100 px-4 py-3 text-sm text-red-700">
+        <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+        <span>Lỗi tải dữ liệu</span>
+      </div>
     );
 
   const roadmaps = data?.data ?? [];
@@ -60,11 +79,11 @@ export default function RoadmapsPage() {
           </Link>
         </div>
       ) : (
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {roadmaps.map((r) => (
+        <RevealGroup className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {roadmaps.map((r: Roadmap) => (
             <div
               key={r.id}
-              className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 space-y-4 hover:shadow-md transition"
+              className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 space-y-4 hover:shadow-md hover:-translate-y-0.5 transition"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="h-10 w-10 rounded-xl bg-indigo-50 flex items-center justify-center shrink-0">
@@ -73,7 +92,7 @@ export default function RoadmapsPage() {
                 <span
                   className={[
                     'text-xs font-semibold px-2 py-1 rounded-full',
-                    r.status === 'published'
+                    r.status === 'approved'
                       ? 'bg-emerald-100 text-emerald-700'
                       : 'bg-slate-100 text-slate-500',
                   ].join(' ')}
@@ -111,7 +130,7 @@ export default function RoadmapsPage() {
               </div>
             </div>
           ))}
-        </div>
+        </RevealGroup>
       )}
     </div>
   );

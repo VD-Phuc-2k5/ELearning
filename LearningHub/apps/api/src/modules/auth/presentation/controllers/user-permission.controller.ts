@@ -22,7 +22,7 @@ import { AuthFailures } from '../../domain/errors/auth.failures';
 import {
   toUserPermissionsResponse,
   toUserPermissionResponse,
-} from '../dto/response.dto';
+} from '../dto/user-permission-response.dto';
 
 function mapFailure(failure: AuthFailures): never {
   switch (failure.code) {
@@ -69,8 +69,11 @@ export class UserPermissionController {
       isGranted: dto.isGranted,
       grantedBy: currentUser.id,
     });
-    if (result.type === 'left') mapFailure(result.value as AuthFailures);
-    return toUserPermissionResponse(result.value!.userPermission);
+    if (result.type === 'left') {
+      mapFailure(result.value as AuthFailures);
+      return;
+    }
+    return toUserPermissionResponse(result.value.userPermission);
   }
 
   @Delete(':permissionId')

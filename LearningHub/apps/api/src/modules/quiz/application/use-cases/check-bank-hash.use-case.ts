@@ -16,9 +16,9 @@ export class CheckBankHashUseCase {
 
   async execute(
     hash: string,
-    uploaderId: string,
+    _uploaderId: string,
   ): Promise<CheckBankHashResult> {
-    const bank = await this.questionBankRepository.findByHash(hash, uploaderId);
+    const bank = await this.questionBankRepository.findByHash(hash);
     return { exists: !!bank, bank };
   }
 }

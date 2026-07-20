@@ -2,13 +2,13 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Check, Plus, Edit3, Trash2 } from 'lucide-react';
-import type { Role } from '@learning-hub/domain';
+import type { Role, Permission } from '@learning-hub/domain';
 import {
   getMatrix,
   assignPermissionToRole,
   removePermissionFromRole,
   deleteRole as deleteRoleFn,
-  type MatrixData,
+  type RolePermissionMatrix,
 } from '../actions/admin.actions';
 
 interface TogglePermissionParams {
@@ -25,7 +25,7 @@ interface RolesTabProps {
 export function RolesTab({ openConfirm, onEditRole }: RolesTabProps) {
   const qc = useQueryClient();
 
-  const { data: matrixData, isLoading } = useQuery<MatrixData>({
+  const { data: matrixData, isLoading } = useQuery<RolePermissionMatrix>({
     queryKey: ['admin-matrix'],
     queryFn: getMatrix,
   });
@@ -74,7 +74,7 @@ export function RolesTab({ openConfirm, onEditRole }: RolesTabProps) {
             <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase border-r border-slate-200 sticky left-0 bg-slate-50 z-10 w-64">
               Quyền hạn
             </th>
-            {matrixData?.roles?.map((role) => (
+            {matrixData?.roles?.map((role: Role) => (
               <th
                 key={role.id}
                 className="px-6 py-4 group border-r border-slate-200 min-w-[120px]"
@@ -110,12 +110,12 @@ export function RolesTab({ openConfirm, onEditRole }: RolesTabProps) {
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-100">
-          {matrixData?.permissions?.map((perm) => (
+          {matrixData?.permissions?.map((perm: Permission) => (
             <tr key={perm.id} className="hover:bg-slate-50/50 transition">
               <td className="px-6 py-4 text-left text-sm font-bold text-slate-700 bg-slate-50/30 border-r border-slate-200 sticky left-0 z-10">
                 {perm.code}
               </td>
-              {matrixData.roles.map((role) => {
+              {matrixData.roles.map((role: Role) => {
                 const isAssigned = matrixData.matrix[role.id]?.includes(
                   perm.id,
                 );

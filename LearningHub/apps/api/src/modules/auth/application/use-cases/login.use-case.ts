@@ -49,6 +49,9 @@ export class LoginUseCase implements Usecase<LoginResult, LoginParams> {
     if (!isPasswordValid) {
       return left(AuthFailures.invalidPassword());
     }
+    if (!user.isActive) {
+      return left(AuthFailures.userInactive());
+    }
     if (params.requireAdminRole || params.rejectAdminRole) {
       const userRoles = await this.userRoleRepository.findByUserId(user.id);
       const isAdmin = userRoles.some(

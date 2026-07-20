@@ -1,13 +1,45 @@
 {
-    "$schema": "../../node_modules/nx/schemas/project-schema.json",
-    "sourceRoot": "apps/LearningHub",
-    "projectType": "application",
-    "tags": [],
-    "targets": {
-        "dev": {
-            "options": {
-                "port": 3002
-            }
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/LearningHub",
+  "projectType": "application",
+  "tags": [],
+  "targets": {
+    "dev": {
+      "options": {
+        "port": 3002
+      }
+    },
+    "build": {
+      "executor": "@nx/next:build",
+      "outputs": ["{options.outputPath}"],
+      "defaultConfiguration": "production",
+      "options": {
+        "outputPath": "dist/apps/LearningHub"
+      },
+      "configurations": {
+        "development": {
+          "outputPath": "dist/apps/LearningHub"
+        },
+        "production": {
+          "outputPath": "dist/apps/LearningHub"
         }
+      }
+    },
+    "start": {
+      "executor": "@nx/next:server",
+      "defaultConfiguration": "production",
+      "options": {
+        "buildTarget": "LearningHub:build:production",
+        "port": 3002
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "LearningHub:build:development"
+        },
+        "production": {
+          "buildTarget": "LearningHub:build:production"
+        }
+      }
     }
+  }
 }

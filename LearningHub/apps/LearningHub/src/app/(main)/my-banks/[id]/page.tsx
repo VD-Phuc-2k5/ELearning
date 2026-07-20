@@ -5,6 +5,8 @@ import { useParams, useRouter } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import gsap from 'gsap';
+import { io } from 'socket.io-client';
+import { getSocketToken } from '../../../actions/auth.actions';
 import {
   getBankDetail,
   getQuestionsForQuiz,
@@ -30,7 +32,7 @@ import {
   BarChart2,
 } from 'lucide-react';
 import { clsx } from 'clsx';
-import type { Tab } from './components/types';
+import type { BankDetailTab } from './components/types';
 import { QuestionsTab } from './components/questions-tab';
 import { UploadTab } from './components/upload-tab';
 import { HistoryTab } from './components/history-tab';
@@ -42,12 +44,16 @@ export default function BankDetailPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const pageRef = useRef<HTMLDivElement>(null);
-  const [tab, setTab] = useState<Tab>('questions');
+  const [tab, setTab] = useState<BankDetailTab>('questions');
   const [tagOpen, setTagOpen] = useState(false);
   const [deleteErr, setDeleteErr] = useState('');
   const { modal: confirmModal, openConfirm } = useConfirmModal();
 
-  const { data: bank, isLoading: bankLoading } = useQuery({
+  const {
+    data: bank,
+    isLoading: bankLoading,
+    error: bankError,
+  } = useQuery({
     queryKey: ['bank', id],
     queryFn: () => getBankDetail(id),
   });
@@ -81,12 +87,18 @@ export default function BankDetailPage() {
   };
 
   const updateTagsMutation = useMutation({
-    mutationFn: (tagIds: number[]) => updateBank(id, { tagIds }),
+    mutationFn: async (tagIds: number[]) => {
+      const result = await updateBank(id, { tagIds });
+      if (!result.success) throw new Error(result.message);
+    },
     onSuccess: invalidateBank,
   });
 
   const publishMutation = useMutation({
-    mutationFn: (statusId: string) => updateBank(id, { statusId }),
+    mutationFn: async (statusId: string) => {
+      const result = await updateBank(id, { statusId });
+      if (!result.success) throw new Error(result.message);
+    },
     onSuccess: invalidateBank,
   });
 
@@ -97,18 +109,24 @@ export default function BankDetailPage() {
       setTitle(bank.title);
       setDescription(bank.description ?? '');
     }
-  }, [bank?.id]);
+  }, [bank]);
 
   const updateInfoMutation = useMutation({
-    mutationFn: (data: { title?: string; description?: string }) =>
-      updateBank(id, data),
+    mutationFn: async (data: { title?: string; description?: string }) => {
+      const result = await updateBank(id, data);
+      if (!result.success) throw new Error(result.message);
+    },
     onSuccess: invalidateBank,
   });
 
   const [newTagName, setNewTagName] = useState('');
   const [tagSearch, setTagSearch] = useState('');
   const createTagMutation = useMutation({
-    mutationFn: (name: string) => createTag(name),
+    mutationFn: async (name: string) => {
+      const result = await createTag(name);
+      if (!result.success) throw new Error(result.message);
+      return result.data;
+    },
     onSuccess: (tag) => {
       queryClient.invalidateQueries({ queryKey: ['tags'] });
       updateTagsMutation.mutate([
@@ -119,7 +137,10 @@ export default function BankDetailPage() {
     },
   });
   const deleteTagMutation = useMutation({
-    mutationFn: (tagId: number) => deleteTag(tagId),
+    mutationFn: async (tagId: number) => {
+      const result = await deleteTag(tagId);
+      if (!result.success) throw new Error(result.message);
+    },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['tags'] }),
   });
 
@@ -132,8 +153,38 @@ export default function BankDetailPage() {
     );
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const token = await getSocketToken();
+      if (cancelled) return;
+      const socketUrl = (
+        process.env.NEXT_PUBLIC_NEST_API_URL ?? 'http://localhost:8080'
+      ).replace(/\/api\/?$/, '');
+      const socket = io(`${socketUrl}/forum`, {
+        auth: { token },
+        transports: ['websocket'],
+      });
+      socket.on('bank:reviewed', (payload: { bankId: string }) => {
+        if (payload.bankId === id) {
+          queryClient.invalidateQueries({ queryKey: ['bank', id] });
+          queryClient.invalidateQueries({ queryKey: ['bank-derived', id] });
+        }
+      });
+      return () => {
+        socket.disconnect();
+      };
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [id, queryClient]);
+
   const deleteBankMutation = useMutation({
-    mutationFn: () => deleteBank(id),
+    mutationFn: async () => {
+      const result = await deleteBank(id);
+      if (!result.success) throw new Error(result.message);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['my-banks'] });
       router.push('/my-banks');
@@ -160,6 +211,26 @@ export default function BankDetailPage() {
         <div className="h-10 bg-slate-100 rounded-xl w-64" />
         <div className="h-40 bg-slate-100 rounded-3xl" />
         <div className="h-64 bg-slate-100 rounded-3xl" />
+      </div>
+    );
+  }
+
+  if (bankError) {
+    return (
+      <div className="flex flex-col items-center justify-center py-32 text-center">
+        <AlertCircle className="h-12 w-12 text-rose-300 mb-4" />
+        <h3 className="text-lg font-semibold text-slate-700">
+          Không thể tải dữ liệu
+        </h3>
+        <p className="text-slate-500 text-sm mt-1">
+          {(bankError as Error)?.message || 'Vui lòng thử lại sau.'}
+        </p>
+        <Link
+          href="/my-banks"
+          className="mt-4 text-sm text-indigo-600 hover:underline"
+        >
+          ← Quay lại danh sách
+        </Link>
       </div>
     );
   }
@@ -339,19 +410,32 @@ export default function BankDetailPage() {
           <Button
             variant="secondary"
             size="md"
-            onClick={() =>
-              publishMutation.mutate(
-                bank.statusId === 'published' ? 'draft' : 'published',
-              )
-            }
+            onClick={() => {
+              if (bank.statusId === 'draft') {
+                publishMutation.mutate('pending_review');
+              } else if (bank.statusId === 'pending_review') {
+                publishMutation.mutate('draft');
+              } else {
+                publishMutation.mutate('draft');
+              }
+            }}
             isLoading={publishMutation.isPending}
+            disabled={
+              bank.statusId === 'pending_review' && publishMutation.isPending
+            }
             className={
-              bank.statusId === 'published'
+              bank.statusId === 'pending_review'
                 ? 'text-amber-600 border-amber-300 hover:bg-amber-50'
-                : 'text-emerald-600 border-emerald-300 hover:bg-emerald-50'
+                : bank.statusId === 'approved' || bank.statusId === 'published'
+                  ? 'text-amber-600 border-amber-300 hover:bg-amber-50'
+                  : 'text-emerald-600 border-emerald-300 hover:bg-emerald-50'
             }
           >
-            {bank.statusId === 'published' ? 'Unpublish' : 'Publish'}
+            {bank.statusId === 'pending_review'
+              ? 'Cancel Review'
+              : bank.statusId === 'approved' || bank.statusId === 'published'
+                ? 'Unpublish'
+                : 'Submit for Review'}
           </Button>
           <Button
             variant="secondary"
@@ -384,11 +468,18 @@ export default function BankDetailPage() {
           { label: 'Total questions', value: bank.totalQuestions },
           {
             label: 'Status',
-            value: bank.statusId === 'published' ? 'Published' : 'Draft',
+            value:
+              bank.statusId === 'pending_review'
+                ? 'Pending Review'
+                : bank.statusId === 'approved'
+                  ? 'Approved'
+                  : bank.statusId === 'published'
+                    ? 'Published'
+                    : 'Draft',
           },
           {
-            label: 'Updated',
-            value: new Date(bank.updatedAt).toLocaleDateString('en-US'),
+            label: 'Created',
+            value: new Date(bank.createdAt).toLocaleDateString('en-US'),
           },
         ].map(({ label, value }) => (
           <div
@@ -410,7 +501,7 @@ export default function BankDetailPage() {
               { key: 'upload', label: 'Import Excel', Icon: Upload },
               { key: 'history', label: 'Import History', Icon: History },
               { key: 'stats', label: 'Thống kê', Icon: BarChart2 },
-            ] as { key: Tab; label: string; Icon: ElementType }[]
+            ] as { key: BankDetailTab; label: string; Icon: ElementType }[]
           ).map(({ key, label, Icon }) => (
             <button
               key={key}

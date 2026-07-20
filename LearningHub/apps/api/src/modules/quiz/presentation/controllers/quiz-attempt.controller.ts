@@ -20,7 +20,7 @@ import { GetQuizAttemptsUseCase } from '../../application/use-cases/get-quiz-att
 import { GetQuizAttemptDetailUseCase } from '../../application/use-cases/get-quiz-attempt-detail.use-case';
 import { GetBankProgressUseCase } from '../../application/use-cases/get-bank-progress.use-case';
 import { GetBankRoadmapsUseCase } from '../../application/use-cases/get-bank-roadmaps.use-case';
-import { SubmitQuizRequestDto } from '../dto/quiz-attempt.request.dto';
+import { SubmitQuizRequestDto } from '../dto/submit-quiz-request.dto';
 
 interface AuthenticatedRequest {
   user: { id: string };
@@ -54,16 +54,19 @@ export class QuizAttemptController {
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'bankId', required: false })
+  @ApiQuery({ name: 'uploaderId', required: false, type: String })
   async getAttempts(
     @Request() req: AuthenticatedRequest,
     @Query('page') page?: number,
     @Query('limit') limit?: number,
     @Query('bankId') bankId?: string,
+    @Query('uploaderId') uploaderId?: string,
   ) {
     return this.getQuizAttemptsUseCase.execute(req.user.id, {
       page,
       limit,
       bankId,
+      uploaderId,
     });
   }
 

@@ -1,0 +1,14 @@
+{
+  "name": "@learning-hub/AdminPage",
+  "version": "0.0.1",
+  "private": true,
+  "dependencies": {
+    "@tailwindcss/typography": "^0.5.20",
+    "autoprefixer": "10.4.13",
+    "next": "~16.2.6",
+    "postcss": "8.5.10",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
+    "tailwindcss": "3.4.3"
+  }
+}

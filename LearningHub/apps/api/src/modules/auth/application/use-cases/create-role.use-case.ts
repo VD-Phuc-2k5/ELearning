@@ -3,9 +3,9 @@ import { Either, Failure, Usecase, left, right } from '@learning-hub/core';
 import { IRoleRepository } from '../../domain/repositories/i-role.repository';
 import { Role } from '../../domain/entities/role.entity';
 import { AuthFailures } from '../../domain/errors/auth.failures';
-import { CreateRoleDto } from '../dto/role.dto';
+import { CreateRoleDto } from '../dto/create-role.dto';
 
-export interface CreateRoleParams extends CreateRoleDto {}
+export type CreateRoleParams = CreateRoleDto;
 export interface CreateRoleResult {
   role: Role;
 }

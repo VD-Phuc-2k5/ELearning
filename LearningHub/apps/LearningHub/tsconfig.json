@@ -1,6 +1,8 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
+    "strict": true,
+    "noImplicitAny": true,
     "jsx": "preserve",
     "noEmit": true,
     "emitDeclarationOnly": false,
@@ -17,7 +19,7 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"],
+      "@/*": ["./apps/LearningHub/src/*"],
       "@learning-hub/core": ["packages/core/src/index.ts"],
       "@learning-hub/core/server": ["packages/core/src/server.ts"],
       "@learning-hub/domain": ["packages/domain/src/index.ts"],
@@ -26,7 +28,12 @@
       "@learning-hub/data/server": ["packages/data/src/server.ts"]
     }
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "next-env.d.ts"],
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "next-env.d.ts",
+    "../../types/**/*.d.ts"
+  ],
   "exclude": [
     "out-tsc",
     "dist",

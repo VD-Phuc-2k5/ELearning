@@ -4,7 +4,6 @@ import { useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import {
   ArrowLeft,
-  AlertCircle,
   Zap,
   ClipboardList,
   Clock,
@@ -13,11 +12,11 @@ import {
 import { clsx } from 'clsx';
 import '@aejkatappaja/phantom-ui';
 import type { QuestionBank } from '@learning-hub/domain';
-import type { Mode } from './types';
+import type { QuizMode } from './types';
 
 interface ModeSelectProps {
   bank: QuestionBank | undefined;
-  onSelectMode: (m: Mode, timeLimitSeconds?: number) => void;
+  onSelectMode: (m: QuizMode, timeLimitSeconds?: number) => void;
   onBack: () => void;
 }
 
@@ -29,36 +28,29 @@ export function ModeSelect({ bank, onSelectMode, onBack }: ModeSelectProps) {
       <div className="flex items-center gap-3">
         <button
           onClick={onBack}
+          aria-label="Quay lại"
           className="p-2 rounded-xl hover:bg-slate-100 text-slate-500 transition"
         >
           <ArrowLeft className="h-5 w-5" />
         </button>
-        <phantom-ui loading={!bank} animation="pulse" reveal={0.3}>
+        {bank ? (
           <div>
-            <h2 className="text-2xl font-bold text-slate-900">
-              {bank?.title ?? 'Loading...'}
-            </h2>
+            <h2 className="text-2xl font-bold text-slate-900">{bank.title}</h2>
             <p className="text-slate-500 text-sm">
-              {bank?.totalQuestions ?? 0} câu hỏi
+              {bank.totalQuestions ?? 0} câu hỏi
             </p>
           </div>
-        </phantom-ui>
+        ) : (
+          <phantom-ui loading animation="pulse" reveal={0.3}>
+            <div>
+              <h2 className="text-2xl font-bold text-slate-900">Loading...</h2>
+              <p className="text-slate-500 text-sm">0 câu hỏi</p>
+            </div>
+          </phantom-ui>
+        )}
       </div>
 
-      {bank?.statusId !== 'published' && (
-        <div className="flex items-center gap-3 rounded-2xl bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-700">
-          <AlertCircle className="h-5 w-5 shrink-0" />
-          Ngân hàng đang ở trạng thái <strong>draft</strong> — không thể làm
-          quiz. Hãy publish trước.
-        </div>
-      )}
-
-      <div
-        className={clsx(
-          'grid gap-4',
-          bank?.statusId !== 'published' && 'pointer-events-none opacity-40',
-        )}
-      >
+      <div className="grid gap-4">
         <ModeCard
           icon={<Zap className="h-8 w-8" />}
           title="Luyện tập"

@@ -87,10 +87,24 @@ export class AuthFailures extends Failure {
     return new AuthFailures('Email already in use', 'EMAIL_ALREADY_IN_USE');
   }
 
+  static usernameAlreadyExists(): AuthFailures {
+    return new AuthFailures(
+      'Username already exists',
+      'USERNAME_ALREADY_EXISTS',
+    );
+  }
+
   static cannotDeleteSelf(): AuthFailures {
     return new AuthFailures(
       'Cannot delete your own account',
       'CANNOT_DELETE_SELF',
+    );
+  }
+
+  static userHasRelatedRecords(): AuthFailures {
+    return new AuthFailures(
+      'User cannot be deleted: transfer or remove related records first (e.g. forums they own)',
+      'USER_HAS_RELATED_RECORDS',
     );
   }
 }

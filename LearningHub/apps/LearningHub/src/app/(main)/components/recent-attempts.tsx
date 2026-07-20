@@ -2,14 +2,25 @@
 
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
-import { CheckCircle2, XCircle, ArrowUpRight, Clock } from 'lucide-react';
+import {
+  CheckCircle2,
+  XCircle,
+  ArrowUpRight,
+  Clock,
+  AlertCircle,
+} from 'lucide-react';
 import { clsx } from 'clsx';
 import { listAttempts } from '../../actions/quiz-attempt.actions';
 import { getBankDetail } from '../../actions/quiz.actions';
 import { EmptyState } from '../../../components/ui';
 import '@aejkatappaja/phantom-ui';
 
-const STATUS_BADGE: Record<string, { label: string; cls: string }> = {
+interface StatusBadge {
+  label: string;
+  cls: string;
+}
+
+const STATUS_BADGE: Record<string, StatusBadge> = {
   pass: { label: 'Pass', cls: 'bg-emerald-100 text-emerald-700' },
   fail: { label: 'Fail', cls: 'bg-red-100 text-red-700' },
   in_progress: { label: 'In Progress', cls: 'bg-amber-100 text-amber-700' },
@@ -23,24 +34,36 @@ const fmtTime = (iso: string) =>
     minute: '2-digit',
   });
 
-export function RecentAttempts() {
-  const { data, isLoading } = useQuery({
-    queryKey: ['quiz-attempts-recent'],
+interface Props {
+  userId?: string;
+}
+
+export function RecentAttempts({ userId }: Props) {
+  const {
+    data,
+    isLoading,
+    error: attemptsError,
+  } = useQuery({
+    queryKey: ['quiz-attempts-recent', userId],
     queryFn: () => listAttempts({ limit: 5 }),
   });
 
   const attempts = data?.data ?? [];
-  const uniqueBankIds = [...new Set(attempts.map((a) => a.questionBankId))];
+  const uniqueBankIds = [
+    ...new Set(attempts.map((a: any) => a.questionBankId as string)),
+  ];
 
-  const { data: bankTitles = {} } = useQuery({
+  const { data: bankTitles = {}, error: titlesError } = useQuery({
     queryKey: ['recent-bank-titles', uniqueBankIds],
     queryFn: async (): Promise<Record<string, string>> => {
       const banks = await Promise.all(
-        uniqueBankIds.map((id) => getBankDetail(id).catch(() => null)),
+        uniqueBankIds.map((id: any) =>
+          getBankDetail(id as string).catch(() => null),
+        ),
       );
       const map: Record<string, string> = {};
       banks.forEach((b, i) => {
-        if (b) map[uniqueBankIds[i]] = b.title;
+        if (b) map[uniqueBankIds[i] as string] = b.title;
       });
       return map;
     },
@@ -65,7 +88,21 @@ export function RecentAttempts() {
         )}
       </div>
 
-      {isLoading ? (
+      {titlesError && (
+        <p className="text-xs text-rose-600 flex items-center gap-1">
+          <AlertCircle className="h-3 w-3" />
+          Không thể tải tiêu đề ngân hàng
+        </p>
+      )}
+
+      {attemptsError ? (
+        <div className="flex flex-col items-center justify-center py-8 rounded-2xl border border-rose-200 bg-rose-50 text-center">
+          <AlertCircle className="h-8 w-8 text-rose-400 mb-2" />
+          <p className="text-sm font-medium text-rose-700">
+            Không thể tải lịch sử làm bài
+          </p>
+        </div>
+      ) : isLoading ? (
         <phantom-ui
           loading
           animation="pulse"
@@ -84,14 +121,14 @@ export function RecentAttempts() {
         />
       ) : (
         <div className="space-y-3">
-          {attempts.map((a) => {
+          {attempts.map((a: any) => {
             const badge = STATUS_BADGE[a.status] ?? STATUS_BADGE.fail;
             const pct =
               a.scorePercent !== null ? Math.round(a.scorePercent) : null;
             return (
               <div
                 key={a.id}
-                className="flex items-center gap-4 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm transition hover:shadow-md"
+                className="flex items-center gap-4 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm transition hover:shadow-md hover:-translate-y-0.5"
               >
                 <div className="min-w-0 flex-1">
                   <Link

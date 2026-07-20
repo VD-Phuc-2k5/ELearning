@@ -47,13 +47,11 @@ import { GetDerivedBanksUseCase } from '../../application/use-cases/get-derived-
 import { UploadQuestionsUseCase } from '../../application/use-cases/upload-questions.use-case';
 import { ParseExcelUseCase } from '../../application/use-cases/parse-excel.use-case';
 
-import {
-  CreateQuestionBankRequestDto,
-  UploadQuestionsRequestDto,
-  VerifyQuestionAnswerRequestDto,
-  UpdateQuestionBankRequestDto,
-  UpdateQuestionRequestDto,
-} from '../dto/question-bank.request.dto';
+import { CreateQuestionBankRequestDto } from '../dto/create-question-bank-request.dto';
+import { UploadQuestionsRequestDto } from '../dto/upload-questions-request.dto';
+import { VerifyQuestionAnswerRequestDto } from '../dto/verify-question-answer-request.dto';
+import { UpdateQuestionBankRequestDto } from '../dto/update-question-bank-request.dto';
+import { UpdateQuestionRequestDto } from '../dto/update-question-request.dto';
 
 @ApiTags('Quiz - Ngân hàng câu hỏi')
 @ApiBearerAuth()
@@ -98,6 +96,7 @@ export class QuizBankController {
   @ApiQuery({ name: 'search', required: false, type: String })
   @ApiQuery({ name: 'tagId', required: false, type: Number })
   @ApiQuery({ name: 'statusId', required: false, type: String })
+  @ApiQuery({ name: 'uploaderId', required: false, type: String })
   async getBankList(
     @Request() req: AuthenticatedRequest,
     @Query('page') page?: number,
@@ -105,6 +104,7 @@ export class QuizBankController {
     @Query('search') search?: string,
     @Query('tagId') tagId?: number,
     @Query('statusId') statusId?: string,
+    @Query('uploaderId') uploaderId?: string,
   ) {
     return this.getQuestionBankListUseCase.execute({
       page,
@@ -112,7 +112,7 @@ export class QuizBankController {
       search,
       tagId,
       statusId,
-      uploaderId: req.user.id,
+      uploaderId,
     });
   }
 

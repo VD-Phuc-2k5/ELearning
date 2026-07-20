@@ -9,7 +9,6 @@ import { BankTagEntity } from './infrastructure/persistence/entities/bank-tag.en
 import { QuestionEntity } from './infrastructure/persistence/entities/question.entity';
 import { AnswerOptionEntity } from './infrastructure/persistence/entities/answer-option.entity';
 import { CorrectAnswerEntity } from './infrastructure/persistence/entities/correct-answer.entity';
-import { QuestionDifficultEntity } from './infrastructure/persistence/entities/question-difficult.entity';
 import { QuizAttemptEntity } from './infrastructure/persistence/entities/quiz-attempt.entity';
 import { QuizAttemptAnswerEntity } from './infrastructure/persistence/entities/quiz-attempt-answer.entity';
 import { UserBankProgressEntity } from './infrastructure/persistence/entities/user-bank-progress.entity';
@@ -59,12 +58,19 @@ import { GetQuizAttemptsUseCase } from './application/use-cases/get-quiz-attempt
 import { GetQuizAttemptDetailUseCase } from './application/use-cases/get-quiz-attempt-detail.use-case';
 import { GetBankProgressUseCase } from './application/use-cases/get-bank-progress.use-case';
 import { GetBankRoadmapsUseCase } from './application/use-cases/get-bank-roadmaps.use-case';
+import { ApproveQuestionBankUseCase } from './application/use-cases/approve-question-bank.use-case';
+import { RejectQuestionBankUseCase } from './application/use-cases/reject-question-bank.use-case';
 
 import { MulterModule } from '@nestjs/platform-express';
 import { QuizBankController } from './presentation/controllers/quiz-bank.controller';
 import { QuizAttemptController } from './presentation/controllers/quiz-attempt.controller';
 import { QuizTagController } from './presentation/controllers/quiz-tag.controller';
+import { AdminQuizBankController } from './presentation/controllers/admin-quiz-bank.controller';
 import { RoadmapModule } from '../roadmap/roadmap.module';
+import { ForumModule } from '../forum/forum.module';
+import { UserRoleEntity } from '../auth/infrastructure/persistence/entities/user-role.entity';
+import { UserEntity } from '../auth/infrastructure/persistence/entities/user.entity';
+import { RoleEntity } from '../auth/infrastructure/persistence/entities/role.entity';
 
 const entities = [
   QuestionBankEntity,
@@ -74,10 +80,12 @@ const entities = [
   QuestionEntity,
   AnswerOptionEntity,
   CorrectAnswerEntity,
-  QuestionDifficultEntity,
   QuizAttemptEntity,
   QuizAttemptAnswerEntity,
   UserBankProgressEntity,
+  UserRoleEntity,
+  UserEntity,
+  RoleEntity,
 ];
 
 const useCases = [
@@ -105,6 +113,8 @@ const useCases = [
   GetQuizAttemptDetailUseCase,
   GetBankProgressUseCase,
   GetBankRoadmapsUseCase,
+  ApproveQuestionBankUseCase,
+  RejectQuestionBankUseCase,
 ];
 
 const repositoryProviders = [
@@ -124,8 +134,14 @@ const repositoryProviders = [
     TypeOrmModule.forFeature(entities),
     MulterModule.register({ limits: { fileSize: 5 * 1024 * 1024 } }),
     forwardRef(() => RoadmapModule),
+    forwardRef(() => ForumModule),
   ],
-  controllers: [QuizBankController, QuizAttemptController, QuizTagController],
+  controllers: [
+    QuizBankController,
+    QuizAttemptController,
+    QuizTagController,
+    AdminQuizBankController,
+  ],
   providers: [
     ...useCases,
     ...repositoryProviders,
@@ -135,6 +151,10 @@ const repositoryProviders = [
     {
       provide: USER_BANK_PROGRESS_REPOSITORY,
       useClass: UserBankProgressRepository,
+    },
+    {
+      provide: QUESTION_BANK_REPOSITORY,
+      useClass: QuestionBankRepository,
     },
   ],
 })

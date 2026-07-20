@@ -7,12 +7,13 @@ import gsap from 'gsap';
 import '@aejkatappaja/phantom-ui';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
+import { AlertCircle } from 'lucide-react';
 import {
   getBankDetail,
   getQuestionsForQuiz,
 } from '../../../actions/quiz.actions';
 import type { QuizSubmitResult } from '@learning-hub/domain';
-import type { Mode } from './components/types';
+import type { QuizMode } from './components/types';
 import { ModeSelect } from './components/mode-select';
 import { PracticeMode } from './components/practice-mode';
 import { ExamMode } from './components/exam-mode';
@@ -24,28 +25,32 @@ export default function QuizPage() {
   const { bankId } = useParams<{ bankId: string }>();
   const searchParams = useSearchParams();
   const roadmapId = searchParams.get('roadmapId') ?? undefined;
-  const autoMode = searchParams.get('mode') as Mode | null;
+  const autoMode = searchParams.get('mode') as QuizMode | null;
   const router = useRouter();
   const pageRef = useRef<HTMLDivElement>(null);
-  const [mode, setMode] = useState<Mode>(
+  const [mode, setMode] = useState<QuizMode>(
     autoMode === 'practice' || autoMode === 'exam' || autoMode === 'timed-exam'
       ? autoMode
       : 'select',
   );
   const qc = useQueryClient();
-  const [lastQuizMode, setLastQuizMode] = useState<Mode>('exam');
+  const [lastQuizMode, setLastQuizMode] = useState<QuizMode>('exam');
   const [result, setResult] = useState<QuizSubmitResult | null>(null);
   const [reviewMode, setReviewMode] = useState(false);
   const [timeLimitSeconds, setTimeLimitSeconds] = useState<
     number | undefined
   >();
 
-  const { data: bank } = useQuery({
+  const { data: bank, error: bankError } = useQuery({
     queryKey: ['bank', bankId],
     queryFn: () => getBankDetail(bankId),
   });
 
-  const { data: rawQuestions = [], isLoading } = useQuery({
+  const {
+    data: rawQuestions = [],
+    isLoading,
+    error: questionsError,
+  } = useQuery({
     queryKey: ['quiz-questions', bankId],
     queryFn: () => getQuestionsForQuiz(bankId),
     enabled: mode !== 'select',
@@ -97,6 +102,18 @@ export default function QuizPage() {
     );
   }
 
+  if (bankError || questionsError) {
+    return (
+      <div className="flex flex-col items-center justify-center py-32 text-center">
+        <AlertCircle className="h-12 w-12 text-rose-300 mb-4" />
+        <h3 className="text-lg font-semibold text-slate-700">
+          Không thể tải dữ liệu
+        </h3>
+        <p className="text-slate-500 text-sm mt-1">Vui lòng thử lại sau.</p>
+      </div>
+    );
+  }
+
   return (
     <div ref={pageRef} className="max-w-2xl mx-auto">
       {roadmapId && (
@@ -122,7 +139,7 @@ export default function QuizPage() {
       )}
       {mode === 'select' && (
         <ModeSelect
-          bank={bank}
+          bank={bank ?? undefined}
           onSelectMode={(m, secs) => {
             setTimeLimitSeconds(secs);
             setMode(m);

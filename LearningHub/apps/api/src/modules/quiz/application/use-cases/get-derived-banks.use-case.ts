@@ -21,17 +21,18 @@ export class GetDerivedBanksUseCase {
 
   async execute(id: string, requesterId: string): Promise<DerivedBanksResult> {
     const bank = await this.questionBankRepository.findById(id);
-    if (!bank || bank.uploaderId !== requesterId) return { data: [] };
+    if (!bank || bank.statusId !== 'approved') return { data: [] };
     if (!bank.fileHash) return { data: [] };
+
+    const original = await this.questionBankRepository.findOriginalByHash(
+      bank.fileHash,
+    );
+    if (!original || original.uploaderId !== requesterId) return { data: [] };
+
     const derived = await this.questionBankRepository.findDerivedBanks(
       bank.fileHash,
-      bank.uploaderId,
+      requesterId,
     );
-    // ponytail: first uploader = original owner; copies have newer createdAt
-    const bankCreatedAt = new Date(bank.createdAt);
-    const isOriginal = derived.every(
-      (d) => new Date(d.createdAt) > bankCreatedAt,
-    );
-    return isOriginal ? { data: derived } : { data: [] };
+    return { data: derived };
   }
 }

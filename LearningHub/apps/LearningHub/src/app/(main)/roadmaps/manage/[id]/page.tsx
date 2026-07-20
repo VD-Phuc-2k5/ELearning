@@ -18,6 +18,7 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { Button, Input, useConfirmModal } from '../../../../../components/ui';
+import { useCurrentUser } from '../../../../../components/hooks/use-current-user';
 import {
   getRoadmapDetail,
   updateRoadmap,
@@ -32,14 +33,18 @@ export default function EditRoadmapPage() {
   const router = useRouter();
   const qc = useQueryClient();
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, error } = useQuery({
     queryKey: ['roadmap', id],
     queryFn: () => getRoadmapDetail(id),
   });
 
-  const { data: allBanks } = useQuery({
-    queryKey: ['banks-picker'],
-    queryFn: () => getBanks({ limit: 100, statusId: 'published' }),
+  const { user } = useCurrentUser();
+
+  const { data: allBanks, error: banksError } = useQuery({
+    queryKey: ['banks-picker', user?.id],
+    queryFn: () =>
+      getBanks({ limit: 100, statusId: 'approved', uploaderId: user?.id }),
+    enabled: !!user,
   });
 
   const [title, setTitle] = useState('');
@@ -50,6 +55,7 @@ export default function EditRoadmapPage() {
   const [showPicker, setShowPicker] = useState(false);
   const [pickerSearch, setPickerSearch] = useState('');
   const [deleteErr, setDeleteErr] = useState('');
+  const [saveErr, setSaveErr] = useState('');
   const { modal: confirmModal, openConfirm } = useConfirmModal();
 
   useEffect(() => {
@@ -57,7 +63,7 @@ export default function EditRoadmapPage() {
     setTitle(data.roadmap.title);
     setDescription(data.roadmap.description ?? '');
     setItems(
-      data.items.map((it) => ({
+      data.items.map((it: any) => ({
         id: it.id,
         bankId: it.questionBankId,
         title: it.bankTitle ?? it.questionBankId,
@@ -67,20 +73,32 @@ export default function EditRoadmapPage() {
 
   const save = useMutation({
     mutationFn: async () => {
-      await updateRoadmap(id, { title, description });
-      await setRoadmapItems(
+      const r1 = await updateRoadmap(id, { title, description });
+      if (!r1.success) throw new Error(r1.message);
+      const r2 = await setRoadmapItems(
         id,
         items.map((i) => i.bankId),
       );
+      if (!r2.success) throw new Error(r2.message);
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['roadmap', id] });
       router.push(`/roadmaps/${id}`);
     },
+    onError: (e: unknown) => {
+      setSaveErr(
+        e instanceof Error
+          ? e.message
+          : 'Lưu roadmap thất bại. Vui lòng thử lại.',
+      );
+    },
   });
 
   const delRoadmap = useMutation({
-    mutationFn: () => deleteRoadmap(id),
+    mutationFn: async () => {
+      const result = await deleteRoadmap(id);
+      if (!result.success) throw new Error(result.message);
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['my-roadmaps'] });
       router.push('/roadmaps/manage');
@@ -136,6 +154,14 @@ export default function EditRoadmapPage() {
       </div>
     );
 
+  if (error)
+    return (
+      <div className="flex items-start gap-2 rounded-2xl bg-red-50 border border-red-100 px-4 py-3 text-sm text-red-700">
+        <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+        <span>Lỗi tải dữ liệu</span>
+      </div>
+    );
+
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div className="flex items-center gap-3">
@@ -171,6 +197,28 @@ export default function EditRoadmapPage() {
           >
             <X className="h-4 w-4" />
           </button>
+        </div>
+      )}
+
+      {saveErr && (
+        <div className="flex items-start justify-between rounded-2xl bg-red-50 border border-red-100 px-4 py-3">
+          <div className="flex items-start gap-2 text-sm text-red-700">
+            <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+            <span>{saveErr}</span>
+          </div>
+          <button
+            onClick={() => setSaveErr('')}
+            className="text-red-500 hover:text-red-700"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+
+      {banksError && (
+        <div className="flex items-start gap-2 rounded-2xl bg-red-50 border border-red-100 px-4 py-3 text-sm text-red-700">
+          <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+          <span>Không thể tải dữ liệu</span>
         </div>
       )}
 

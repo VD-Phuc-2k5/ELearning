@@ -2,7 +2,14 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
-import { Plus, Map, ArrowUpRight, Edit2, Trash2 } from 'lucide-react';
+import {
+  Plus,
+  Map,
+  ArrowUpRight,
+  Edit2,
+  Trash2,
+  AlertCircle,
+} from 'lucide-react';
 import { Button, useConfirmModal } from '../../../../components/ui';
 import {
   listMyRoadmaps,
@@ -12,13 +19,16 @@ import {
 export default function ManageRoadmapsPage() {
   const qc = useQueryClient();
   const { modal: confirmModal, openConfirm } = useConfirmModal();
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, error } = useQuery({
     queryKey: ['my-roadmaps'],
     queryFn: () => listMyRoadmaps({ limit: 50 }),
   });
 
   const del = useMutation({
-    mutationFn: (id: string) => deleteRoadmap(id),
+    mutationFn: async (id: string) => {
+      const result = await deleteRoadmap(id);
+      if (!result.success) throw new Error(result.message);
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['my-roadmaps'] }),
   });
 
@@ -37,7 +47,12 @@ export default function ManageRoadmapsPage() {
         </Link>
       </div>
 
-      {isLoading ? (
+      {error ? (
+        <div className="flex items-start gap-2 rounded-2xl bg-red-50 border border-red-100 px-4 py-3 text-sm text-red-700">
+          <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+          <span>Lỗi tải dữ liệu</span>
+        </div>
+      ) : isLoading ? (
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
             <div
@@ -56,7 +71,7 @@ export default function ManageRoadmapsPage() {
         </div>
       ) : (
         <div className="space-y-3">
-          {data.data.map((r) => (
+          {data.data.map((r: any) => (
             <div
               key={r.id}
               className="flex items-center gap-4 p-4 rounded-2xl border border-slate-100 bg-white shadow-sm"

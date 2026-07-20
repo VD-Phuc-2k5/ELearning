@@ -19,11 +19,11 @@ export interface IAuthRepository {
   login(data: LoginParams): Promise<Either<Failure, AuthTokens>>;
   adminLogin(data: LoginParams): Promise<Either<Failure, AuthTokens>>;
   refreshToken(token: string): Promise<Either<Failure, AuthTokens>>;
-  logout(): Promise<Either<Failure, void>>;
+  logout(refreshToken: string): Promise<Either<Failure, void>>;
   getProfile(): Promise<Either<Failure, User>>;
 
   // Admin Users
-  getUsers(): Promise<Either<Failure, User[]>>;
+  getUsers(role?: string): Promise<Either<Failure, User[]>>;
   registerAdmin(data: RegisterParams): Promise<Either<Failure, User>>;
   updateUser(
     id: string,

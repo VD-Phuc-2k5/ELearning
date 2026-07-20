@@ -1,6 +1,12 @@
 'use server';
 
-import { Either, Failure } from '@learning-hub/core';
+async function unwrapOrThrow<T>(
+  promise: Promise<{ type: string; value: any }>,
+): Promise<T> {
+  const result = await promise;
+  if (result.type === 'left') throw new Error(result.value.message);
+  return result.value;
+}
 import {
   QuizRemoteDataSourceImpl,
   QuizRepositoryImpl,
@@ -18,46 +24,54 @@ import {
   GetBankProgressQuizParams,
   GetBankProgressQuizUsecase,
 } from '@learning-hub/domain';
-import { cookies } from 'next/headers';
-
-function unwrap<T>(r: Either<Failure, T>): T {
-  if (r.type === 'left') throw new Error(r.value.message);
-  return r.value;
-}
-
-async function getRepo() {
-  const token = (await cookies()).get('accessToken')?.value ?? '';
-  return new QuizRepositoryImpl(new QuizRemoteDataSourceImpl(), token);
+function getRepo() {
+  return new QuizRepositoryImpl(new QuizRemoteDataSourceImpl());
 }
 
 export async function listAttempts(params?: {
   page?: number;
   limit?: number;
   bankId?: string;
+  uploaderId?: string;
 }): Promise<AttemptList> {
-  const repo = await getRepo();
+  const repo = getRepo();
   const result = await new GetAttemptsQuizUsecase(repo).execute(
-    new GetAttemptsQuizParams(params?.page, params?.limit, params?.bankId),
+    new GetAttemptsQuizParams(
+      params?.page,
+      params?.limit,
+      params?.bankId,
+      params?.uploaderId,
+    ),
   );
   return result.type === 'right' ? result.value : { data: [], total: 0 };
 }
 
-export async function getAttemptDetail(id: string): Promise<QuizAttemptDetail> {
-  const repo = await getRepo();
-  return unwrap(
-    await new GetAttemptDetailQuizUsecase(repo).execute(
-      new GetAttemptDetailQuizParams(id),
-    ),
-  );
+export async function getAttemptDetail(
+  id: string,
+): Promise<QuizAttemptDetail | null> {
+  try {
+    const repo = getRepo();
+    return unwrapOrThrow(
+      new GetAttemptDetailQuizUsecase(repo).execute(
+        new GetAttemptDetailQuizParams(id),
+      ),
+    );
+  } catch {
+    return null;
+  }
 }
 
 export async function getBankProgress(
   bankId: string,
 ): Promise<UserBankProgress | null> {
-  const repo = await getRepo();
-  return unwrap(
-    await new GetBankProgressQuizUsecase(repo).execute(
-      new GetBankProgressQuizParams(bankId),
-    ),
-  );
+  try {
+    const repo = getRepo();
+    return unwrapOrThrow(
+      new GetBankProgressQuizUsecase(repo).execute(
+        new GetBankProgressQuizParams(bankId),
+      ),
+    );
+  } catch {
+    return null;
+  }
 }

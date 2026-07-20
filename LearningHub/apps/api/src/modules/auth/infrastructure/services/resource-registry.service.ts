@@ -15,9 +15,9 @@ export class ResourceRegistryService
   ) {}
 
   onModuleInit() {
-    this.resources = new Set(
-      this.dataSource.entityMetadatas.map((m) => m.tableName),
-    );
+    const tableNames = this.dataSource.entityMetadatas.map((m) => m.tableName);
+    const urlResources = ['me', 'posts', 'reports', 'invites'];
+    this.resources = new Set([...tableNames, ...urlResources]);
   }
 
   hasResource(resource: string): boolean {

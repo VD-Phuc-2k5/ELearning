@@ -4,19 +4,44 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getBanks } from '../../actions/quiz.actions';
 import type { QuestionBank } from '@learning-hub/domain';
+import { useCurrentUser } from '../../../components/hooks/use-current-user';
 import { Button } from '../../../components/ui';
-import { Plus, BookOpen, Share2, Upload, FileQuestion } from 'lucide-react';
+import { RevealGroup } from '../../../components/effects/reveal';
+import {
+  Plus,
+  BookOpen,
+  Share2,
+  Upload,
+  FileQuestion,
+  AlertCircle,
+} from 'lucide-react';
 import Link from 'next/link';
 
 export default function MyBanksPage() {
+  const { user } = useCurrentUser();
   const [page, setPage] = useState(1);
   const limit = 12;
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, error } = useQuery({
     queryKey: ['my-banks', page],
-    queryFn: () => getBanks({ page, limit }),
+    queryFn: () => getBanks({ page, limit, uploaderId: user?.id }),
+    enabled: !!user,
   });
   const total = data?.total ?? 0;
   const totalPages = Math.ceil(total / limit);
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center py-32 text-center">
+        <AlertCircle className="h-12 w-12 text-rose-300 mb-4" />
+        <h3 className="text-lg font-semibold text-slate-700">
+          Không thể tải dữ liệu
+        </h3>
+        <p className="text-slate-500 text-sm mt-1">
+          {(error as Error)?.message || 'Vui lòng thử lại sau.'}
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -44,7 +69,7 @@ export default function MyBanksPage() {
           ))}
         </div>
       ) : data?.data && data.data.length > 0 ? (
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <RevealGroup className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {data.data.map((bank: QuestionBank) => (
             <div
               key={bank.id}
@@ -93,7 +118,7 @@ export default function MyBanksPage() {
               </div>
             </div>
           ))}
-        </div>
+        </RevealGroup>
       ) : (
         <div className="flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-slate-200 bg-white p-16 text-center">
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-400 mb-5">

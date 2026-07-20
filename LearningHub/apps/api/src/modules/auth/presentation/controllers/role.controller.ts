@@ -20,7 +20,8 @@ import { UpdateRoleUseCase } from '../../application/use-cases/update-role.use-c
 import { DeleteRoleUseCase } from '../../application/use-cases/delete-role.use-case';
 import { AssignPermissionToRoleUseCase } from '../../application/use-cases/assign-permission-to-role.use-case';
 import { RemovePermissionFromRoleUseCase } from '../../application/use-cases/remove-permission-from-role.use-case';
-import { CreateRoleDto, UpdateRoleDto } from '../../application/dto/role.dto';
+import { CreateRoleDto } from '../../application/dto/create-role.dto';
+import { UpdateRoleDto } from '../../application/dto/update-role.dto';
 import { AssignPermissionDto } from '../../application/dto/assign-permission.dto';
 import { AuthFailures } from '../../domain/errors/auth.failures';
 

@@ -28,11 +28,31 @@ export class ResourceActionGuard implements CanActivate {
   ) {}
 
   async canActivate(ctx: ExecutionContext): Promise<boolean> {
+    if (
+      (ctx.getType() === 'http' &&
+        ctx.switchToHttp().getRequest().path === '/metrics') ||
+      ctx.switchToHttp().getRequest().path === '/health'
+    ) {
+      return true;
+    }
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
       ctx.getHandler(),
       ctx.getClass(),
     ]);
     if (isPublic) return true;
+
+    const request = ctx.switchToHttp().getRequest();
+    const bypassPaths = [
+      '/api/sandbox',
+      '/sandbox',
+      '/api/problems',
+      '/problems',
+      '/api/submissions',
+      '/submissions',
+    ];
+    if (bypassPaths.some((p) => request.path.startsWith(p))) {
+      return true;
+    }
 
     // Routes using @RequirePermissions are handled by PermissionGuard
     const requiredPerms = this.reflector.getAllAndOverride<string[]>(
@@ -41,7 +61,6 @@ export class ResourceActionGuard implements CanActivate {
     );
     if (requiredPerms?.length) return true;
 
-    const request = ctx.switchToHttp().getRequest();
     const user: User | undefined = request.user;
     if (!user) throw new UnauthorizedException();
 
@@ -60,7 +79,12 @@ export class ResourceActionGuard implements CanActivate {
 
   private extractResource(path: string): string | null {
     const SKIP = new Set(['api', 'admin']);
+    // ponytail: any authenticated user may manage these resources; JwtAuthGuard still enforces auth
+    const OPEN_RESOURCES = new Set(['forum_tags']);
     const segments = path.split('/').filter(Boolean);
-    return segments.find((s) => !SKIP.has(s)) ?? null;
+    const resource = segments.find((s) => !SKIP.has(s));
+    if (!resource) return null;
+    const normalized = resource.replace(/-/g, '_');
+    return OPEN_RESOURCES.has(normalized) ? null : normalized;
   }
 }

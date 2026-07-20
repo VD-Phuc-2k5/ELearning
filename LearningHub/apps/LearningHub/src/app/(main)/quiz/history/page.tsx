@@ -3,14 +3,25 @@
 import { useMemo, useState } from 'react';
 import { useQuery, useQueries } from '@tanstack/react-query';
 import Link from 'next/link';
-import { Clock, CheckCircle2, XCircle, ArrowUpRight } from 'lucide-react';
+import {
+  Clock,
+  CheckCircle2,
+  XCircle,
+  ArrowUpRight,
+  AlertCircle,
+} from 'lucide-react';
 import { clsx } from 'clsx';
 import { Button } from '../../../../components/ui';
 import { listAttempts } from '../../../actions/quiz-attempt.actions';
 import { getBankDetail } from '../../../actions/quiz.actions';
 import '@aejkatappaja/phantom-ui';
 
-const STATUS_BADGE: Record<string, { label: string; cls: string }> = {
+interface StatusBadge {
+  label: string;
+  cls: string;
+}
+
+const STATUS_BADGE: Record<string, StatusBadge> = {
   pass: { label: 'Pass', cls: 'bg-emerald-100 text-emerald-700' },
   fail: { label: 'Fail', cls: 'bg-red-100 text-red-700' },
   in_progress: { label: 'In Progress', cls: 'bg-amber-100 text-amber-700' },
@@ -20,22 +31,22 @@ export default function QuizHistoryPage() {
   const [page, setPage] = useState(1);
   const limit = 10;
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, error } = useQuery({
     queryKey: ['quiz-attempts', page],
     queryFn: () => listAttempts({ page, limit }),
   });
 
-  const attempts = data?.data ?? [];
+  const attempts = useMemo(() => data?.data ?? [], [data]);
   const total = data?.total ?? 0;
 
   const uniqueBankIds = useMemo(
-    () => [...new Set(attempts.map((a) => a.questionBankId))],
+    () => [...new Set(attempts.map((a: any) => a.questionBankId as string))],
     [attempts],
   );
   const bankQueries = useQueries({
-    queries: uniqueBankIds.map((id) => ({
+    queries: uniqueBankIds.map((id: any) => ({
       queryKey: ['bank', id],
-      queryFn: () => getBankDetail(id),
+      queryFn: () => getBankDetail(id as string),
       enabled: uniqueBankIds.length > 0,
     })),
   });
@@ -73,6 +84,20 @@ export default function QuizHistoryPage() {
       </phantom-ui>
     );
 
+  if (isError) {
+    return (
+      <div className="flex flex-col items-center justify-center py-32 text-center">
+        <AlertCircle className="h-12 w-12 text-rose-300 mb-4" />
+        <h3 className="text-lg font-semibold text-slate-700">
+          Không thể tải lịch sử
+        </h3>
+        <p className="text-slate-500 text-sm mt-1">
+          {(error as Error)?.message || 'Vui lòng thử lại sau.'}
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -109,7 +134,7 @@ export default function QuizHistoryPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {attempts.map((a) => {
+                {attempts.map((a: any) => {
                   const badge = STATUS_BADGE[a.status] ?? STATUS_BADGE.fail;
                   const pct =
                     a.scorePercent !== null ? Math.round(a.scorePercent) : null;

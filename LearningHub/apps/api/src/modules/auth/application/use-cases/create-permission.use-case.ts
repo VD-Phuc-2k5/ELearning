@@ -6,7 +6,7 @@ import { Permission } from '../../domain/entities/permission.entity';
 import { AuthFailures } from '../../domain/errors/auth.failures';
 import { CreatePermissionDto } from '../dto/permission.dto';
 
-export interface CreatePermissionParams extends CreatePermissionDto {}
+export type CreatePermissionParams = CreatePermissionDto;
 export interface CreatePermissionResult {
   permission: Permission;
 }
